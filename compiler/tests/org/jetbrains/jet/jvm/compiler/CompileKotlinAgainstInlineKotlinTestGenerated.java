@@ -507,6 +507,12 @@ public class CompileKotlinAgainstInlineKotlinTestGenerated extends AbstractCompi
                     doBoxTestWithInlineCheck(fileName);
                 }
 
+                @TestMetadata("exceptionInFinally.1.kt")
+                public void testExceptionInFinally() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable/exceptionInFinally.1.kt");
+                    doBoxTestWithInlineCheck(fileName);
+                }
+
                 @TestMetadata("forInFinally.1.kt")
                 public void testForInFinally() throws Exception {
                     String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable/forInFinally.1.kt");

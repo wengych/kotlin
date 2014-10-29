@@ -69,9 +69,9 @@ public abstract class CoveringTryCatchNodeProcessor<T: IntervalWithHandler>() {
         for (startNode in infosToClose) {
             val pop = currentCoveringBlocks.pop()
             //Temporary disabled cause during patched structure of exceptions changed
-//            if (startNode != pop) {
-//                throw RuntimeException("Wrong try-catch structure " + startNode + " " + pop + " " + infosToClose.size())
-//            };
+            if (startNode != pop) {
+                //throw RuntimeException("Wrong try-catch structure " + startNode + " " + pop + " " + infosToClose.size())
+            };
         }
 
         //Reversing list order cause we should pop external block before internal one

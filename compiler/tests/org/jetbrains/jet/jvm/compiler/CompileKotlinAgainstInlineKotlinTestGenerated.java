@@ -602,6 +602,12 @@ public class CompileKotlinAgainstInlineKotlinTestGenerated extends AbstractCompi
                     String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable/tryCatchInFinally.1.kt");
                     doBoxTestWithInlineCheck(fileName);
                 }
+
+                @TestMetadata("unmatchedEndNode.1.kt")
+                public void testUnmatchedEndNode() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable/unmatchedEndNode.1.kt");
+                    doBoxTestWithInlineCheck(fileName);
+                }
             }
         }
     }

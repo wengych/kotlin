@@ -121,7 +121,7 @@ public class InlineCodegen implements CallGenerator {
         catch (CompilationException e) {
             throw e;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             boolean generateNodeText = !(e instanceof InlineException);
             PsiElement element = DescriptorToSourceUtils.descriptorToDeclaration(this.codegen.getContext().getContextDescriptor());
             throw new CompilationException("Couldn't inline method call '" +

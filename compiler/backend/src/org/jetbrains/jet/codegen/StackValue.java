@@ -176,7 +176,7 @@ public abstract class StackValue implements StackValueI {
 
     @NotNull
     public static Field field(@NotNull StackValue.Field field, @NotNull StackValue newReceiver) {
-        return new Field(field.type, field.owner, field.name, field.isReadStatic, newReceiver);
+        return new Field(field.type, field.owner, field.name, field.isStaticPut, newReceiver);
     }
 
 
@@ -184,7 +184,7 @@ public abstract class StackValue implements StackValueI {
     public static StackValue changeReceiverForFieldAndSharedVar(@NotNull StackValueWithSimpleReceiver stackValue, @Nullable StackValue newReceiver) {
         //TODO static check
         if (newReceiver != null) {
-            if (!stackValue.isReadStatic) {
+            if (!stackValue.isStaticPut) {
                 if (stackValue instanceof Field) {
                     return field((Field) stackValue, newReceiver);
                 }
@@ -1003,14 +1003,14 @@ public abstract class StackValue implements StackValueI {
 
         @Override
         public void putNoReceiver(@NotNull Type type, @NotNull InstructionAdapter v) {
-            v.visitFieldInsn(isReadStatic ? GETSTATIC : GETFIELD, owner.getInternalName(), name, this.type.getDescriptor());
+            v.visitFieldInsn(isStaticPut ? GETSTATIC : GETFIELD, owner.getInternalName(), name, this.type.getDescriptor());
             coerceTo(type, v);
         }
 
         @Override
         public void store(@NotNull Type topOfStackType, @NotNull InstructionAdapter v) {
             coerceFrom(topOfStackType, v);
-            v.visitFieldInsn(isWriteStatic ? PUTSTATIC : PUTFIELD, owner.getInternalName(), name, this.type.getDescriptor());
+            v.visitFieldInsn(isStaticStore ? PUTSTATIC : PUTFIELD, owner.getInternalName(), name, this.type.getDescriptor());
         }
     }
 
@@ -1043,7 +1043,7 @@ public abstract class StackValue implements StackValueI {
         public void putNoReceiver(@NotNull Type type, @NotNull InstructionAdapter v) {
             if (getter == null) {
                 assert fieldName != null : "Property should have either a getter or a field name: " + descriptor;
-                v.visitFieldInsn(isReadStatic ? GETSTATIC : GETFIELD, methodOwner.getInternalName(), fieldName, this.type.getDescriptor());
+                v.visitFieldInsn(isStaticPut ? GETSTATIC : GETFIELD, methodOwner.getInternalName(), fieldName, this.type.getDescriptor());
                 genNotNullAssertionForField(v, state, descriptor);
                 coerceTo(type, v);
             }
@@ -1058,7 +1058,7 @@ public abstract class StackValue implements StackValueI {
             coerceFrom(topOfStackType, v);
             if (setter == null) {
                 assert fieldName != null : "Property should have either a setter or a field name: " + descriptor;
-                v.visitFieldInsn(isWriteStatic ? PUTSTATIC : PUTFIELD, methodOwner.getInternalName(), fieldName, this.type.getDescriptor());
+                v.visitFieldInsn(isStaticStore ? PUTSTATIC : PUTFIELD, methodOwner.getInternalName(), fieldName, this.type.getDescriptor());
             }
             else {
                 setter.invokeWithoutAssertions(v);
@@ -1382,19 +1382,19 @@ public abstract class StackValue implements StackValueI {
 
     public abstract static class StackValueWithSimpleReceiver extends StackValueWithReceiver {
 
-        public final boolean isReadStatic;
+        public final boolean isStaticPut;
 
-        public final boolean isWriteStatic;
+        public final boolean isStaticStore;
 
         public StackValueWithSimpleReceiver(
                 @NotNull Type type,
-                boolean isReadStatic,
-                boolean isWriteStatic,
+                boolean isStaticPut,
+                boolean isStaticStore,
                 @NotNull StackValue receiver
         ) {
             super(type, receiver);
-            this.isReadStatic = isReadStatic;
-            this.isWriteStatic = isWriteStatic;
+            this.isStaticPut = isStaticPut;
+            this.isStaticStore = isStaticStore;
         }
 
         @Override
@@ -1416,7 +1416,11 @@ public abstract class StackValue implements StackValueI {
 
         @Override
         public boolean hasReceiver(boolean isRead) {
-            return isRead ? !isReadStatic : !isWriteStatic;
+            boolean result = isRead ? !isStaticPut : !isStaticStore;
+            if (!result) {
+
+            }
+            return result;
         }
     }
 

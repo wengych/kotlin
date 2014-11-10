@@ -451,6 +451,6 @@ public abstract class CodegenContext<T extends DeclarationDescriptor> {
     //}
 
     private static boolean isStaticField(@NotNull StackValue value) {
-        return value instanceof StackValue.Field && ((StackValue.Field) value).isReadStatic;
+        return value instanceof StackValue.Field && ((StackValue.Field) value).isStaticPut;
     }
 }

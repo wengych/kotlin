@@ -211,9 +211,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             @NotNull ClassDescriptor required
     ) {
         if (!isInterface(provided) && isInterface(required)) {
-            //TODO: is needed double wrapping?
-            Type type = asmType(required.getDefaultType());
-            return StackValue.lazyCast(StackValue.lazyCast(inner, OBJECT_TYPE), type);
+            return StackValue.coercion(inner, asmType(required.getDefaultType()));
         }
 
         return inner;
@@ -272,7 +270,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
     public StackValue genLazy(JetElement expr, Type type) {
         StackValue value = gen(expr);
-        return StackValue.lazyCast(value, type);
+        return StackValue.coercion(value, type);
     }
 
     private StackValue genStatement(JetElement statement) {
@@ -381,7 +379,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
         if (isEmptyExpression(thenExpression)) {
             if (isEmptyExpression(elseExpression)) {
-                return StackValue.lazyCast(condition, asmType);
+                return StackValue.coercion(condition, asmType);
             }
             return generateSingleBranchIf(condition, expression, elseExpression, false, isStatement);
         }
@@ -393,7 +391,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
         return StackValue.operation(asmType, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(@JetValueParameter(name = "p1") InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter adapter) {
                 Label elseLabel = new Label();
                 condition.condJump(elseLabel, true, v);   // == 0, i.e. false
 
@@ -743,7 +741,8 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
                                                                       LOOP_RANGE_HAS_NEXT_RESOLVED_CALL, loopRange,
                                                                       "No hasNext() function " + DiagnosticUtils.atLocation(loopRange));
             @SuppressWarnings("ConstantConditions") Call fakeCall = makeFakeCall(new TransientReceiver(iteratorCall.getResultingDescriptor().getReturnType()));
-            invokeFunctionNotLazy(fakeCall, hasNextCall, StackValue.local(iteratorVarIndex, asmTypeForIterator));
+            StackValue result = invokeFunction(fakeCall, hasNextCall, StackValue.local(iteratorVarIndex, asmTypeForIterator));
+            result.put(result.type, v);
 
             JetType type = hasNextCall.getResultingDescriptor().getReturnType();
             assert type != null && JetTypeChecker.DEFAULT.isSubtypeOf(type, KotlinBuiltIns.getInstance().getBooleanType());
@@ -1346,7 +1345,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         );
         closureCodegen.gen();
 
-        return closureCodegen.putInstanceOnStack(v, this);
+        return closureCodegen.putInstanceOnStack(this);
     }
 
     @Override
@@ -1824,7 +1823,6 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             ValueParameterDescriptor valueParameterDescriptor = (ValueParameterDescriptor) descriptor;
             ClassDescriptor scriptClass = bindingContext.get(CLASS_FOR_SCRIPT, scriptDescriptor);
             StackValue script = StackValue.thisOrOuter(this, scriptClass, false, false);
-            //script.put(script.type, v);
             Type fieldType = typeMapper.mapType(valueParameterDescriptor);
             return StackValue.field(fieldType, scriptClassType, valueParameterDescriptor.getName().getIdentifier(), false, script);
         }
@@ -2086,17 +2084,6 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     @NotNull
     public StackValue invokeFunction(@NotNull ResolvedCall<?> resolvedCall, @NotNull StackValue receiver) {
         return invokeFunction(resolvedCall.getCall(), resolvedCall, receiver);
-    }
-
-    @NotNull
-    public void invokeFunctionNotLazy(@NotNull ResolvedCall<?> resolvedCall, @NotNull StackValue receiver) {
-        StackValue result = invokeFunction(resolvedCall.getCall(), resolvedCall, receiver);
-        result.put(result.type, v);
-    }
-
-    public void invokeFunctionNotLazy(@NotNull Call call, @NotNull ResolvedCall<?> resolvedCall, @NotNull StackValue receiver) {
-        StackValue result = invokeFunction(call, resolvedCall, receiver);
-        result.put(result.type, v);
     }
 
     @NotNull
@@ -2473,7 +2460,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
                                                                KotlinSyntheticClass.Kind.CALLABLE_REFERENCE_WRAPPER,
                                                                this, strategy, getParentCodegen());
             closureCodegen.gen();
-            return closureCodegen.putInstanceOnStack(v, this);
+            return closureCodegen.putInstanceOnStack(this);
         }
 
         VariableDescriptor variableDescriptor = bindingContext.get(VARIABLE, expression);
@@ -2693,7 +2680,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         Type type = expressionType(expression);
 
         if (expression instanceof JetSafeQualifiedExpression && !isPrimitive(type)) {
-            return StackValue.lazyCast(generateSafeQualifiedExpression((JetSafeQualifiedExpression) expression, ifnull), type);
+            return StackValue.coercion(generateSafeQualifiedExpression((JetSafeQualifiedExpression) expression, ifnull), type);
         }
         else {
             return genLazy(expression, type);
@@ -2707,6 +2694,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         Type receiverType = expressionType(receiver);
         StackValue receiverValue = generateExpressionWithNullFallback(receiver, ifNull);
 
+        //Do not optimize for primitives cause in case of safe call extension receiver should be generated before dispatch one
         StackValue newReceiver = new StackValue.Safe(receiverType, receiverValue, isPrimitive(receiverType) ? null : ifNull);
         return genQualified(newReceiver, selector);
     }
@@ -2717,13 +2705,12 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         Type type = boxType(expressionType(expression));
 
         StackValue value = generateSafeQualifiedExpression(expression, ifnull);
-        StackValue newReceiver = StackValue.lazyCast(value, type);
+        StackValue newReceiver = StackValue.coercion(value, type);
         StackValue result;
 
         if (!isPrimitive(expressionType(expression.getReceiverExpression()))) {
             result = new StackValue.SafeFallback(type, ifnull, newReceiver);
         } else {
-            //TODO safefallbacl
             result = newReceiver;
         }
 
@@ -2785,7 +2772,8 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
                 }
                 else {
                     ResolvedCall<? extends CallableDescriptor> resolvedCall = getResolvedCallWithAssert(operationReference, bindingContext);
-                    invokeFunctionNotLazy(resolvedCall, StackValue.none());
+                    StackValue result = invokeFunction(resolvedCall.getCall(), resolvedCall, StackValue.none());
+                    result.put(result.type, v);
                 }
                 if (operationReference.getReferencedNameElementType() == JetTokens.NOT_IN) {
                     genInvertBoolean(v);
@@ -3009,7 +2997,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         }
         else {
             type = Type.INT_TYPE;
-            leftValue = StackValue.lazyCast(invokeFunction(resolvedCall, receiver), type);
+            leftValue = StackValue.coercion(invokeFunction(resolvedCall, receiver), type);
             rightValue = StackValue.constant(0, type);
         }
         return StackValue.cmp(expression.getOperationToken(), type, leftValue, rightValue);
@@ -3268,7 +3256,8 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
                     ResolvedCall<FunctionDescriptor> resolvedCall = bindingContext.get(COMPONENT_RESOLVED_CALL, variableDeclaration);
                     assert resolvedCall != null : "Resolved call is null for " + variableDeclaration.getText();
                     Call call = makeFakeCall(initializerAsReceiver);
-                    invokeFunctionNotLazy(call, resolvedCall, local);
+                    StackValue result = invokeFunction(call, resolvedCall, local);
+                    result.put(result.type, v);
                     return null;
                 }
             });
@@ -3768,7 +3757,7 @@ The "returned" value of try expression with no finally is either the last expres
                 condType = OBJECT_TYPE;
             }
             StackValue condition = genLazy(patternExpression, condType);
-            return genEqualsForExpressionsOnStack(JetTokens.EQEQ, StackValue.lazyCast(expressionToMatch, subjectType), condition);
+            return genEqualsForExpressionsOnStack(JetTokens.EQEQ, StackValue.coercion(expressionToMatch, subjectType), condition);
         }
         else {
             return gen(patternExpression);

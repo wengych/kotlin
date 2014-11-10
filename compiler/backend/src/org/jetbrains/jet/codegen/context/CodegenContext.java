@@ -291,7 +291,6 @@ public abstract class CodegenContext<T extends DeclarationDescriptor> {
                         break;
                     }
                     else {
-                        //return result == null ? innerValue : composedOrStatic(result, innerValue);
                         return StackValue.changeReceiverForFieldAndSharedVar(innerValue, result);
                     }
                 }
@@ -441,14 +440,6 @@ public abstract class CodegenContext<T extends DeclarationDescriptor> {
     public CodegenContext findChildContext(@NotNull DeclarationDescriptor child) {
         return childContexts == null ? null : childContexts.get(child);
     }
-
-    //@NotNull
-    //private static StackValue composedOrStatic(@NotNull StackValue prefix, @NotNull StackValue suffix) {
-    //    if (isStaticField(suffix)) {
-    //        return suffix;
-    //    }
-    //    return StackValue.composed(prefix, suffix);
-    //}
 
     private static boolean isStaticField(@NotNull StackValue value) {
         return value instanceof StackValue.Field && ((StackValue.Field) value).isStaticPut;

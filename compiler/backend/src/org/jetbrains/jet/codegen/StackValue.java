@@ -373,8 +373,8 @@ public abstract class StackValue implements StackValueI {
         return new FieldForSharedVar(field.type, field.owner, field.name, newSharedVarReceiver);
     }
 
-    public static StackValue lazyCast(@NotNull StackValue receiver, @NotNull Type type) {
-        return CodegenPackage.castValue(receiver, type);
+    public static StackValue coercion(@NotNull StackValue receiver, @NotNull Type type) {
+        return CodegenPackage.coercion(receiver, type);
     }
 
     public static StackValue thisOrOuter(@NotNull ExpressionCodegen codegen, @NotNull ClassDescriptor descriptor, boolean isSuper, boolean isExplicit) {

@@ -798,10 +798,9 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                                     : "Function container should be annotated with [data]: " + function;
                             PropertyDescriptor property = bindingContext.get(BindingContext.VALUE_PARAMETER_AS_PROPERTY, valueParameter);
                             assert property != null : "Copy function doesn't correspond to any property: " + function;
-                            codegen.v.load(0, thisDescriptorType);
                             Type propertyType = typeMapper.mapType(property);
-                            codegen.intermediateValueForProperty(property, false, null, StackValue.none())
-                                    .putNoReceiver(propertyType, codegen.v);
+                            codegen.intermediateValueForProperty(property, false, null, StackValue.local(0, OBJECT_TYPE))
+                                    .put(propertyType, codegen.v);
                         }
                     },
                     null
@@ -895,7 +894,9 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                 public void doGenerateBody(@NotNull ExpressionCodegen codegen, @NotNull JvmMethodSignature signature) {
                     boolean forceField = AsmUtil.isPropertyWithBackingFieldInOuterClass(original) &&
                                          !isClassObject(bridge.getContainingDeclaration());
-                    StackValue property = codegen.intermediateValueForProperty(original, forceField, null, MethodKind.SYNTHETIC_ACCESSOR, StackValue.none());
+                    StackValue property =
+                            codegen.intermediateValueForProperty(original, forceField, null, MethodKind.SYNTHETIC_ACCESSOR,
+                                                                 StackValue.none());
 
                     InstructionAdapter iv = codegen.v;
                     Type[] argTypes = signature.getAsmMethod().getArgumentTypes();

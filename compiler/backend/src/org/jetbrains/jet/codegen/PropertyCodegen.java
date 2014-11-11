@@ -425,7 +425,7 @@ public class PropertyCodegen {
 
         codegen.tempVariables.put(
                 resolvedCall.getCall().getValueArguments().get(propertyMetadataArgumentIndex).asElement(),
-                new StackValue.StackValueWithoutReceiver(PROPERTY_METADATA_TYPE) {
+                new StackValue(PROPERTY_METADATA_TYPE) {
                     @Override
                     public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
                         Field array = StackValue

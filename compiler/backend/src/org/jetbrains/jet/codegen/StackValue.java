@@ -454,7 +454,7 @@ public abstract class StackValue implements IStackValue {
         return value instanceof Local || value instanceof Constant;
     }
 
-    private static class None extends StackValueWithoutReceiver {
+    private static class None extends StackValue {
         public static final None INSTANCE = new None();
 
         private None() {
@@ -467,7 +467,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class Local extends StackValueWithoutReceiver {
+    public static class Local extends StackValue {
         public final int index;
 
         private Local(int index, Type type) {
@@ -493,7 +493,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class OnStack extends StackValueWithoutReceiver {
+    public static class OnStack extends StackValue {
         public OnStack(Type type) {
             super(type);
         }
@@ -527,7 +527,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class Constant extends StackValueWithoutReceiver {
+    public static class Constant extends StackValue {
         @Nullable
         private final Object value;
 
@@ -571,7 +571,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class NumberCompare extends StackValueWithoutReceiver {
+    private static class NumberCompare extends StackValue {
         protected final IElementType opToken;
         protected final Type operandType;
         protected final StackValue left;
@@ -658,7 +658,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class Invert extends StackValueWithoutReceiver {
+    private static class Invert extends StackValue {
         private final StackValue myOperand;
 
         private Invert(StackValue operand) {
@@ -709,7 +709,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class CollectionElementReceiver extends ReadOnlyValue {
+    public static class CollectionElementReceiver extends StackValue {
         private final Callable callable;
         private final boolean isGetter;
         private final ExpressionCodegen codegen;
@@ -1110,7 +1110,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class Expression extends StackValueWithoutReceiver {
+    private static class Expression extends StackValue {
         private final JetExpression expression;
         private final ExpressionCodegen generator;
 
@@ -1226,7 +1226,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class ThisOuter extends StackValueWithoutReceiver {
+    private static class ThisOuter extends StackValue {
         private final ExpressionCodegen codegen;
         private final ClassDescriptor descriptor;
         private final boolean isSuper;
@@ -1247,7 +1247,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class PostIncrement extends StackValueWithoutReceiver {
+    private static class PostIncrement extends StackValue {
         private final int index;
         private final int increment;
 
@@ -1267,7 +1267,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class PreIncrementForLocalVar extends StackValueWithoutReceiver {
+    private static class PreIncrementForLocalVar extends StackValue {
         private final int index;
         private final int increment;
 
@@ -1287,7 +1287,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class PrefixIncrement extends StackValueWithoutReceiver {
+    private static class PrefixIncrement extends StackValue {
         private final int delta;
         private final Callable callable;
         private final ResolvedCall resolvedCall;
@@ -1328,7 +1328,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class CallReceiver extends StackValueWithoutReceiver {
+    public static class CallReceiver extends StackValue {
         private final ResolvedCall<?> resolvedCall;
         private final StackValue receiver;
         private final ExpressionCodegen codegen;
@@ -1454,6 +1454,14 @@ public abstract class StackValue implements IStackValue {
 
 
         @Override
+        public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
+            if (!skipReceiver) {
+                putReceiver(v, true);
+            }
+            putSelector(type, v);
+        }
+
+        @Override
         public void putReceiver(@NotNull InstructionAdapter v, boolean isRead) {
             if (hasReceiver(isRead)) {
                 receiver.put(receiver.type, v);
@@ -1476,16 +1484,9 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
-            if (!skipReceiver) {
-                putReceiver(v, true);
-            }
-            putSelector(type, v);
-        }
+        public abstract void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver);
 
         public abstract void putReceiver(@NotNull InstructionAdapter v, boolean isRead);
-
-        public abstract void putSelector(@NotNull Type type, @NotNull InstructionAdapter v);
 
         public abstract boolean hasReceiver(boolean isRead);
 
@@ -1540,25 +1541,12 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public abstract static class StackValueWithoutReceiver extends StackValue {
+    static class ComplexReceiver extends StackValue {
 
-        public StackValueWithoutReceiver(@NotNull Type type) {
-            super(type);
-        }
-
-        @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
-            put(type, v);
-        }
-    }
-
-
-    static class ComplexReceiver extends ReadOnlyValue {
-
-        private final StackValueWithSimpleReceiver originalValueWithReceiver;
+        private final StackValueWithReceiver originalValueWithReceiver;
         private final int[] operations;
 
-        public ComplexReceiver(StackValueWithSimpleReceiver value, int [] operations) {
+        public ComplexReceiver(StackValueWithReceiver value, int [] operations) {
             super(value.type);
             this.originalValueWithReceiver = value;
             this.operations = operations;
@@ -1583,7 +1571,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class Receiver extends StackValueWithoutReceiver {
+    public static class Receiver extends StackValue {
 
         private final StackValue[] instructions;
 
@@ -1604,11 +1592,11 @@ public abstract class StackValue implements IStackValue {
 
     public static class Delegated extends StackValueWithSimpleReceiver {
 
-        public final StackValueWithSimpleReceiver originalValue;
+        public final StackValueWithReceiver originalValue;
 
         public Delegated(
                 @NotNull Type type,
-                @NotNull StackValueWithSimpleReceiver originalValue,
+                @NotNull StackValueWithReceiver originalValue,
                 @NotNull StackValue receiver
         ) {
             super(type, !originalValue.hasReceiver(true), !originalValue.hasReceiver(false), receiver);
@@ -1640,19 +1628,15 @@ public abstract class StackValue implements IStackValue {
     }
 
     private static StackValue complexReceiver(StackValue stackValue, int ... operations) {
-        if (stackValue instanceof StackValueWithoutReceiver) {
-            return stackValue;
+        if (stackValue instanceof StackValueWithReceiver) {
+            return new Delegated(stackValue.type, (StackValueWithReceiver) stackValue,
+                                 new ComplexReceiver((StackValueWithSimpleReceiver) stackValue, operations));
         } else {
-            if (stackValue instanceof StackValueWithSimpleReceiver) {
-                return new Delegated(stackValue.type, (StackValueWithSimpleReceiver) stackValue,
-                                     new ComplexReceiver((StackValueWithSimpleReceiver) stackValue, operations));
-            } else {
-                throw new UnsupportedOperationException();
-            }
+            return stackValue;
         }
     }
 
-    static class Safe extends StackValueWithoutReceiver {
+    static class Safe extends StackValue {
 
         @NotNull private final Type type;
         private final StackValue receiver;

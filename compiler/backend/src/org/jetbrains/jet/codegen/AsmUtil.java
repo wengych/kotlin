@@ -653,7 +653,7 @@ public class AsmUtil {
         if (!state.isCallAssertionsEnabled()) return stackValue;
         if (approximationInfo == null || !TypesPackage.assertNotNull(approximationInfo)) return stackValue;
 
-        return new StackValue.StackValueWithoutReceiver(stackValue.type) {
+        return new StackValue(stackValue.type) {
 
             @Override
             public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {

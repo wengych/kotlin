@@ -24,10 +24,10 @@ import org.jetbrains.jet.codegen.StackValue.StackValueWithoutReceiver
 import org.jetbrains.jet.codegen.StackValue.StackValueWithSimpleReceiver
 
 public fun coercion(value: StackValue, castType: Type): StackValue {
-    return if (value is StackValueWithReceiver) CastValueWithReceiver(value, castType) else CastValue(value, castType)
+    return if (value is StackValueWithReceiver) CoercionValueWithReceiver(value, castType) else CoercionValue(value, castType)
 }
 
-class CastValueWithReceiver(val value: StackValueWithReceiver, val castType: Type) : StackValueWithSimpleReceiver(castType, !value.hasReceiver(true), !value.hasReceiver(false), value.receiver), StackValueI by value {
+class CoercionValueWithReceiver(val value: StackValueWithReceiver, val castType: Type) : StackValueWithSimpleReceiver(castType, !value.hasReceiver(true), !value.hasReceiver(false), value.receiver), StackValueI by value {
 
     override fun putReceiver(v: InstructionAdapter, isRead: Boolean) {
         value.putReceiver(v, isRead)
@@ -42,7 +42,7 @@ class CastValueWithReceiver(val value: StackValueWithReceiver, val castType: Typ
     }
 }
 
-class CastValue(val value: StackValue, val castType: Type) : StackValueWithoutReceiver(castType), StackValueI by value {
+class CoercionValue(val value: StackValue, val castType: Type) : StackValueWithoutReceiver(castType), StackValueI by value {
 
 }
 

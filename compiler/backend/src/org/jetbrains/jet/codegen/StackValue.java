@@ -126,6 +126,10 @@ public abstract class StackValue implements StackValueI {
         return new Local(index, type);
     }
 
+    public static Local thiz() {
+        return local(0, OBJECT_TYPE);
+    }
+
     @NotNull
     public static StackValue shared(int index, @NotNull Type type) {
         return new Shared(index, type);

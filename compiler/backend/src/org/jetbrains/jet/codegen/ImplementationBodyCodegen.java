@@ -799,7 +799,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                             PropertyDescriptor property = bindingContext.get(BindingContext.VALUE_PARAMETER_AS_PROPERTY, valueParameter);
                             assert property != null : "Copy function doesn't correspond to any property: " + function;
                             Type propertyType = typeMapper.mapType(property);
-                            codegen.intermediateValueForProperty(property, false, null, StackValue.local(0, OBJECT_TYPE))
+                            codegen.intermediateValueForProperty(property, false, null, StackValue.thiz())
                                     .put(propertyType, codegen.v);
                         }
                     },
@@ -1111,7 +1111,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         }
 
         if (isObject(descriptor)) {
-            StackValue.singleton(descriptor, typeMapper).store(StackValue.local(0, classAsmType), iv);
+            StackValue.singleton(descriptor, typeMapper).store(StackValue.thiz(), iv);
         }
 
         for (JetDelegationSpecifier specifier : myClass.getDelegationSpecifiers()) {
@@ -1277,7 +1277,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                 }
                 else return;
 
-                constructorContext.lookupInContext(toLookup, StackValue.local(0, OBJECT_TYPE), state, true);
+                constructorContext.lookupInContext(toLookup, StackValue.thiz(), state, true);
             }
 
             @Override
@@ -1286,7 +1286,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                 assert descriptor instanceof CallableDescriptor ||
                        descriptor instanceof ClassDescriptor : "'This' reference target should be class or callable descriptor but was " + descriptor;
                 if (descriptor instanceof ClassDescriptor) {
-                    context.lookupInContext(descriptor, StackValue.local(0, OBJECT_TYPE), state, true);
+                    context.lookupInContext(descriptor, StackValue.thiz(), state, true);
                 }
 
                 if (descriptor instanceof CallableDescriptor) {
@@ -1321,7 +1321,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
             ResolvedCall<?> resolvedCall = CallUtilPackage.getResolvedCallWithAssert(superCall, bindingContext);
             ClassDescriptor superClass = ((ConstructorDescriptor) resolvedCall.getResultingDescriptor()).getContainingDeclaration();
             if (superClass.isInner()) {
-                constructorContext.lookupInContext(superClass.getContainingDeclaration(), StackValue.local(0, OBJECT_TYPE), state, true);
+                constructorContext.lookupInContext(superClass.getContainingDeclaration(), StackValue.thiz(), state, true);
             }
 
             if (!isAnonymousObject(descriptor)) {

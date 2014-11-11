@@ -260,7 +260,7 @@ public class AnonymousObjectTransformer {
                                                        oldObjectType,
                                                        fake.getNewFieldName(),
                                                        false,
-                                                       StackValue.local(0, oldObjectType));
+                                                       StackValue.thiz());
                 fake.setRemapValue(composed);
             }
         }
@@ -396,7 +396,7 @@ public class AnonymousObjectTransformer {
                                                        oldObjectType, /*TODO owner type*/
                                                        recapturedParamInfo.getNewFieldName(),
                                                        false,
-                                                       StackValue.local(0, oldObjectType));
+                                                       StackValue.thiz());
                 recapturedParamInfo.setRemapValue(composed);
                 allRecapturedParameters.add(desc);
 

@@ -269,7 +269,7 @@ public abstract class CodegenContext<T extends DeclarationDescriptor> {
 
                 return canHaveOuter(typeMapper.getBindingContext(), classDescriptor)
                        ? StackValue.field(typeMapper.mapType(enclosingClass), typeMapper.mapType(classDescriptor),
-                                          CAPTURED_THIS_FIELD, false, StackValue.local(0, AsmTypeConstants.OBJECT_TYPE))
+                                          CAPTURED_THIS_FIELD, false, StackValue.thiz())
                        : null;
             }
         });

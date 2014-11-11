@@ -1837,7 +1837,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             return stackValueForLocal(descriptor, index);
         }
 
-        return context.lookupInContext(descriptor, StackValue.local(0, OBJECT_TYPE), state, false);
+        return context.lookupInContext(descriptor, StackValue.thiz(), state, false);
     }
 
 
@@ -2245,7 +2245,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             if (DescriptorUtils.isClassObject(receiverDescriptor)) {
                 CallableMemberDescriptor contextDescriptor = context.getContextDescriptor();
                 if (contextDescriptor instanceof FunctionDescriptor && receiverDescriptor == contextDescriptor.getContainingDeclaration()) {
-                    return StackValue.local(0, OBJECT_TYPE);
+                    return StackValue.thiz();
                 }
                 else {
                     return StackValue.singleton(receiverDescriptor, typeMapper);
@@ -2287,7 +2287,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     // SCRIPT: generate script, move to ScriptingUtil
     private StackValue generateScript(@NotNull ScriptReceiver receiver) {
         CodegenContext cur = context;
-        StackValue result = StackValue.local(0, OBJECT_TYPE);
+        StackValue result = StackValue.thiz();
         boolean inStartConstructorContext = cur instanceof ConstructorContext;
         while (cur != null) {
             if (!inStartConstructorContext) {

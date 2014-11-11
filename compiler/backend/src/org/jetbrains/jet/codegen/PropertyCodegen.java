@@ -427,7 +427,7 @@ public class PropertyCodegen {
                 resolvedCall.getCall().getValueArguments().get(propertyMetadataArgumentIndex).asElement(),
                 new StackValue.StackValueWithoutReceiver(PROPERTY_METADATA_TYPE) {
                     @Override
-                    public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+                    public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
                         Field array = StackValue
                                 .field(Type.getType("[" + PROPERTY_METADATA_TYPE), owner, JvmAbi.PROPERTY_METADATA_ARRAY_NAME, true,
                                        StackValue.none());

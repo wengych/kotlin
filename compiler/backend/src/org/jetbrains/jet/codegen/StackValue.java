@@ -76,9 +76,13 @@ public abstract class StackValue implements IStackValue {
         put(type, v);
     }
 
-    @Override
     public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
         put(type, v, false);
+    }
+
+    @Override
+    public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
+        putSelector(type, v);
     }
 
     @Override
@@ -92,10 +96,11 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    @Override
     public void storeSelector(@NotNull Type topOfStackType, @NotNull InstructionAdapter v) {
         throw new UnsupportedOperationException("cannot store to value " + this);
     }
+
+    public abstract void putSelector(@NotNull Type type, @NotNull InstructionAdapter v);
 
     @Override
     public void store(@NotNull StackValue value, @NotNull InstructionAdapter v, boolean skipReceiver) {
@@ -103,7 +108,6 @@ public abstract class StackValue implements IStackValue {
         storeSelector(value.type, v);
     }
 
-    @Override
     public void store(@NotNull StackValue value, @NotNull InstructionAdapter v) {
         store(value, v, false);
     }
@@ -458,7 +462,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             coerceTo(type, v);
         }
     }
@@ -476,7 +480,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             v.load(index, this.type);
             coerceTo(type, v);
             // TODO unbox
@@ -495,7 +499,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             coerceTo(type, v);
         }
 
@@ -533,7 +537,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             if (value instanceof Integer) {
                 v.iconst((Integer) value);
             }
@@ -582,7 +586,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             putAsBoolean(v);
             coerceTo(type, v);
         }
@@ -666,7 +670,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             putAsBoolean(v);
             coerceTo(type, v);
         }
@@ -752,7 +756,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(
+        public void putSelector(
                 @NotNull Type type, @NotNull InstructionAdapter v
         ) {
             ResolvedCall<?> call = isGetter ? resolvedGetCall : resolvedSetCall;
@@ -1117,7 +1121,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             generator.gen(expression, type);
         }
     }
@@ -1237,7 +1241,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             StackValue stackValue = codegen.generateThisOrOuter(descriptor, isSuper);
             stackValue.put(coerceType ? type : stackValue.type, v);
         }
@@ -1254,7 +1258,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             if (!type.equals(Type.VOID_TYPE)) {
                 v.load(index, Type.INT_TYPE);
                 coerceTo(type, v);
@@ -1274,7 +1278,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             v.iinc(index, increment);
             if (!type.equals(Type.VOID_TYPE)) {
                 v.load(index, Type.INT_TYPE);
@@ -1307,7 +1311,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             value = StackValue.complexReceiver(value, RECEIVER_READ, RECEIVER_WRITE, RECEIVER_READ);
             value.put(this.type, v);
 
@@ -1370,7 +1374,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             CallableDescriptor descriptor = resolvedCall.getResultingDescriptor();
 
             ReceiverValue dispatchReceiver = resolvedCall.getDispatchReceiver();
@@ -1543,9 +1547,6 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public abstract void put(@NotNull Type type, @NotNull InstructionAdapter v);
-
-        @Override
         public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
             put(type, v);
         }
@@ -1564,7 +1565,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(
+        public void putSelector(
                 @NotNull Type type, @NotNull InstructionAdapter v
         ) {
             boolean wasPutted = false;
@@ -1592,7 +1593,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(
+        public void putSelector(
                 @NotNull Type type, @NotNull InstructionAdapter v
         ) {
             for (StackValue instruction : instructions) {
@@ -1665,7 +1666,7 @@ public abstract class StackValue implements IStackValue {
         }
 
         @Override
-        public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             receiver.put(this.type, v);
             if (ifNull != null) {
                 //not a primitive

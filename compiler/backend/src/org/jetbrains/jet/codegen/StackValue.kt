@@ -27,7 +27,11 @@ public fun coercion(value: StackValue, castType: Type): StackValue {
     return if (value is StackValueWithReceiver) CoercionValueWithReceiver(value, castType) else CoercionValue(value, castType)
 }
 
-class CoercionValue(val value: StackValue, val castType: Type) : StackValueWithoutReceiver(castType), IStackValue by value
+class CoercionValue(val value: StackValue, val castType: Type) : StackValueWithoutReceiver(castType), IStackValue by value {
+    override fun putSelector(type: Type, v: InstructionAdapter) {
+        value.putSelector(type, v)
+    }
+}
 
 class CoercionValueWithReceiver(
         val value: StackValueWithReceiver,
@@ -94,7 +98,7 @@ public abstract class ReadOnlyValue(type: Type) : StackValueWithoutReceiver(type
 
 open class OperationStackValue(val resultType: Type, val lambda: (v: InstructionAdapter)-> Unit) : ReadOnlyValue(resultType) {
 
-    override fun put(type: Type, v: InstructionAdapter) {
+    override fun putSelector(type: Type, v: InstructionAdapter) {
         lambda(v)
         coerceTo(type, v)
     }

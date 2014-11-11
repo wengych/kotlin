@@ -47,7 +47,7 @@ import static org.jetbrains.jet.codegen.AsmUtil.*;
 import static org.jetbrains.jet.lang.resolve.java.AsmTypeConstants.*;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
-public abstract class StackValue implements StackValueI {
+public abstract class StackValue implements IStackValue {
 
     private static final String NULLABLE_BYTE_TYPE_NAME = "java/lang/Byte";
     private static final String NULLABLE_SHORT_TYPE_NAME = "java/lang/Short";
@@ -77,7 +77,9 @@ public abstract class StackValue implements StackValueI {
     }
 
     @Override
-    public abstract void put(@NotNull Type type, @NotNull InstructionAdapter v);
+    public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
+        put(type, v, false);
+    }
 
     @Override
     public void dup(@NotNull InstructionAdapter v, boolean withReceiver) {
@@ -1315,7 +1317,7 @@ public abstract class StackValue implements StackValueI {
                 value.store(StackValue.onStack(this.type), v, true);
             }
 
-            putNoReceiver(value, this.type, v);
+            value.put(this.type, v, true);
             coerceTo(type, v);
         }
     }
@@ -1444,16 +1446,6 @@ public abstract class StackValue implements StackValueI {
             this.isStaticStore = isStaticStore;
         }
 
-        @Override
-        public void put(
-                @NotNull Type type, @NotNull InstructionAdapter v
-        ) {
-            putReceiver(v, true);
-            putNoReceiver(type, v);
-        }
-
-        @Override
-        public abstract void putNoReceiver(@NotNull Type type, @NotNull InstructionAdapter v);
 
         @Override
         public void putReceiver(@NotNull InstructionAdapter v, boolean isRead) {
@@ -1475,6 +1467,14 @@ public abstract class StackValue implements StackValueI {
         protected StackValueWithReceiver(@NotNull Type type, @NotNull StackValue receiver) {
             super(type);
             this.receiver = receiver;
+        }
+
+        @Override
+        public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
+            if (!skipReceiver) {
+                putReceiver(v, true);
+            }
+            putNoReceiver(type, v);
         }
 
         public abstract void putReceiver(@NotNull InstructionAdapter v, boolean isRead);
@@ -1534,24 +1534,18 @@ public abstract class StackValue implements StackValueI {
         }
     }
 
-    public abstract static class ReadOnlyValue extends StackValueWithoutReceiver {
-
-        public ReadOnlyValue(@NotNull Type type) {
-            super(type);
-        }
-
-        @Override
-        public void store(
-                @NotNull Type topOfStackType, @NotNull InstructionAdapter v
-        ) {
-            throw new UnsupportedOperationException("Read only value could be stored");
-        }
-    }
-
     public abstract static class StackValueWithoutReceiver extends StackValue {
 
         public StackValueWithoutReceiver(@NotNull Type type) {
             super(type);
+        }
+
+        @Override
+        public abstract void put(@NotNull Type type, @NotNull InstructionAdapter v);
+
+        @Override
+        public void put(@NotNull Type type, @NotNull InstructionAdapter v, boolean skipReceiver) {
+            put(type, v);
         }
     }
 
@@ -1586,7 +1580,7 @@ public abstract class StackValue implements StackValueI {
         }
     }
 
-    public static class Receiver extends StackValue {
+    public static class Receiver extends StackValueWithoutReceiver {
 
         private final StackValue[] instructions;
 
@@ -1652,14 +1646,6 @@ public abstract class StackValue implements StackValueI {
             } else {
                 throw new UnsupportedOperationException();
             }
-        }
-    }
-
-    private static void putNoReceiver(StackValue value, Type type, InstructionAdapter iv) {
-        if (value instanceof StackValueWithSimpleReceiver) {
-            ((StackValueWithSimpleReceiver) value).putNoReceiver(type, iv);
-        } else {
-            value.put(type, iv);
         }
     }
 

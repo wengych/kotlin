@@ -390,7 +390,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
         return StackValue.operation(asmType, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 Label elseLabel = new Label();
                 condition.condJump(elseLabel, true, v);   // == 0, i.e. false
 
@@ -1204,7 +1204,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         Type targetType = isStatement ? Type.VOID_TYPE : expressionType(ifExpression);
         return StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 Label elseLabel = new Label();
                 condition.condJump(elseLabel, inverse, v);
 
@@ -1277,7 +1277,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         else {
             return StackValue.operation(AsmTypeConstants.JAVA_STRING_TYPE, new Function1<InstructionAdapter, Unit>() {
                 @Override
-                public Unit invoke(InstructionAdapter adapter) {
+                public Unit invoke(InstructionAdapter v) {
                     genStringBuilderConstructor(v);
                     for (JetStringTemplateEntry entry : entries) {
                         if (entry instanceof JetStringTemplateEntryWithExpression) {
@@ -2110,7 +2110,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         if (callable instanceof CallableMethod) {
             return StackValue.functionCall(returnType, new Function1<InstructionAdapter, Unit>() {
                 @Override
-                public Unit invoke(InstructionAdapter adapter) {
+                public Unit invoke(InstructionAdapter v) {
                     CallableMethod callableMethod = (CallableMethod) callable;
                     invokeMethodWithArguments(callableMethod, resolvedCall, receiver);
 
@@ -2506,7 +2506,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
         return StackValue.operation(factoryMethod.getReturnType(), new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 v.visitLdcInsn(descriptor.getName().asString());
                 v.getstatic(packageClassInternalName, JvmAbi.KOTLIN_PACKAGE_FIELD_NAME, K_PACKAGE_IMPL_TYPE.getDescriptor());
 
@@ -2765,7 +2765,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         final JetExpression deparenthesized = JetPsiUtil.deparenthesize(rangeExpression);
         return StackValue.operation(Type.BOOLEAN_TYPE, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 if (isIntRangeExpr(deparenthesized)) {
                     genInIntRange(leftValue, (JetBinaryExpression) deparenthesized);
                 }
@@ -2821,7 +2821,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     private StackValue generateBooleanAnd(final JetBinaryExpression expression) {
         return StackValue.operation(Type.BOOLEAN_TYPE, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 gen(expression.getLeft(), Type.BOOLEAN_TYPE);
                 Label ifFalse = new Label();
                 v.ifeq(ifFalse);
@@ -2839,7 +2839,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     private StackValue generateBooleanOr(final JetBinaryExpression expression) {
         return StackValue.operation(Type.BOOLEAN_TYPE, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 gen(expression.getLeft(), Type.BOOLEAN_TYPE);
                 Label ifTrue = new Label();
                 v.ifne(ifTrue);
@@ -2890,7 +2890,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     private StackValue genCmpWithZero(final JetExpression exp, final Type expType, final IElementType opToken) {
         return StackValue.operation(Type.BOOLEAN_TYPE, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 gen(exp, expType);
                 Label trueLabel = new Label();
                 Label afterLabel = new Label();
@@ -3187,7 +3187,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
         return StackValue.operation(asmResultType, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 StackValue value = gen(expression.getBaseExpression());
                 value = StackValue.complexWriteReadReceiver(value);
 
@@ -3372,7 +3372,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
         return StackValue.operation(type, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 if (isArray) {
                     gen(args.get(0), Type.INT_TYPE);
                     v.newarray(boxType(asmType(arrayType.getArguments().get(0).getType())));
@@ -3547,7 +3547,7 @@ The "returned" value of try expression with no finally is either the last expres
 
         return StackValue.operation(expectedAsmType, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
 
            JetFinallySection finallyBlock = expression.getFinallyBlock();
                 FinallyBlockStackElement finallyBlockStackElement = null;
@@ -3696,7 +3696,7 @@ The "returned" value of try expression with no finally is either the last expres
 
                 return StackValue.operation(rightTypeAsm, new Function1<InstructionAdapter, Unit>() {
                     @Override
-                    public Unit invoke(InstructionAdapter adapter) {
+                    public Unit invoke(InstructionAdapter v) {
                         value.put(boxType(value.type), v);
 
                         if (opToken != JetTokens.AS_SAFE) {
@@ -3813,7 +3813,7 @@ The "returned" value of try expression with no finally is either the last expres
 
         return StackValue.operation(resultType, new Function1<InstructionAdapter, Unit>() {
             @Override
-            public Unit invoke(InstructionAdapter adapter) {
+            public Unit invoke(InstructionAdapter v) {
                 SwitchCodegen switchCodegen =
                         SwitchCodegenUtil.buildAppropriateSwitchCodegenIfPossible(expression, isStatement, ExpressionCodegen.this);
                 if (switchCodegen != null) {

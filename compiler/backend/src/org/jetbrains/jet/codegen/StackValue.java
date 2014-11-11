@@ -935,7 +935,7 @@ public abstract class StackValue implements IStackValue {
                 ((CallableMethod) getter).invokeWithNotNullAssertion(v, state, resolvedGetCall);
             }
             else {
-                StackValue result = ((IntrinsicMethod) getter).generate(codegen, v, this.type, null, null, null);
+                StackValue result = ((IntrinsicMethod) getter).generate(codegen, this.type, null, null, null);
                 result.put(result.type, v);
             }
             coerceTo(type, v);
@@ -1000,7 +1000,7 @@ public abstract class StackValue implements IStackValue {
             }
             else {
                 //noinspection ConstantConditions
-                StackValue result = ((IntrinsicMethod) setter).generate(codegen, v, null, null, null, null);
+                StackValue result = ((IntrinsicMethod) setter).generate(codegen, null, null, null, null);
                 result.put(result.type, v);
             }
         }

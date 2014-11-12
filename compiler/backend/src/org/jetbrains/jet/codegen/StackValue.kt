@@ -18,9 +18,7 @@ package org.jetbrains.jet.codegen
 
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
-import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.jet.codegen.StackValue.StackValueWithReceiver
-import org.jetbrains.jet.codegen.StackValue.StackValueWithoutReceiver
 import org.jetbrains.jet.codegen.StackValue.StackValueWithSimpleReceiver
 
 public fun coercion(value: StackValue, castType: Type): StackValue {
@@ -62,11 +60,6 @@ public class StackValueWithLeaveTask(
 
     override fun put(type: Type, v: InstructionAdapter) {
         stackValue.put(type, v)
-        leaveTasks()
-    }
-
-    override fun condJump(label: Label, jumpIfFalse: Boolean, v: InstructionAdapter ) {
-        stackValue.condJump(label, jumpIfFalse, v)
         leaveTasks()
     }
 

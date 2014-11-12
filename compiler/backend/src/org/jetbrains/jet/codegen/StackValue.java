@@ -28,7 +28,6 @@ import org.jetbrains.jet.codegen.state.JetTypeMapper;
 import org.jetbrains.jet.lang.descriptors.*;
 import org.jetbrains.jet.lang.psi.JetArrayAccessExpression;
 import org.jetbrains.jet.lang.psi.JetExpression;
-import org.jetbrains.jet.lang.psi.JetIfExpression;
 import org.jetbrains.jet.lang.resolve.annotations.AnnotationsPackage;
 import org.jetbrains.jet.lang.resolve.calls.model.ResolvedCall;
 import org.jetbrains.jet.lang.resolve.calls.model.ResolvedValueArgument;
@@ -1690,12 +1689,18 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static void generateConditionJump(StackValue condition, Label label, boolean jumpIfFalse, InstructionAdapter iv) {
-        condJump(condition, jumpIfFalse, label).put(Type.BOOLEAN_TYPE, iv);
-    }
-
-    private static ConditionJump condJump(StackValue condition, boolean jumpIfFalse, Label label) {
-        return new ConditionJump(Type.BOOLEAN_TYPE, condition, jumpIfFalse, label);
+    public static void generateConditionJump(StackValue condition, Label label, boolean jumpIfFalse, InstructionAdapter v) {
+        if (condition instanceof Conditional) {
+            ((Conditional)condition).condJump(label, jumpIfFalse, v);
+        } else {
+            condition.put(Type.BOOLEAN_TYPE, v);
+            if (jumpIfFalse) {
+                v.visitJumpInsn(Opcodes.IFEQ, label);
+            }
+            else {
+                v.visitJumpInsn(Opcodes.IFNE, label);
+            }
+        }
     }
 
     public static abstract class Conditional extends StackValue {
@@ -1721,38 +1726,6 @@ public abstract class StackValue implements IStackValue {
             v.mark(ifTrue);
             v.iconst(1);
             v.mark(end);
-        }
-    }
-
-    public static class ConditionJump extends StackValue {
-        private final StackValue condition;
-        private final boolean jumpIfFalse;
-        private final Label label;
-
-
-        public ConditionJump(@NotNull Type type, StackValue condition, boolean jumpIfFalse, Label label) {
-            super(Type.BOOLEAN_TYPE);
-            this.condition = condition;
-
-            this.jumpIfFalse = jumpIfFalse;
-            this.label = label;
-        }
-
-        @Override
-        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
-            //condition.condJump(label, jumpIfFalse, v);
-            if (condition instanceof Conditional) {
-                ((Conditional)condition).condJump(label, jumpIfFalse, v);
-            } else {
-                condition.put(this.type, v);
-                condition.coerceTo(Type.BOOLEAN_TYPE, v);
-                if (jumpIfFalse) {
-                    v.visitJumpInsn(Opcodes.IFEQ, label);
-                }
-                else {
-                    v.visitJumpInsn(Opcodes.IFNE, label);
-                }
-            }
         }
     }
 }

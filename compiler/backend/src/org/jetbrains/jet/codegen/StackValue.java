@@ -668,7 +668,7 @@ public abstract class StackValue implements IStackValue {
 
         @Override
         public void condJump(@NotNull Label label, boolean jumpIfFalse, @NotNull InstructionAdapter v) {
-            generateConditionJump(myOperand, !jumpIfFalse, label, v);
+            generateConditionJump(myOperand, label, !jumpIfFalse, v);
         }
     }
 
@@ -1690,40 +1690,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class IfElseValue extends StackValue {
-
-        private final StackValue condition;
-        private final StackValue thenBranch;
-        private final StackValue elseBranch;
-
-        protected IfElseValue(@NotNull Type type, @NotNull StackValue condition, @Nullable StackValue thenBranch, @Nullable StackValue elseBranch, JetIfExpression ifExpression) {
-            super(type);
-            this.condition = condition;
-            this.thenBranch = thenBranch;
-            this.elseBranch = elseBranch;
-            assert thenBranch != null || elseBranch != null : "If or else branch should be present";
-        }
-
-        @Override
-        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
-            Label elseLabel = new Label();
-            generateConditionJump(condition, thenBranch != null, elseLabel, v);
-            Label end = new Label();
-            if (thenBranch != null) {
-                thenBranch.put(this.type, v);
-                v.goTo(end);
-            }
-            v.mark(elseLabel);
-            if (elseBranch != null) {
-                elseBranch.put(this.type, v);
-            }
-
-            //markLineNumber(expression, isStatement);
-            v.mark(end);
-        }
-    }
-
-    public static void generateConditionJump(StackValue condition, boolean jumpIfFalse, Label label, InstructionAdapter iv) {
+    public static void generateConditionJump(StackValue condition, Label label, boolean jumpIfFalse, InstructionAdapter iv) {
         condJump(condition, jumpIfFalse, label).put(Type.BOOLEAN_TYPE, iv);
     }
 
@@ -1764,7 +1731,7 @@ public abstract class StackValue implements IStackValue {
 
 
         public ConditionJump(@NotNull Type type, StackValue condition, boolean jumpIfFalse, Label label) {
-            super(type);
+            super(Type.BOOLEAN_TYPE);
             this.condition = condition;
 
             this.jumpIfFalse = jumpIfFalse;

@@ -388,26 +388,24 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             }
         }
 
-        return StackValue.operation(asmType, new Function1<InstructionAdapter, Unit>() {
+        StackValue thenValue = StackValue.operation(asmType, new Function1<InstructionAdapter, Unit>() {
             @Override
             public Unit invoke(InstructionAdapter v) {
-                Label elseLabel = new Label();
-                condition.condJump(elseLabel, true, v);   // == 0, i.e. false
-
-                Label end = new Label();
-
                 gen(thenExpression, asmType);
 
-                v.goTo(end);
-                v.mark(elseLabel);
-
-                gen(elseExpression, asmType);
-
-                markLineNumber(expression, isStatement);
-                v.mark(end);
                 return Unit.INSTANCE$;
             }
         });
+
+        StackValue elseValue = StackValue.operation(asmType, new Function1<InstructionAdapter, Unit>() {
+            @Override
+            public Unit invoke(InstructionAdapter v) {
+                gen(elseExpression, asmType);
+                return Unit.INSTANCE$;
+            }
+        });
+
+        return new StackValue.ConditionJump(asmType, condition, thenValue, elseValue);
     }
 
     @Override
@@ -1196,38 +1194,38 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
     private StackValue generateSingleBranchIf(
             final StackValue condition,
-            final JetIfExpression ifExpression,
+            JetIfExpression ifExpression,
             final JetExpression expression,
             final boolean inverse,
-            final boolean isStatement
+            boolean isStatement
     ) {
-        Type targetType = isStatement ? Type.VOID_TYPE : expressionType(ifExpression);
-        return StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
-            @Override
-            public Unit invoke(InstructionAdapter v) {
-                Label elseLabel = new Label();
-                condition.condJump(elseLabel, inverse, v);
-
-                if (isStatement) {
+        final Type targetType = isStatement ? Type.VOID_TYPE : expressionType(ifExpression);
+        if (isStatement) {
+            return StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
+                @Override
+                public Unit invoke(InstructionAdapter v) {
+                    Label elseLabel = new Label();
+                    condition.condJump(elseLabel, inverse, v);
                     gen(expression, Type.VOID_TYPE);
                     v.mark(elseLabel);
+                    return null;
                 }
-                else {
-                    Type targetType = expressionType(ifExpression);
+            });
+        } else {
+            StackValue thenValue = StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
+                @Override
+                public Unit invoke(InstructionAdapter v) {
                     gen(expression, targetType);
-                    Label end = new Label();
-                    v.goTo(end);
 
-
-                    v.mark(elseLabel);
-                    StackValue.putUnitInstance(v);
-
-                    markStartLineNumber(ifExpression);
-                    v.mark(end);
+                    //gen(elseExpression, asmType);
+                    return Unit.INSTANCE$;
                 }
-                return null;
-            }
-        });
+            });
+
+            StackValue elseValue = StackValue.unit();
+
+            return new StackValue.ConditionJump(targetType, condition, inverse ? thenValue : elseValue, inverse ? elseValue : thenValue);
+        }
     }
 
     @Override

@@ -38,6 +38,7 @@ import org.jetbrains.jet.lang.resolve.java.jvmSignature.JvmMethodParameterSignat
 import org.jetbrains.jet.lang.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.jet.lexer.JetTokens;
 import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
@@ -54,8 +55,8 @@ public abstract class StackValue implements IStackValue {
     private static final String NULLABLE_SHORT_TYPE_NAME = "java/lang/Short";
     private static final String NULLABLE_LONG_TYPE_NAME = "java/lang/Long";
 
-    public static final int RECEIVER_READ = 0;
-    public static final int RECEIVER_WRITE = 1;
+    private static final int RECEIVER_READ = 0;
+    private static final int RECEIVER_WRITE = 1;
 
     private static final StackValue.Local THIS0 = local(0, OBJECT_TYPE);
     private static final StackValue UNIT = operation(UNIT_TYPE, new Function1<InstructionAdapter, Unit>() {
@@ -127,10 +128,10 @@ public abstract class StackValue implements IStackValue {
         put(this.type, v);
         coerceTo(Type.BOOLEAN_TYPE, v);
         if (jumpIfFalse) {
-            v.ifeq(label);
+            v.visitJumpInsn(Opcodes.IFEQ, label);
         }
         else {
-            v.ifne(label);
+            v.visitJumpInsn(Opcodes.IFNE, label);
         }
     }
 
@@ -1709,6 +1710,73 @@ public abstract class StackValue implements IStackValue {
             v.goTo(end);
             v.mark(ifNull);
             v.pop();
+            v.mark(end);
+        }
+    }
+
+
+    //public static class Condition extends StackValue {
+    //
+    //    @NotNull private final Type type;
+    //    private final boolean inverse;
+    //    private StackValue base;
+    //
+    //    protected Condition(@NotNull Type type, boolean inverse, StackValue base) {
+    //        super(type);
+    //        this.type = type;
+    //        this.inverse = inverse;
+    //        this.base = base;
+    //    }
+    //
+    //    @Override
+    //    public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
+    //        put(this.type, v);
+    //        coerceTo(Type.BOOLEAN_TYPE, v);
+    //        if (jumpIfFalse) {
+    //            v.ifeq(label);
+    //        }
+    //        else {
+    //            v.ifne(label);
+    //        }
+    //    }
+    //}
+    //
+    //public static void putCondition(StackValue condition, boolean jumpIfFalse, Label label, InstructionAdapter v) {
+    //    condition.put(Type.BOOLEAN_TYPE, v);
+    //    if (jumpIfFalse) {
+    //        v.ifeq(label);
+    //    }
+    //    else {
+    //        v.ifne(label);
+    //    }
+    //}
+
+
+
+    public static class ConditionJump extends StackValue {
+
+        private final StackValue condition;
+        private final StackValue ifBranch;
+        private final StackValue elseBranch;
+
+        protected ConditionJump(@NotNull Type type, StackValue condition, StackValue ifBranch, StackValue elseBranch) {
+            super(type);
+            this.condition = condition;
+            this.ifBranch = ifBranch;
+            this.elseBranch = elseBranch;
+        }
+
+        @Override
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
+            Label elseLabel = new Label();
+            condition.condJump(elseLabel, true, v);
+            Label end = new Label();
+            ifBranch.put(this.type, v);
+            v.goTo(end);
+            v.mark(elseLabel);
+            elseBranch.put(this.type, v);
+
+            //markLineNumber(expression, isStatement);
             v.mark(end);
         }
     }

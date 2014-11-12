@@ -17,7 +17,6 @@
 package org.jetbrains.jet.codegen;
 
 import com.intellij.psi.tree.IElementType;
-import jet.runtime.typeinfo.JetValueParameter;
 import kotlin.Function1;
 import kotlin.Unit;
 import org.jetbrains.annotations.Contract;
@@ -29,6 +28,7 @@ import org.jetbrains.jet.codegen.state.JetTypeMapper;
 import org.jetbrains.jet.lang.descriptors.*;
 import org.jetbrains.jet.lang.psi.JetArrayAccessExpression;
 import org.jetbrains.jet.lang.psi.JetExpression;
+import org.jetbrains.jet.lang.psi.JetIfExpression;
 import org.jetbrains.jet.lang.resolve.annotations.AnnotationsPackage;
 import org.jetbrains.jet.lang.resolve.calls.model.ResolvedCall;
 import org.jetbrains.jet.lang.resolve.calls.model.ResolvedValueArgument;
@@ -121,18 +121,6 @@ public abstract class StackValue implements IStackValue {
 
     public void store(@NotNull StackValue value, @NotNull InstructionAdapter v) {
         store(value, v, false);
-    }
-
-    @Override
-    public void condJump(@NotNull Label label, boolean jumpIfFalse, @NotNull InstructionAdapter v) {
-        put(this.type, v);
-        coerceTo(Type.BOOLEAN_TYPE, v);
-        if (jumpIfFalse) {
-            v.visitJumpInsn(Opcodes.IFEQ, label);
-        }
-        else {
-            v.visitJumpInsn(Opcodes.IFNE, label);
-        }
     }
 
     @NotNull
@@ -367,18 +355,6 @@ public abstract class StackValue implements IStackValue {
         return UNIT;
     }
 
-    @Override
-    public void putAsBoolean(InstructionAdapter v) {
-        Label ifTrue = new Label();
-        Label end = new Label();
-        condJump(ifTrue, false, v);
-        v.iconst(0);
-        v.goTo(end);
-        v.mark(ifTrue);
-        v.iconst(1);
-        v.mark(end);
-    }
-
     public static StackValue none() {
         return None.INSTANCE;
     }
@@ -542,7 +518,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    public static class Constant extends StackValue {
+    public static class Constant extends Conditional {
         @Nullable
         private final Object value;
 
@@ -586,7 +562,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class NumberCompare extends StackValue {
+    private static class NumberCompare extends Conditional {
         protected final IElementType opToken;
         protected final Type operandType;
         protected final StackValue left;
@@ -673,7 +649,7 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-    private static class Invert extends StackValue {
+    private static class Invert extends Conditional {
         private final StackValue myOperand;
 
         private Invert(StackValue operand) {
@@ -692,7 +668,7 @@ public abstract class StackValue implements IStackValue {
 
         @Override
         public void condJump(@NotNull Label label, boolean jumpIfFalse, @NotNull InstructionAdapter v) {
-            myOperand.condJump(label, !jumpIfFalse, v);
+            generateConditionJump(myOperand, !jumpIfFalse, label, v);
         }
     }
 
@@ -1714,70 +1690,102 @@ public abstract class StackValue implements IStackValue {
         }
     }
 
-
-    //public static class Condition extends StackValue {
-    //
-    //    @NotNull private final Type type;
-    //    private final boolean inverse;
-    //    private StackValue base;
-    //
-    //    protected Condition(@NotNull Type type, boolean inverse, StackValue base) {
-    //        super(type);
-    //        this.type = type;
-    //        this.inverse = inverse;
-    //        this.base = base;
-    //    }
-    //
-    //    @Override
-    //    public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
-    //        put(this.type, v);
-    //        coerceTo(Type.BOOLEAN_TYPE, v);
-    //        if (jumpIfFalse) {
-    //            v.ifeq(label);
-    //        }
-    //        else {
-    //            v.ifne(label);
-    //        }
-    //    }
-    //}
-    //
-    //public static void putCondition(StackValue condition, boolean jumpIfFalse, Label label, InstructionAdapter v) {
-    //    condition.put(Type.BOOLEAN_TYPE, v);
-    //    if (jumpIfFalse) {
-    //        v.ifeq(label);
-    //    }
-    //    else {
-    //        v.ifne(label);
-    //    }
-    //}
-
-
-
-    public static class ConditionJump extends StackValue {
+    public static class IfElseValue extends StackValue {
 
         private final StackValue condition;
-        private final StackValue ifBranch;
+        private final StackValue thenBranch;
         private final StackValue elseBranch;
 
-        protected ConditionJump(@NotNull Type type, StackValue condition, StackValue ifBranch, StackValue elseBranch) {
+        protected IfElseValue(@NotNull Type type, @NotNull StackValue condition, @Nullable StackValue thenBranch, @Nullable StackValue elseBranch, JetIfExpression ifExpression) {
             super(type);
             this.condition = condition;
-            this.ifBranch = ifBranch;
+            this.thenBranch = thenBranch;
             this.elseBranch = elseBranch;
+            assert thenBranch != null || elseBranch != null : "If or else branch should be present";
         }
 
         @Override
         public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
             Label elseLabel = new Label();
-            condition.condJump(elseLabel, true, v);
+            generateConditionJump(condition, thenBranch != null, elseLabel, v);
             Label end = new Label();
-            ifBranch.put(this.type, v);
-            v.goTo(end);
+            if (thenBranch != null) {
+                thenBranch.put(this.type, v);
+                v.goTo(end);
+            }
             v.mark(elseLabel);
-            elseBranch.put(this.type, v);
+            if (elseBranch != null) {
+                elseBranch.put(this.type, v);
+            }
 
             //markLineNumber(expression, isStatement);
             v.mark(end);
+        }
+    }
+
+    public static void generateConditionJump(StackValue condition, boolean jumpIfFalse, Label label, InstructionAdapter iv) {
+        condJump(condition, jumpIfFalse, label).put(Type.BOOLEAN_TYPE, iv);
+    }
+
+    private static ConditionJump condJump(StackValue condition, boolean jumpIfFalse, Label label) {
+        return new ConditionJump(Type.BOOLEAN_TYPE, condition, jumpIfFalse, label);
+    }
+
+    public static abstract class Conditional extends StackValue {
+
+        protected Conditional(@NotNull Type type) {
+            super(type);
+        }
+
+        public abstract void condJump(@NotNull Label label, boolean jumpIfFalse, @NotNull InstructionAdapter v);
+
+        @Override
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
+            putAsBoolean(v);
+            coerceTo(type, v);
+        }
+
+        public void putAsBoolean(InstructionAdapter v) {
+            Label ifTrue = new Label();
+            Label end = new Label();
+            condJump(ifTrue, false, v);
+            v.iconst(0);
+            v.goTo(end);
+            v.mark(ifTrue);
+            v.iconst(1);
+            v.mark(end);
+        }
+    }
+
+    public static class ConditionJump extends StackValue {
+        private final StackValue condition;
+        private final boolean jumpIfFalse;
+        private final Label label;
+
+
+        public ConditionJump(@NotNull Type type, StackValue condition, boolean jumpIfFalse, Label label) {
+            super(type);
+            this.condition = condition;
+
+            this.jumpIfFalse = jumpIfFalse;
+            this.label = label;
+        }
+
+        @Override
+        public void putSelector(@NotNull Type type, @NotNull InstructionAdapter v) {
+            //condition.condJump(label, jumpIfFalse, v);
+            if (condition instanceof Conditional) {
+                ((Conditional)condition).condJump(label, jumpIfFalse, v);
+            } else {
+                condition.put(this.type, v);
+                condition.coerceTo(Type.BOOLEAN_TYPE, v);
+                if (jumpIfFalse) {
+                    v.visitJumpInsn(Opcodes.IFEQ, label);
+                }
+                else {
+                    v.visitJumpInsn(Opcodes.IFNE, label);
+                }
+            }
         }
     }
 }

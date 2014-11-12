@@ -29,13 +29,9 @@ public interface IStackValue {
 
     void store(@NotNull StackValue value, @NotNull InstructionAdapter v, boolean skipReceiver);
 
-    void condJump(@NotNull Label label, boolean jumpIfFalse, @NotNull InstructionAdapter v);
-
     void coerceTo(@NotNull Type toType, @NotNull InstructionAdapter v);
 
     void coerceFrom(@NotNull Type topOfStackType, @NotNull InstructionAdapter v);
-
-    void putAsBoolean(InstructionAdapter v);
 
     void dup(@NotNull InstructionAdapter v, boolean withReceiver);
 }

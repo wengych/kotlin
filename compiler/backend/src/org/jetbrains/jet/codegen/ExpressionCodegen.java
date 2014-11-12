@@ -369,9 +369,9 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         return generateIfExpression(expression, false);
     }
 
-    /* package */ StackValue generateIfExpression(@NotNull final JetIfExpression expression, final boolean isStatement) {
+    /* package */ StackValue generateIfExpression(@NotNull JetIfExpression expression, boolean isStatement) {
         final Type asmType = isStatement ? Type.VOID_TYPE : expressionType(expression);
-        final StackValue condition = gen(expression.getCondition());
+        StackValue condition = gen(expression.getCondition());
 
         final JetExpression thenExpression = expression.getThen();
         final JetExpression elseExpression = expression.getElse();
@@ -405,7 +405,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             }
         });
 
-        return new StackValue.ConditionJump(asmType, condition, thenValue, elseValue);
+        return new StackValue.IfElseValue(asmType, condition, thenValue, elseValue, expression);
     }
 
     @Override
@@ -417,7 +417,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         blockStackElements.push(new LoopBlockStackElement(end, condition, targetLabel(expression)));
 
         StackValue conditionValue = gen(expression.getCondition());
-        conditionValue.condJump(end, true, v);
+        StackValue.generateConditionJump(conditionValue, true, end, v);
 
         generateLoopBody(expression.getBody());
 
@@ -464,7 +464,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             conditionValue = gen(condition);
         }
 
-        conditionValue.condJump(beginLoopLabel, false, v);
+        StackValue.generateConditionJump(conditionValue, false, beginLoopLabel, v);
         v.mark(breakLabel);
 
         blockStackElements.pop();
@@ -1193,39 +1193,24 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     }
 
     private StackValue generateSingleBranchIf(
-            final StackValue condition,
+            StackValue condition,
             JetIfExpression ifExpression,
             final JetExpression expression,
-            final boolean inverse,
+            boolean inverse,
             boolean isStatement
     ) {
         final Type targetType = isStatement ? Type.VOID_TYPE : expressionType(ifExpression);
-        if (isStatement) {
-            return StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
-                @Override
-                public Unit invoke(InstructionAdapter v) {
-                    Label elseLabel = new Label();
-                    condition.condJump(elseLabel, inverse, v);
-                    gen(expression, Type.VOID_TYPE);
-                    v.mark(elseLabel);
-                    return null;
-                }
-            });
-        } else {
-            StackValue thenValue = StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
-                @Override
-                public Unit invoke(InstructionAdapter v) {
-                    gen(expression, targetType);
+        StackValue thenValue = StackValue.operation(targetType, new Function1<InstructionAdapter, Unit>() {
+            @Override
+            public Unit invoke(InstructionAdapter v) {
+                gen(expression, targetType);
+                return Unit.INSTANCE$;
+            }
+        });
 
-                    //gen(elseExpression, asmType);
-                    return Unit.INSTANCE$;
-                }
-            });
+        StackValue elseValue = isStatement ? null : StackValue.unit();
 
-            StackValue elseValue = StackValue.unit();
-
-            return new StackValue.ConditionJump(targetType, condition, inverse ? thenValue : elseValue, inverse ? elseValue : thenValue);
-        }
+        return new StackValue.IfElseValue(targetType, condition, inverse ? thenValue : elseValue, inverse ? elseValue : thenValue, ifExpression);
     }
 
     @Override
@@ -3822,7 +3807,7 @@ The "returned" value of try expression with no finally is either the last expres
                         JetWhenCondition[] conditions = whenEntry.getConditions();
                         for (int i = 0; i < conditions.length; i++) {
                             StackValue conditionValue = generateWhenCondition(subjectType, subjectLocal, conditions[i]);
-                            conditionValue.condJump(nextCondition, true, v);
+                            StackValue.generateConditionJump(conditionValue, true, nextCondition, v);
                             if (i < conditions.length - 1) {
                                 v.goTo(thisEntry);
                                 v.mark(nextCondition);

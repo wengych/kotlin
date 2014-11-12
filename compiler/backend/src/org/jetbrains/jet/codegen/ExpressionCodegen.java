@@ -1836,7 +1836,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             return stackValueForLocal(descriptor, index);
         }
 
-        return context.lookupInContext(descriptor, StackValue.thiz(), state, false);
+        return context.lookupInContext(descriptor, StackValue.this0(), state, false);
     }
 
 
@@ -2243,7 +2243,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             if (DescriptorUtils.isClassObject(receiverDescriptor)) {
                 CallableMemberDescriptor contextDescriptor = context.getContextDescriptor();
                 if (contextDescriptor instanceof FunctionDescriptor && receiverDescriptor == contextDescriptor.getContainingDeclaration()) {
-                    return StackValue.thiz();
+                    return StackValue.this0();
                 }
                 else {
                     return StackValue.singleton(receiverDescriptor, typeMapper);
@@ -2285,7 +2285,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     // SCRIPT: generate script, move to ScriptingUtil
     private StackValue generateScript(@NotNull ScriptReceiver receiver) {
         CodegenContext cur = context;
-        StackValue result = StackValue.thiz();
+        StackValue result = StackValue.this0();
         boolean inStartConstructorContext = cur instanceof ConstructorContext;
         while (cur != null) {
             if (!inStartConstructorContext) {
@@ -3280,7 +3280,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             JetScript scriptPsi = JetPsiUtil.getScript(variableDeclaration);
             assert scriptPsi != null;
             Type scriptClassType = asmTypeForScriptPsi(bindingContext, scriptPsi);
-            storeTo = StackValue.field(varType, scriptClassType, variableDeclaration.getName(), false, StackValue.thiz());
+            storeTo = StackValue.field(varType, scriptClassType, variableDeclaration.getName(), false, StackValue.this0());
         }
         else if (sharedVarType == null) {
             storeTo = StackValue.local(index, varType);

@@ -17,6 +17,7 @@
 package org.jetbrains.jet.codegen;
 
 import com.intellij.psi.tree.IElementType;
+import jet.runtime.typeinfo.JetValueParameter;
 import kotlin.Function1;
 import kotlin.Unit;
 import org.jetbrains.annotations.Contract;
@@ -55,6 +56,15 @@ public abstract class StackValue implements IStackValue {
 
     public static final int RECEIVER_READ = 0;
     public static final int RECEIVER_WRITE = 1;
+
+    private static final StackValue.Local THIS0 = local(0, OBJECT_TYPE);
+    private static final StackValue UNIT = operation(UNIT_TYPE, new Function1<InstructionAdapter, Unit>() {
+        @Override
+        public Unit invoke(InstructionAdapter v) {
+            v.visitFieldInsn(GETSTATIC, UNIT_TYPE.getInternalName(), JvmAbi.INSTANCE_FIELD, UNIT_TYPE.getDescriptor());
+            return null;
+        }
+    });
 
     @NotNull
     public final Type type;
@@ -129,8 +139,8 @@ public abstract class StackValue implements IStackValue {
         return new Local(index, type);
     }
 
-    public static Local thiz() {
-        return local(0, OBJECT_TYPE);
+    public static Local this0() {
+        return THIS0;
     }
 
     @NotNull
@@ -349,7 +359,11 @@ public abstract class StackValue implements IStackValue {
     }
 
     public static void putUnitInstance(@NotNull InstructionAdapter v) {
-        v.visitFieldInsn(GETSTATIC, UNIT_TYPE.getInternalName(), JvmAbi.INSTANCE_FIELD, UNIT_TYPE.getDescriptor());
+        unit().put(UNIT_TYPE, v);
+    }
+
+    public static StackValue unit() {
+        return UNIT;
     }
 
     @Override

@@ -49,7 +49,6 @@ import static org.jetbrains.jet.codegen.JvmCodegenUtil.isInterface;
 import static org.jetbrains.jet.codegen.JvmSerializationBindings.*;
 import static org.jetbrains.jet.lang.resolve.DescriptorUtils.isClassObject;
 import static org.jetbrains.jet.lang.resolve.DescriptorUtils.isTrait;
-import static org.jetbrains.jet.lang.resolve.java.AsmTypeConstants.OBJECT_TYPE;
 import static org.jetbrains.jet.lang.resolve.java.AsmTypeConstants.PROPERTY_METADATA_TYPE;
 import static org.jetbrains.jet.lang.resolve.java.diagnostics.DiagnosticsPackage.OtherOrigin;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
@@ -380,7 +379,7 @@ public class PropertyCodegen {
         public void doGenerateBody(@NotNull ExpressionCodegen codegen, @NotNull JvmMethodSignature signature) {
             InstructionAdapter v = codegen.v;
             PropertyDescriptor propertyDescriptor = callableDescriptor.getCorrespondingProperty();
-            StackValue property = codegen.intermediateValueForProperty(propertyDescriptor, true, null, StackValue.thiz());
+            StackValue property = codegen.intermediateValueForProperty(propertyDescriptor, true, null, StackValue.this0());
 
             if (callableDescriptor instanceof PropertyGetterDescriptor) {
                 Type type = signature.getReturnType();
@@ -436,7 +435,7 @@ public class PropertyCodegen {
                 }
         );
 
-        StackValue delegatedProperty = codegen.intermediateValueForProperty(propertyDescriptor, true, null, StackValue.thiz());
+        StackValue delegatedProperty = codegen.intermediateValueForProperty(propertyDescriptor, true, null, StackValue.this0());
         return codegen.invokeFunction(resolvedCall, delegatedProperty);
     }
 

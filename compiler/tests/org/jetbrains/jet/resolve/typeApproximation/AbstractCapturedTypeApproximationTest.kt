@@ -22,54 +22,145 @@ import org.jetbrains.jet.ConfigurationKind
 import java.io.File
 import org.jetbrains.jet.lang.resolve.lazy.JvmResolveUtil
 import org.jetbrains.jet.lang.resolve.BindingContext
-import org.jetbrains.jet.lang.descriptors.FunctionDescriptor
 import org.jetbrains.jet.lang.types.TypeSubstitutor
 import org.jetbrains.jet.lang.types.TypeProjectionImpl
 import org.jetbrains.jet.lang.types.lang.KotlinBuiltIns
 import org.jetbrains.jet.lang.types.Variance
+import org.jetbrains.jet.lang.types.Variance.*
 import org.jetbrains.jet.lang.types.typesApproximation.approximateCapturedTypes
 import org.jetbrains.jet.JetTestUtils
 import org.jetbrains.jet.lang.psi.JetPsiFactory
 import org.jetbrains.jet.lang.resolve.calls.inference.CapturedTypeConstructor
-import org.jetbrains.jet.lang.types.JetTypeImpl
 import org.jetbrains.jet.lang.resolve.calls.inference.createCapturedType
+import org.jetbrains.jet.lang.diagnostics.Severity
+import org.jetbrains.jet.lang.types.typesApproximation.approximateCapturedTypesIfNecessary
+import java.util.ArrayList
+import org.jetbrains.jet.lang.types.TypeProjection
+import org.jetbrains.jet.lang.descriptors.TypeParameterDescriptor
 
 abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture() {
-    override fun createEnvironment(): JetCoreEnvironment = createEnvironmentWithMockJdk(ConfigurationKind.ALL)
+    override fun createEnvironment(): JetCoreEnvironment = createEnvironmentWithMockJdk(ConfigurationKind.JDK_ONLY)
 
-    public fun doTest(filePath: String) {
-        val file = File(filePath)
-        val text = JetTestUtils.doLoadFile(file)!!
+    public fun doTest(filePath: String, vararg substitutions: String) {
+        assert(substitutions.size() in 1..2, "Captured type approximation test requires substitutions for (T) or (T, R)")
+        val oneTypeVariable = substitutions.size() == 1
 
-        val jetFile = JetPsiFactory(getProject()).createFile(text)
-        val bindingContext = JvmResolveUtil.analyzeOneFileWithJavaIntegration(jetFile).bindingContext
+        val declarationsText = JetTestUtils.doLoadFile(File(getTestDataPath() + "declarations.kt"))
 
-        val functions = bindingContext.getSliceContents(BindingContext.FUNCTION)
-        val functionFoo = functions.values().firstOrNull { it.getName().asString() == "foo" } ?:
-                          throw AssertionError("Function 'foo' is not declared")
-        val typeParameter = functionFoo.getTypeParameters().first()
-        val parameter = functionFoo.getValueParameters().first().getType()
+        fun analyzeTestFile(testType: String) = run {
+            val test = declarationsText.replace("TestType", testType)
+            val testFile = JetPsiFactory(getProject()).createFile(test)
+            val bindingContext = JvmResolveUtil.analyzeOneFileWithJavaIntegration(testFile).bindingContext
+            val functions = bindingContext.getSliceContents(BindingContext.FUNCTION)
+            val functionFoo = functions.values().firstOrNull { it.getName().asString() == "foo" } ?:
+                              throw AssertionError("Function 'foo' is not declared")
+            Pair(bindingContext, functionFoo)
+        }
 
+        fun createTestType(testTypeWithT: String): String {
+            val substitutionForT = substitutions[0]
+            val testType = testTypeWithT.replace("T", substitutionForT)
+            if (oneTypeVariable) return testType
+            val substitutionForR = substitutions[1]
+            return testType.replace("R", substitutionForR)
+        }
+
+        fun createTestSubstitutions(typeParameters: List<TypeParameterDescriptor>) = run {
+            val intType = KotlinBuiltIns.getInstance().getIntType()
+            val stringType = KotlinBuiltIns.getInstance().getStringType()
+            val t = typeParameters[0]
+            val r = typeParameters[1]
+            if (oneTypeVariable)
+                listOf(mapOf(t to TypeProjectionImpl(IN_VARIANCE, intType)),
+                       mapOf(t to TypeProjectionImpl(OUT_VARIANCE, intType)))
+            else {
+                listOf(linkedMapOf(t to TypeProjectionImpl(IN_VARIANCE, intType), r to TypeProjectionImpl(OUT_VARIANCE, stringType)))
+            }
+        }
+
+        fun createTestSubstitutor(testSubstitution: Map<TypeParameterDescriptor, TypeProjection>): TypeSubstitutor {
+            val substitutionContext = testSubstitution.map {
+                val (typeParameter, typeProjection) = it
+                typeParameter.getTypeConstructor() to TypeProjectionImpl(createCapturedType(typeProjection))
+            }.toMap()
+            return TypeSubstitutor.create(substitutionContext)
+        }
+
+        val testTypes = if (oneTypeVariable) getTestTypesForOneTypeVariable() else getTestTypesForTwoTypeVariables()
         val result = StringBuilder {
-            val endIndex = text.indexOf("// T captures")
-            appendln(if (endIndex == -1) text else text.substring(0, endIndex).trimTrailing())
+            for ((index, testTypeWithUnsubstitutedTypeVars) in testTypes.withIndex()) {
+                val testType = createTestType(testTypeWithUnsubstitutedTypeVars)
+                val (bindingContext, functionFoo) = analyzeTestFile(testType)
+                val typeParameters = functionFoo.getTypeParameters()
+                val type = functionFoo.getReturnType()
 
-            for (variance in listOf(Variance.IN_VARIANCE, Variance.OUT_VARIANCE)) {
+                appendln(testType)
 
-                val captured = createCapturedType(TypeProjectionImpl(variance, KotlinBuiltIns.getInstance().getIntType()))
-                val typeSubstitutor = TypeSubstitutor.create(mapOf(typeParameter.getTypeConstructor() to TypeProjectionImpl(captured)))
-                val typeWithCapturedType = typeSubstitutor.substituteWithoutApproximation(
-                        TypeProjectionImpl(Variance.INVARIANT, parameter))!!.getType()
+                if (bindingContext.getDiagnostics().any { it.getSeverity() == Severity.ERROR }) {
+                    appendln("  compiler error\n")
+                    continue
+                }
 
-                val (lower, upper) = approximateCapturedTypes(typeWithCapturedType)
+                val testSubstitutions = createTestSubstitutions(typeParameters)
+                for (testSubstitution in testSubstitutions) {
+                    val typeSubstitutor = createTestSubstitutor(testSubstitution)
+                    val typeWithCapturedType = typeSubstitutor.substituteWithoutApproximation(TypeProjectionImpl(INVARIANT, type))!!.getType()
 
-                appendln()
-                appendln("// T captures '${(captured.getConstructor() as CapturedTypeConstructor).typeProjection}'")
-                appendln("// lower: $lower")
-                appendln("// upper: $upper")
+                    val (lower, upper) = approximateCapturedTypes(typeWithCapturedType)
+                    val substitution = approximateCapturedTypesIfNecessary(TypeProjectionImpl(INVARIANT, typeWithCapturedType))
+
+                    append("  ")
+                    for (typeParameter in testSubstitution.keySet()) {
+                        if (testSubstitution.size() > 1) append("${typeParameter.getName()} = ")
+                        append("${testSubstitution[typeParameter]}. ")
+                    }
+                    appendln("lower: $lower; upper: $upper; substitution: $substitution")
+                }
+                if (testTypes.lastIndex != index) appendln()
             }
         }.toString()
 
-        JetTestUtils.assertEqualsToFile(file, result)
+        JetTestUtils.assertEqualsToFile(File(getTestDataPath() + filePath), result)
+    }
+
+    private fun getTypePatternsForOneTypeVariable() = listOf("In<T>", "Out<T>", "Inv<T>", "Inv<in T>", "Inv<out T>")
+    private fun getTypePatternsForTwoTypeVariables() = listOf("Fun<T, R>", "Inv2<T, R>")
+
+    private fun getTestTypesForOneTypeVariable(): List<String> {
+        val typePatterns = getTypePatternsForOneTypeVariable()
+        assert (typePatterns.size() == 5, "Generated random variants below depend on size 5")
+
+        val range = typePatterns.size().indices
+        val variants = ArrayList<List<Int>>()
+        for (i in range) variants.add(listOf(i))
+        for (i in range) for (j in range) variants.add(listOf(i, j))
+
+        fun addRandomVariants(vararg randomVariants: String) {
+            variants.addAll(randomVariants.map { digits -> digits.map { digit -> "$digit".toInt() } })
+        }
+        addRandomVariants("021", "111", "230", "421", "322", "120", "411", "102", "401", "012")
+        addRandomVariants("4243", "3103", "3043", "2003", "4442", "4143", "1440", "0303", "1302", "1332")
+        addRandomVariants("00200", "22213", "12114", "20304", "34014", "41333", "11214", "02004", "43244", "03004")
+        addRandomVariants("021022", "124230", "210030", "202344", "043234", "024400", "102121", "423143", "132121", "233001")
+
+        return variants.map { it.fold("T") {(type, index) -> type.replace("T", typePatterns[index]) } }
+    }
+
+    private fun getTestTypesForTwoTypeVariables(): List<String> {
+        val typePatterns = getTypePatternsForOneTypeVariable()
+
+        val range = typePatterns.size().indices
+        val result = ArrayList<String>()
+        for (pattern in getTypePatternsForTwoTypeVariables()) {
+            for (i in range) {
+                result.add(typePatterns[i].replace("T", pattern))
+            }
+            for (i in range) {
+                for (j in range) {
+                    result.add(pattern.replace("T", typePatterns[i]).replace("R", typePatterns[j].replace("T", "R")))
+                }
+            }
+        }
+        return result
     }
 }

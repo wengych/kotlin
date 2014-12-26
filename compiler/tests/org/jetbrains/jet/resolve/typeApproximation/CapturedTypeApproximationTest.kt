@@ -38,17 +38,20 @@ import java.util.ArrayList
 import org.jetbrains.jet.lang.types.TypeProjection
 import org.jetbrains.jet.lang.descriptors.TypeParameterDescriptor
 
-abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture() {
+public class CapturedTypeApproximationTest() : JetLiteFixture() {
+
+    override fun getTestDataPath() = "compiler/testData/capturedTypeApproximation/"
+
     override fun createEnvironment(): JetCoreEnvironment = createEnvironmentWithMockJdk(ConfigurationKind.JDK_ONLY)
 
     public fun doTest(filePath: String, vararg substitutions: String) {
         assert(substitutions.size() in 1..2, "Captured type approximation test requires substitutions for (T) or (T, R)")
         val oneTypeVariable = substitutions.size() == 1
 
-        val declarationsText = JetTestUtils.doLoadFile(File(getTestDataPath() + "declarations.kt"))
+        val declarationsText = JetTestUtils.doLoadFile(File(getTestDataPath() + "/declarations.kt"))
 
         fun analyzeTestFile(testType: String) = run {
-            val test = declarationsText.replace("TestType", testType)
+            val test = declarationsText.replace("#TestType#", testType)
             val testFile = JetPsiFactory(getProject()).createFile(test)
             val bindingContext = JvmResolveUtil.analyzeOneFileWithJavaIntegration(testFile).bindingContext
             val functions = bindingContext.getSliceContents(BindingContext.FUNCTION)
@@ -58,11 +61,9 @@ abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture()
         }
 
         fun createTestType(testTypeWithT: String): String {
-            val substitutionForT = substitutions[0]
-            val testType = testTypeWithT.replace("T", substitutionForT)
+            val testType = testTypeWithT.replace("#T#", substitutions[0])
             if (oneTypeVariable) return testType
-            val substitutionForR = substitutions[1]
-            return testType.replace("R", substitutionForR)
+            return testType.replace("#R#", substitutions[1])
         }
 
         fun createTestSubstitutions(typeParameters: List<TypeParameterDescriptor>) = run {
@@ -74,7 +75,10 @@ abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture()
                 listOf(mapOf(t to TypeProjectionImpl(IN_VARIANCE, intType)),
                        mapOf(t to TypeProjectionImpl(OUT_VARIANCE, intType)))
             else {
-                listOf(linkedMapOf(t to TypeProjectionImpl(IN_VARIANCE, intType), r to TypeProjectionImpl(OUT_VARIANCE, stringType)))
+                listOf(mapOf(
+                        t to TypeProjectionImpl(IN_VARIANCE, intType),
+                        r to TypeProjectionImpl(OUT_VARIANCE, stringType))
+                )
             }
         }
 
@@ -118,17 +122,16 @@ abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture()
                 }
                 if (testTypes.lastIndex != index) appendln()
             }
-        }.toString()
+        }
 
-        JetTestUtils.assertEqualsToFile(File(getTestDataPath() + filePath), result)
+        JetTestUtils.assertEqualsToFile(File(getTestDataPath() + "/" + filePath), result.toString())
     }
 
-    private fun getTypePatternsForOneTypeVariable() = listOf("In<T>", "Out<T>", "Inv<T>", "Inv<in T>", "Inv<out T>")
-    private fun getTypePatternsForTwoTypeVariables() = listOf("Fun<T, R>", "Inv2<T, R>")
+    private fun getTypePatternsForOneTypeVariable() = listOf("In<#T#>", "Out<#T#>", "Inv<#T#>", "Inv<in #T#>", "Inv<out #T#>")
+    private fun getTypePatternsForTwoTypeVariables() = listOf("Fun<#T#, #R#>", "Inv2<#T#, #R#>")
 
     private fun getTestTypesForOneTypeVariable(): List<String> {
         val typePatterns = getTypePatternsForOneTypeVariable()
-        assert (typePatterns.size() == 5, "Generated random variants below depend on size 5")
 
         val range = typePatterns.size().indices
         val variants = ArrayList<List<Int>>()
@@ -136,14 +139,16 @@ abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture()
         for (i in range) for (j in range) variants.add(listOf(i, j))
 
         fun addRandomVariants(vararg randomVariants: String) {
-            variants.addAll(randomVariants.map { digits -> digits.map { digit -> "$digit".toInt() } })
+            variants.addAll(randomVariants.map { digits -> digits.map { digit -> digit - '0' } })
         }
+        assert (typePatterns.size() == 5, "Generated random variants below depend on size 5")
+        //From 021 the following is generated: In<Inv<Out<T>>>, where In = typePatterns[0], Inv = typePatterns[2], Out = typePatterns[1]
         addRandomVariants("021", "111", "230", "421", "322", "120", "411", "102", "401", "012")
         addRandomVariants("4243", "3103", "3043", "2003", "4442", "4143", "1440", "0303", "1302", "1332")
         addRandomVariants("00200", "22213", "12114", "20304", "34014", "41333", "11214", "02004", "43244", "03004")
         addRandomVariants("021022", "124230", "210030", "202344", "043234", "024400", "102121", "423143", "132121", "233001")
 
-        return variants.map { it.fold("T") {(type, index) -> type.replace("T", typePatterns[index]) } }
+        return variants.map { it.fold("#T#") {(type, index) -> type.replace("#T#", typePatterns[index]) } }
     }
 
     private fun getTestTypesForTwoTypeVariables(): List<String> {
@@ -153,14 +158,42 @@ abstract public class AbstractCapturedTypeApproximationTest() : JetLiteFixture()
         val result = ArrayList<String>()
         for (pattern in getTypePatternsForTwoTypeVariables()) {
             for (i in range) {
-                result.add(typePatterns[i].replace("T", pattern))
+                result.add(typePatterns[i].replace("#T#", pattern))
             }
             for (i in range) {
                 for (j in range) {
-                    result.add(pattern.replace("T", typePatterns[i]).replace("R", typePatterns[j].replace("T", "R")))
+                    result.add(pattern.replace("#T#", typePatterns[i]).replace("#R#", typePatterns[j].replace("#T#", "#R#")))
                 }
             }
         }
         return result
+    }
+
+    public fun testSimpleT() {
+        doTest("simpleT.txt", "T");
+    }
+
+    public fun testNullableT() {
+        doTest("nullableT.txt", "T?")
+    }
+
+    public fun testUseSiteInT() {
+        doTest("useSiteInT.txt", "in T");
+    }
+
+    public fun testUseSiteInNullableT() {
+        doTest("useSiteInNullableT.txt", "in T?");
+    }
+
+    public fun testUseSiteOutT() {
+        doTest("useSiteOutT.txt", "out T");
+    }
+
+    public fun testUseSiteOutNullableT() {
+        doTest("useSiteOutNullableT.txt", "out T?");
+    }
+
+    public fun testTwoVariables() {
+        doTest("twoVariables.txt", "T", "R")
     }
 }

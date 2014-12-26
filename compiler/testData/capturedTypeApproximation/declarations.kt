@@ -7,4 +7,4 @@ class In<in T>
 class Inv2<T, R>
 class Fun<in T, out R>
 
-fun <T, R> foo(): TestType = throw Exception()
+fun <T, R> foo(): #TestType# = throw Exception()

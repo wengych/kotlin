@@ -25,6 +25,7 @@ import org.jetbrains.jet.lang.psi.JetClassOrObject
 import org.jetbrains.jet.lang.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.jet.lang.resolve.BindingTrace
 
+//todo move
 fun checkTraitRequirements(c: Map<JetClassOrObject, ClassDescriptorWithResolutionScopes>, trace: BindingTrace) {
     for ((classOrObject, descriptor) in c.entrySet()) {
         if (DescriptorUtils.isTrait(descriptor)) continue

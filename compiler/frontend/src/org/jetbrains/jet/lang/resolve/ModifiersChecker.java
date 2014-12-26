@@ -227,16 +227,6 @@ public class ModifiersChecker {
     }
 
     private void checkPlatformNameApplicability(@NotNull DeclarationDescriptor descriptor) {
-        if (descriptor instanceof PropertyDescriptor) {
-            PropertyDescriptor propertyDescriptor = (PropertyDescriptor) descriptor;
-            if (propertyDescriptor.getGetter() != null) {
-                checkPlatformNameApplicability(propertyDescriptor.getGetter());
-            }
-            if (propertyDescriptor.getSetter() != null) {
-                checkPlatformNameApplicability(propertyDescriptor.getSetter());
-            }
-        }
-
         AnnotationDescriptor annotation = descriptor.getAnnotations().findAnnotation(new FqName("kotlin.platform.platformName"));
         if (annotation == null) return;
 

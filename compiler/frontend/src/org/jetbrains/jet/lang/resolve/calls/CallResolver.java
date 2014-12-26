@@ -258,16 +258,15 @@ public class CallResolver {
             @NotNull BasicCallResolutionContext context,
             @NotNull JetConstructorCalleeExpression expression
     ) {
-        assert !context.call.getExplicitReceiver().exists();
+        assert !context.call.getExplicitReceiver().exists() :
+                "Constructor can't be invoked with explicit receiver: " + context.call.getCallElement().getText();
 
         JetReferenceExpression functionReference = expression.getConstructorReferenceExpression();
-        if (functionReference == null) {
+        JetTypeReference typeReference = expression.getTypeReference();
+        if (functionReference == null || typeReference == null) {
             return checkArgumentTypesAndFail(context); // No type there
         }
-        JetTypeReference typeReference = expression.getTypeReference();
-        assert typeReference != null;
         JetType constructedType = typeResolver.resolveType(context.scope, typeReference, context.trace, true);
-
         if (constructedType.isError()) {
             return checkArgumentTypesAndFail(context);
         }

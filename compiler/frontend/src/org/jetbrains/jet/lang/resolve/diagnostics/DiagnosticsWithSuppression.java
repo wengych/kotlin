@@ -46,6 +46,7 @@ import java.util.*;
 
 public class DiagnosticsWithSuppression implements Diagnostics {
 
+    public interface A {}
     public interface SuppressStringProvider {
         ExtensionPointName<SuppressStringProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.kotlin.suppressStringProvider");
 

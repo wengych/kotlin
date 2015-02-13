@@ -2385,7 +2385,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
                 }
             }
             else {
-                return StackValue.thisOrOuter(this, receiverDescriptor, false, false);
+                return StackValue.thisOrOuter(this, receiverDescriptor, false, true);
             }
         }
         else if (receiverValue instanceof ScriptReceiver) {

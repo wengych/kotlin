@@ -6694,6 +6694,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             doTest(fileName);
         }
 
+        @TestMetadata("implicitSmartCastThis2.kt")
+        public void testImplicitSmartCastThis2() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/box/typeInfo/implicitSmartCastThis2.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("inheritance.kt")
         public void testInheritance() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/box/typeInfo/inheritance.kt");

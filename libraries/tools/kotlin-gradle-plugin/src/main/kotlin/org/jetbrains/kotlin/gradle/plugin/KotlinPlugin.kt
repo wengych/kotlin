@@ -207,7 +207,6 @@ abstract class AbstractKotlinPlugin [Inject] (val scriptHandler: ScriptHandler, 
         project.getPlugins().apply(javaClass<JavaPlugin>())
 
         configureSourceSetDefaults(project as ProjectInternal, javaBasePlugin, javaPluginConvention)
-        configureKDoc(project, javaPluginConvention)
 
         val gradleUtils = GradleUtils(scriptHandler, project)
         project.getExtensions().add(DEFAULT_ANNOTATIONS, gradleUtils.resolveKotlinPluginDependency("kotlin-jdk-annotations"))
@@ -222,23 +221,6 @@ abstract class AbstractKotlinPlugin [Inject] (val scriptHandler: ScriptHandler, 
             }
         })
     }
-
-    open protected fun configureKDoc(project: Project, javaPluginConvention: JavaPluginConvention) {
-        val mainSourceSet = javaPluginConvention.getSourceSets()?.findByName(SourceSet.MAIN_SOURCE_SET_NAME) as HasConvention?
-
-        if (mainSourceSet != null) {
-
-            val kdoc = tasksProvider.createKDocTask(project, KDOC_TASK_NAME)
-
-            kdoc.setDescription("Generates KDoc API documentation for the main source code.")
-            kdoc.setGroup(JavaBasePlugin.DOCUMENTATION_GROUP)
-            kdoc.setSource(mainSourceSet.getConvention().getExtensionsAsDynamicObject().getProperty("kotlin"))
-        }
-
-        project.getTasks().withType(tasksProvider.kDocTaskClass) { it!!.setProperty("destinationDir", File(javaPluginConvention.getDocsDir(), "kdoc")) }
-    }
-
-    public val KDOC_TASK_NAME: String = "kdoc"
 }
 
 

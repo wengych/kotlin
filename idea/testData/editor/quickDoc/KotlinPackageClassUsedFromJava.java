@@ -6,4 +6,5 @@ class KotlinPackageClassUsedFromJava {
     }
 }
 
-//INFO: [light_idea_test_case] testing.TestingPackage...
+//INFO: [light_idea_test_case] testing
+//INFO:  public final class TestingPackage extends Object

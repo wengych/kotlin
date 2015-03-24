@@ -57,6 +57,7 @@ import java.util.regex.Pattern;
         BlackBoxWithStdlibCodegenTestGenerated.Reflection.class,
         BlackBoxWithStdlibCodegenTestGenerated.Regressions.class,
         BlackBoxWithStdlibCodegenTestGenerated.Reified.class,
+        BlackBoxWithStdlibCodegenTestGenerated.Smap.class,
         BlackBoxWithStdlibCodegenTestGenerated.StoreStackBeforeInline.class,
         BlackBoxWithStdlibCodegenTestGenerated.Strings.class,
         BlackBoxWithStdlibCodegenTestGenerated.Synthetic.class,
@@ -3402,6 +3403,21 @@ public class BlackBoxWithStdlibCodegenTestGenerated extends AbstractBlackBoxCode
         @TestMetadata("varargs.kt")
         public void testVarargs() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/reified/varargs.kt");
+            doTestWithStdlib(fileName);
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/boxWithStdlib/smap")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Smap extends AbstractBlackBoxCodegenTest {
+        public void testAllFilesPresentInSmap() throws Exception {
+            JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/boxWithStdlib/smap"), Pattern.compile("^(.+)\\.kt$"), true);
+        }
+
+        @TestMetadata("stackTrace.kt")
+        public void testStackTrace() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/smap/stackTrace.kt");
             doTestWithStdlib(fileName);
         }
     }

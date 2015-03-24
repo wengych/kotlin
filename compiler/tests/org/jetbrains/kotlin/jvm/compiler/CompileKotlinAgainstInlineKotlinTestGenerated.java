@@ -756,6 +756,12 @@ public class CompileKotlinAgainstInlineKotlinTestGenerated extends AbstractCompi
             doBoxTestWithInlineCheck(fileName);
         }
 
+        @TestMetadata("exception.1.kt")
+        public void testException() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/smap/exception.1.kt");
+            doBoxTestWithInlineCheck(fileName);
+        }
+
         @TestMetadata("oneFile.1.kt")
         public void testOneFile() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/smap/oneFile.1.kt");

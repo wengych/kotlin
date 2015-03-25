@@ -485,23 +485,23 @@ public inline fun <T : Appendable> String.takeWhileTo(result: T, predicate: (Cha
  * Replaces every [regexp] occurence in the text with the value returned by the given function [body] that
  * takes a [MatchResult].
  */
-public fun String.replaceAll(regexp: String, body: (java.util.regex.MatchResult) -> String): String {
-    val sb = StringBuilder(this.length())
-    val p = regexp.toRegex()
-    val m = p.matcher(this)
+public inline fun String.replaceAll(regexp: String, body: (java.util.regex.MatchResult) -> String): String {
+    val m = regexp.toRegex().matcher(this)
+    if (!m.find()) {
+        return this
+    }
 
-    var lastIdx = 0
-    while (m.find()) {
-        sb.append(this, lastIdx, m.start())
+    var idx = 0
+    val sb = StringBuilder(length())
+    do {
+        sb.append(this, idx, m.start())
         sb.append(body(m.toMatchResult()))
-        lastIdx = m.end()
-    }
+        idx = m.end()
+    } while (idx < length() && m.find())
 
-    if (lastIdx == 0) {
-        return this;
+    if (idx < length()) {
+        sb.append(this, idx, this.length())
     }
-
-    sb.append(this, lastIdx, this.length())
 
     return sb.toString()
 }

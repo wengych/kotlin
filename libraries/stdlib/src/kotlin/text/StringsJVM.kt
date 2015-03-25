@@ -6,6 +6,8 @@ import java.util.Locale
 import java.util.regex.MatchResult
 import java.util.regex.Pattern
 import java.nio.charset.Charset
+import java.util.regex.Matcher
+import kotlin.InlineOption.ONLY_LOCAL_RETURN
 
 /**
  * Returns the index within this string of the last occurrence of the specified substring.
@@ -482,7 +484,7 @@ public inline fun <T : Appendable> String.takeWhileTo(result: T, predicate: (Cha
 }
 
 /**
- * Replaces every [regexp] occurence in the text with the value returned by the given function [body] that
+ * Replaces every [regexp] occurrence in the text with the value returned by the given function [body] that
  * takes a [MatchResult].
  */
 public inline fun String.replaceAll(regexp: String, body: (java.util.regex.MatchResult) -> String): String {
@@ -506,3 +508,24 @@ public inline fun String.replaceAll(regexp: String, body: (java.util.regex.Match
     return sb.toString()
 }
 
+/**
+ * Returns first [regexp] occurrence in the text or null if no matches found
+ */
+public fun String.find(regexp : String) : String? = findAll(regexp).firstOrNull()
+
+/**
+ * Returns [Sequence] consist of all [regexp] matches in the text.
+ */
+public fun String.findAll(regexp : String) : Sequence<String> = mapAllMatches(regexp) {it.group()}
+
+/**
+ * Returns [Sequence] consist of all [regexp] matches in the text. Every match is represented as [java.util.regex.MatchResult]
+ */
+public fun String.findAllMatchResults(regexp : String) : Sequence<MatchResult> = mapAllMatches(regexp) {it.toMatchResult()}
+
+/**
+ * Returns [Sequence] consist of [block] function results for evey [regexp] match in the text.
+ */
+private inline fun <T> String.mapAllMatches(regexp : String, [inlineOptions(ONLY_LOCAL_RETURN)] block : (Matcher) -> T) : Sequence<T> = regexp.toRegex().matcher(this).let { m ->
+    kotlin.sequence { if (m.find()) block(m) else null }
+}

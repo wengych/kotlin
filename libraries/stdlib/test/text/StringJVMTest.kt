@@ -12,7 +12,7 @@ class StringJVMTest {
         for(c in "239")
             sb.append(c)
 
-        println(sb)
+//        println(sb)
 
         for(c in sb)
             sum += (c.toInt() - '0'.toInt())
@@ -87,7 +87,7 @@ class StringJVMTest {
     test fun all() {
         val data = "AbCd"
         assertTrue {
-            data.all { it.isJavaLetter() }
+            data.all { it.isJavaIdentifierStart() }
         }
         assertNot {
             data.all { it.isUpperCase() }
@@ -120,7 +120,7 @@ class StringJVMTest {
     test fun findNot() {
         val data = "1a2b3c"
         assertEquals('a', data.filterNot { it.isDigit() }.firstOrNull())
-        assertNull(data.filterNot { it.isJavaLetterOrDigit() }.firstOrNull())
+        assertNull(data.filterNot { it.isJavaIdentifierPart() }.firstOrNull())
     }
 
     test fun partition() {
@@ -283,14 +283,14 @@ class StringJVMTest {
 
     test fun toByteArrayEncodings() {
         val s = "hello"
-        val defaultCharset = java.nio.charset.Charset.defaultCharset()!!
+        val defaultCharset = java.nio.charset.Charset.defaultCharset()
         assertEquals(String(s.toByteArray()), String(s.toByteArray(defaultCharset)))
         assertEquals(String(s.toByteArray()), String(s.toByteArray(defaultCharset.name())))
     }
 
     test fun testReplaceAllClosure() {
         val s = "test123zzz"
-        val result = s.replaceAll("\\d+") { (mr) ->
+        val result = s.replaceAll("\\d+") { mr ->
             "[" + mr.group() + "]"
         }
         assertEquals("test[123]zzz", result)
@@ -298,7 +298,7 @@ class StringJVMTest {
 
     test fun testReplaceAllClosureAtStart() {
         val s = "123zzz"
-        val result = s.replaceAll("\\d+") { (mr) ->
+        val result = s.replaceAll("\\d+") { mr ->
             "[" + mr.group() + "]"
         }
         assertEquals("[123]zzz", result)
@@ -306,7 +306,7 @@ class StringJVMTest {
 
     test fun testReplaceAllClosureAtEnd() {
         val s = "test123"
-        val result = s.replaceAll("\\d+") { (mr) ->
+        val result = s.replaceAll("\\d+") { mr ->
             "[" + mr.group() + "]"
         }
         assertEquals("test[123]", result)
@@ -314,11 +314,39 @@ class StringJVMTest {
 
     test fun testReplaceAllClosureEmpty() {
         val s = ""
-        val result = s.replaceAll("\\d+") { (mr) ->
+        val result = s.replaceAll("\\d+") { mr ->
             "x"
         }
         assertEquals("", result)
 
+    }
+
+    test fun testReplaceAllMultiple() {
+        val s = "123zzz456yyyy789"
+        val result = s.replaceAll("\\d+") { mr ->
+            "[" + mr.group() + "]"
+        }
+        assertEquals("[123]zzz[456]yyyy[789]", result)
+    }
+
+    test fun testFindEmpty() {
+        assertNull("".find("[0-9]+"))
+    }
+
+    test fun testFind() {
+        assertEquals("123", "erfgewfw123wfefefw".find("[0-9]+"))
+    }
+
+    test fun testFindAllEmpty() {
+        assertEquals(emptyList<String>(), "".findAll("[0-9]+").toList())
+    }
+
+    test fun testFindAll() {
+        assertEquals(listOf("123"), "erfgewfw123wfefefw".findAll("[0-9]+").toList())
+    }
+
+    test fun testFindAllMatches() {
+        assertEquals(listOf("123"), "erfgewfw123wfefefw".findAllMatchResults("[0-9]+").map {it.group()}.toList())
     }
 
     test fun slice() {

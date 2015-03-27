@@ -18,29 +18,21 @@ package org.jetbrains.kotlin.codegen.intrinsics
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.codegen.CallableMethod
-import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.codegen.ExtendedCallable
 import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.psi.JetExpression
+import org.jetbrains.org.objectweb.asm.Type
 
-public class ArraySize : LazyIntrinsicMethod() {
-    override fun generateImpl(
-            codegen: ExpressionCodegen,
-            returnType: Type,
-            element: PsiElement?,
-            arguments: List<JetExpression>,
-            receiver: StackValue
-    ): StackValue {
-        return StackValue.operation(Type.INT_TYPE) {
-            receiver.put(receiver.type, it)
-            it.arraylength()
-        }
+public class NumberCast : LazyIntrinsicMethod() {
+
+    override fun generateImpl(codegen: ExpressionCodegen, returnType: Type, element: PsiElement?, arguments: List<JetExpression>, receiver: StackValue): StackValue {
+        return StackValue.coercion(receiver, returnType)
     }
 
-    public override fun toCallable(method: CallableMethod): ExtendedCallable {
-        return UnaryIntrinsic(method, null, false) { adapter ->
-            adapter.arraylength()
+    override fun toCallable(method: CallableMethod): ExtendedCallable {
+        return UnaryIntrinsic(method) {
+            StackValue.coerce(calcReceiverType()!!, getReturnType(), it)
         }
     }
 }

@@ -18,7 +18,9 @@ package org.jetbrains.kotlin.codegen.intrinsics;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.codegen.CallableMethod;
 import org.jetbrains.kotlin.codegen.ExpressionCodegen;
+import org.jetbrains.kotlin.codegen.ExtendedCallable;
 import org.jetbrains.kotlin.codegen.StackValue;
 import org.jetbrains.kotlin.psi.JetCallExpression;
 import org.jetbrains.kotlin.psi.JetExpression;
@@ -38,4 +40,10 @@ public class NewArray extends LazyIntrinsicMethod {
     ) {
         return codegen.generateNewArray((JetCallExpression) element);
     }
+
+    @Override
+    public boolean supportCallable() {
+        return false;
+    }
 }
+

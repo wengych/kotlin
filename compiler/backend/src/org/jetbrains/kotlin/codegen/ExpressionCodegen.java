@@ -2258,11 +2258,11 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         final Callable callable = resolveToCallable(accessibleFunctionDescriptor, superCall);
         final Type returnType = typeMapper.mapReturnType(accessibleFunctionDescriptor);
 
-        if (callable instanceof CallableMethod) {
+        if (callable instanceof ExtendedCallable) {
             return StackValue.functionCall(returnType, new Function1<InstructionAdapter, Unit>() {
                 @Override
                 public Unit invoke(InstructionAdapter v) {
-                    CallableMethod callableMethod = (CallableMethod) callable;
+                    ExtendedCallable callableMethod = (ExtendedCallable) callable;
                     invokeMethodWithArguments(callableMethod, resolvedCall, receiver);
 
                     StackValue.coerce(callableMethod.getReturnType(), returnType, v);
@@ -2311,7 +2311,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     Callable resolveToCallable(@NotNull FunctionDescriptor fd, boolean superCall) {
         IntrinsicMethod intrinsic = state.getIntrinsics().getIntrinsic(fd);
         if (intrinsic != null) {
-            return intrinsic;
+            return !intrinsic.supportCallable() ? intrinsic : intrinsic.toCallable(state, fd, context, superCall);
         }
 
         return resolveToCallableMethod(fd, superCall, context);
@@ -2323,7 +2323,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     }
 
     public void invokeMethodWithArguments(
-            @NotNull CallableMethod callableMethod,
+            @NotNull ExtendedCallable callableMethod,
             @NotNull ResolvedCall<?> resolvedCall,
             @NotNull StackValue receiver
     ) {
@@ -2344,7 +2344,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     }
 
     public void invokeMethodWithArguments(
-            @NotNull CallableMethod callableMethod,
+            @NotNull ExtendedCallable callableMethod,
             @NotNull ResolvedCall<?> resolvedCall,
             @NotNull StackValue receiver,
             @NotNull CallGenerator callGenerator,
@@ -3313,7 +3313,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
             keepReturnValue = !KotlinBuiltIns.getInstance().getUnitType().equals(descriptor.getReturnType());
         }
 
-        callAugAssignMethod(expression, resolvedCall, (CallableMethod) callable, lhsType, keepReturnValue);
+        callAugAssignMethod(expression, resolvedCall, (ExtendedCallable) callable, lhsType, keepReturnValue);
 
         return StackValue.none();
     }
@@ -3321,7 +3321,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     private void callAugAssignMethod(
             @NotNull JetBinaryExpression expression,
             @NotNull ResolvedCall<?> resolvedCall,
-            @NotNull CallableMethod callable,
+            @NotNull ExtendedCallable callable,
             @NotNull Type lhsType,
             boolean keepReturnValue
     ) {
@@ -3678,7 +3678,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
 
             Callable callable = resolveToCallable(operationDescriptor, false);
-            CallableMethod callableMethod = resolveToCallableMethod(operationDescriptor, false, context);
+            ExtendedCallable callableMethod = resolveToCallableMethod(operationDescriptor, false, context);
             Type[] argumentTypes = callableMethod.getArgumentTypes();
 
             StackValue collectionElementReceiver =
@@ -3692,23 +3692,23 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     }
 
     private StackValue createCollectionElementReceiver(
-            JetArrayAccessExpression expression,
-            StackValue receiver,
-            JetExpression array,
-            Type arrayType,
-            FunctionDescriptor operationDescriptor,
+            @NotNull JetArrayAccessExpression expression,
+            @NotNull StackValue receiver,
+            @NotNull JetExpression array,
+            @NotNull Type arrayType,
+            @NotNull FunctionDescriptor operationDescriptor,
             boolean isGetter,
-            ResolvedCall<FunctionDescriptor> resolvedGetCall,
+             ResolvedCall<FunctionDescriptor> resolvedGetCall,
             ResolvedCall<FunctionDescriptor> resolvedSetCall,
-            Callable callable,
-            Type[] argumentTypes
+            @NotNull Callable callable,
+            @NotNull Type[] argumentTypes
     ) {
 
         ResolvedCall<FunctionDescriptor> resolvedCall = isGetter ? resolvedGetCall : resolvedSetCall;
         assert resolvedCall != null : "couldn't find resolved call: " + expression.getText();
 
-        if (callable instanceof CallableMethod) {
-            CallableMethod callableMethod = (CallableMethod) callable;
+        if (callable instanceof ExtendedCallable) {
+            ExtendedCallable callableMethod = (ExtendedCallable) callable;
             ArgumentGenerator argumentGenerator =
                     new CallBasedArgumentGenerator(this, defaultCallGenerator,
                                                    resolvedCall.getResultingDescriptor().getValueParameters(),

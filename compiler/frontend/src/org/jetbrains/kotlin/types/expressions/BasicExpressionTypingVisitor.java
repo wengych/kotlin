@@ -836,7 +836,7 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
                 else {
                     context.trace.record(BindingContext.VARIABLE_REASSIGNMENT, expression);
 
-                    checkLValue(context.trace, baseExpression);
+                    checkLValue(context.trace, context, baseExpression, null);
                 }
                 // TODO : Maybe returnType?
                 result = receiverType;
@@ -939,18 +939,34 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
     /**
      * @return {@code true} iff expression can be assigned to
      */
-    public static boolean checkLValue(@NotNull BindingTrace trace, @NotNull JetExpression expression) {
-        return checkLValue(trace, expression, false);
+    public boolean checkLValue(
+            @NotNull BindingTrace trace,
+            @NotNull ExpressionTypingContext context,
+            @NotNull JetExpression expression,
+            @Nullable JetExpression rightHandSide
+    ) {
+        return checkLValue(trace, context, expression, rightHandSide, false);
     }
 
-    private static boolean checkLValue(@NotNull BindingTrace trace, @NotNull JetExpression expressionWithParenthesis, boolean canBeThis) {
+    private boolean checkLValue(
+            @NotNull BindingTrace trace,
+            @NotNull ExpressionTypingContext context,
+            @NotNull JetExpression expressionWithParenthesis,
+            @Nullable JetExpression rightHandSide,
+            boolean canBeThis
+    ) {
         JetExpression expression = JetPsiUtil.deparenthesize(expressionWithParenthesis);
         if (expression instanceof JetArrayAccessExpression) {
-            JetExpression arrayExpression = ((JetArrayAccessExpression) expression).getArrayExpression();
-            if (arrayExpression == null) return false;
+            JetArrayAccessExpression arrayAccessExpression = (JetArrayAccessExpression) expression;
+            JetExpression arrayExpression = arrayAccessExpression.getArrayExpression();
+            if (arrayExpression == null || rightHandSide == null) return false;
 
-            return checkLValue(trace, arrayExpression, true);
+            TemporaryBindingTrace ignoreReportsTrace = TemporaryBindingTrace.create(trace, "Trace for checking set function");
+            ExpressionTypingContext findSetterContext = context.replaceBindingTrace(ignoreReportsTrace);
+            JetTypeInfo info = resolveArrayAccessSetMethod(arrayAccessExpression, rightHandSide, findSetterContext, ignoreReportsTrace);
+            return info.getType() != null;
         }
+
         if (canBeThis && expression instanceof JetThisExpression) return true;
         VariableDescriptor variable = BindingContextUtils.extractVariableDescriptorIfAny(trace.getBindingContext(), expression, true);
 

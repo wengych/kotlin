@@ -13,4 +13,5 @@ fun main() {
 // 0 ICONST_1
 // 0 IFEQ
 // 3 IFNE
+// 3 IF
 // 1 GOTO

@@ -150,7 +150,7 @@ public class InlineCodegenUtil {
     @NotNull
     public static VirtualFile getVirtualFileForCallable(@NotNull ClassId containerClassId, @NotNull GenerationState state) {
         VirtualFileFinder fileFinder = VirtualFileFinder.SERVICE.getInstance(state.getProject());
-        VirtualFile file = fileFinder.findVirtualFileWithHeader(containerClassId.asSingleFqName());
+        VirtualFile file = fileFinder.findVirtualFileWithHeader(containerClassId);
         if (file == null) {
             throw new IllegalStateException("Couldn't find declaration file for " + containerClassId);
         }
@@ -177,9 +177,9 @@ public class InlineCodegenUtil {
     }
 
     @Nullable
-    public static VirtualFile findVirtualFile(@NotNull Project project, @NotNull String internalName) {
+    public static VirtualFile findVirtualFile(@NotNull Project project, @NotNull ClassId classId) {
         VirtualFileFinder fileFinder = VirtualFileFinder.SERVICE.getInstance(project);
-        return fileFinder.findVirtualFileWithHeader(new FqName(internalName.replace('/', '.')));
+        return fileFinder.findVirtualFileWithHeader(classId);
     }
 
     //TODO: navigate to inner classes
@@ -403,7 +403,8 @@ public class InlineCodegenUtil {
             if (outputFile != null) {
                 return new ClassReader(outputFile.asByteArray());
             } else {
-                VirtualFile file = findVirtualFile(state.getProject(), internalName);
+                ClassId classIdFromInternalName = ClassId.fromString(internalName);
+                VirtualFile file = findVirtualFile(state.getProject(), classIdFromInternalName);
                 if (file == null) {
                     throw new RuntimeException("Couldn't find virtual file for " + internalName);
                 }

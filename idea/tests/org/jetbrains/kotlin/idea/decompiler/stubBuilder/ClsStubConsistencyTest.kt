@@ -34,9 +34,8 @@ public class ClsStubConsistencyTest : JetLightCodeInsightFixtureTestCase() {
 
     public fun testConsistencyForKotlinPackage() {
         val project = getProject()
-        val packageClassFqName = PackageClassUtils.getPackageClassFqName(STANDARD_LIBRARY_FQNAME)
         val virtualFileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(GlobalSearchScope.allScope(project))
-        val kotlinPackageFile = virtualFileFinder.findVirtualFileWithHeader(packageClassFqName)!!
+        val kotlinPackageFile = virtualFileFinder.findVirtualFileWithHeader(PackageClassUtils.getPackageClassId(STANDARD_LIBRARY_FQNAME))!!
 
         val decompiledText = buildDecompiledText(kotlinPackageFile).text
         val clsStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(kotlinPackageFile))!!

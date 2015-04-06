@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.codegen.StackValue;
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods;
 import org.jetbrains.kotlin.codegen.state.JetTypeMapper;
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.KotlinSyntheticClass;
+import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName;
 import org.jetbrains.kotlin.load.kotlin.PackageClassUtils;
 import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache;
@@ -634,7 +635,8 @@ public class MethodInliner {
         JvmClassName name = JvmClassName.byInternalName(type);
         String packageClassInternalName = PackageClassUtils.getPackageClassInternalName(name.getPackageFqName());
         if (type.startsWith(packageClassInternalName + '$')) {
-            VirtualFile virtualFile = InlineCodegenUtil.findVirtualFile(inliningContext.state.getProject(), type);
+            ClassId packagePartClassId = ClassId.fromString(type);
+            VirtualFile virtualFile = InlineCodegenUtil.findVirtualFile(inliningContext.state.getProject(), packagePartClassId);
             if (virtualFile != null) {
                 KotlinJvmBinaryClass klass = KotlinBinaryClassCache.getKotlinBinaryClass(virtualFile);
                 if (klass != null && klass.getClassHeader().getSyntheticClassKind() == KotlinSyntheticClass.Kind.PACKAGE_PART) {

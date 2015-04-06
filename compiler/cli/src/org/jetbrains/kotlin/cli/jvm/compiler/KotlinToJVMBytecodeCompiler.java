@@ -173,12 +173,12 @@ public class KotlinToJVMBytecodeCompiler {
         for (Module module : chunk) {
             addKotlinSourceRoots(configuration, getAbsolutePaths(directory, module));
 
-            for (String classpathRoot : module.getClasspathRoots()) {
-                addJvmClasspathRoot(configuration, new File(classpathRoot));
-            }
-
             for (String javaSourceRoot : module.getJavaSourceRoots()) {
                 addJavaSourceRoot(configuration, new File(javaSourceRoot));
+            }
+
+            for (String classpathRoot : module.getClasspathRoots()) {
+                addJvmClasspathRoot(configuration, new File(classpathRoot));
             }
 
             for (String annotationsRoot : module.getAnnotationsRoots()) {

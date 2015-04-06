@@ -80,20 +80,27 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
 
         if (request is FindClassRequest && searchCache != null) {
             val (cachedRequest, cachedResult) = searchCache!!
-            when (cachedResult) {
-                is SearchResult.NotFound -> {
-                    if (cachedRequest.broaderThan(request)) {
-                        return null
+            if (cachedRequest.classId == request.classId) {
+                when (cachedResult) {
+                    is SearchResult.NotFound -> {
+                        if (cachedRequest.acceptedRootTypes.containsAll(request.acceptedRootTypes)) {
+                            return null
+                        }
+                        else {
+                            val limitedRootTypes = request.acceptedRootTypes.toHashSet()
+                            limitedRootTypes.removeAll(cachedRequest.acceptedRootTypes)
+                            if (limitedRootTypes.isEmpty()) {
+                                return null
+                            }
+                            else {
+                                return doSearch(FindClassRequest(request.classId, limitedRootTypes), handler)
+                            }
+                        }
                     }
-                }
-                is SearchResult.Found -> {
-                    if (cachedRequest == request) {
-                        return handler(cachedResult.packageDirectory, cachedResult.root.type).result
-                    }
-                    else {
-                        val limitedRootTypes = request.acceptedRootTypes.toHashSet()
-                        limitedRootTypes.removeAll(cachedRequest.acceptedRootTypes)
-                        return search(FindClassRequest(request.classId, limitedRootTypes), handler)
+                    is SearchResult.Found -> {
+                        if (cachedRequest.acceptedRootTypes == request.acceptedRootTypes) {
+                            return handler(cachedResult.packageDirectory, cachedResult.root.type).result
+                        }
                     }
                 }
             }
@@ -198,10 +205,6 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
     private data class FindClassRequest(val classId: ClassId, override val acceptedRootTypes: Set<JavaRoot.RootType>): SearchRequest {
         override val packageFqName: FqName
             get() = classId.getPackageFqName()
-
-        fun broaderThan(other: FindClassRequest): Boolean {
-            return this.classId == other.classId && this.acceptedRootTypes.containsAll(other.acceptedRootTypes)
-        }
     }
 
     private data class TraverseRequest(

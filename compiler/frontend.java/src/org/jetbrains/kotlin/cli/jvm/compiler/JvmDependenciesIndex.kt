@@ -27,14 +27,15 @@ import kotlin.properties.Delegates
 
 //TODO_R: not public?
 public data class JavaRoot(public val file: VirtualFile, public val type: JavaRoot.RootType) {
+    //TODO_R: constant enum sets
     public enum class RootType {
         SOURCE
         BINARY
     }
 }
 
-class JvmDependenciesIndex(val roots: List<JavaRoot>) {
-    //these fields are computed based on classpath which is filled in later
+class JvmDependenciesIndex(private val roots: List<JavaRoot>) {
+    //these fields are computed based on roots field which is filled in later
     private val maxIndex: Int by Delegates.lazy { roots.size() }
 
     private val rootCache: Cache by Delegates.lazy {
@@ -56,8 +57,8 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
             findClassGivenDirectory: (VirtualFile, JavaRoot.RootType) -> T?
     ): T? {
         return search(FindClassRequest(classId, acceptedRootTypes)) { dir, rootType ->
-            val result = findClassGivenDirectory(dir, rootType)
-            HandleResult(result, continueSearch = result == null)
+            val found = findClassGivenDirectory(dir, rootType)
+            HandleResult(found, continueSearch = found == null)
         }
     }
 
@@ -78,48 +79,38 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
             handler: (VirtualFile, JavaRoot.RootType) -> HandleResult<T>
     ): T? {
 
-        if (request is FindClassRequest && searchCache != null) {
-            val (cachedRequest, cachedResult) = searchCache!!
-            if (cachedRequest.classId == request.classId) {
-                when (cachedResult) {
-                    is SearchResult.NotFound -> {
-                        if (cachedRequest.acceptedRootTypes.containsAll(request.acceptedRootTypes)) {
-                            return null
-                        }
-                        else {
-                            val limitedRootTypes = request.acceptedRootTypes.toHashSet()
-                            limitedRootTypes.removeAll(cachedRequest.acceptedRootTypes)
-                            if (limitedRootTypes.isEmpty()) {
-                                return null
-                            }
-                            else {
-                                return doSearch(FindClassRequest(request.classId, limitedRootTypes), handler)
-                            }
-                        }
-                    }
-                    is SearchResult.Found -> {
-                        if (cachedRequest.acceptedRootTypes == request.acceptedRootTypes) {
-                            return handler(cachedResult.packageDirectory, cachedResult.root.type).result
-                        }
-                    }
+        fun doSearch() = doSearch(request, handler)
+
+        if (request !is FindClassRequest || searchCache == null) {
+            return doSearch()
+        }
+        val (cachedRequest, cachedResult) = searchCache!!
+        if (cachedRequest.classId != request.classId) {
+            return doSearch()
+        }
+        when (cachedResult) {
+            is SearchResult.NotFound -> {
+                val limitedRootTypes = request.acceptedRootTypes.toHashSet()
+                limitedRootTypes.removeAll(cachedRequest.acceptedRootTypes)
+                if (limitedRootTypes.isEmpty()) {
+                    return null
+                }
+                else {
+                    return doSearch(FindClassRequest(request.classId, limitedRootTypes), handler)
+                }
+            }
+            is SearchResult.Found -> {
+                if (cachedRequest.acceptedRootTypes == request.acceptedRootTypes) {
+                    return handler(cachedResult.packageDirectory, cachedResult.root.type).result
                 }
             }
         }
 
-        return doSearch(request, handler)
+        return doSearch()
     }
 
     private fun <T : Any> doSearch(request: SearchRequest, handler: (VirtualFile, JavaRoot.RootType) -> HandleResult<T>): T? {
         val findClassRequest = request as? FindClassRequest
-        fun handle(root: JavaRoot, targetDirInRoot: VirtualFile): T? {
-            if (root.type in request.acceptedRootTypes) {
-                val (result, shouldContinue) = handler(targetDirInRoot, root.type)
-                if (!shouldContinue) {
-                    return result
-                }
-            }
-            return null
-        }
 
         fun <T : Any> found(packageDirectory: VirtualFile, root: JavaRoot, result: T): T {
             if (findClassRequest != null) {
@@ -135,15 +126,25 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
             return null
         }
 
+        fun handle(root: JavaRoot, targetDirInRoot: VirtualFile): T? {
+            if (root.type in request.acceptedRootTypes) {
+                val (result, shouldContinue) = handler(targetDirInRoot, root.type)
+                if (!shouldContinue) {
+                    return result
+                }
+            }
+            return null
+        }
+
         val packagesPath = request.packageFqName.pathSegments().map { it.getIdentifier() }
         val caches = cachesPath(packagesPath)
 
-        var lastMaxIndex = -1
+        var lastMaxRootIndex = -1
         for (cacheIndex in (caches.size() - 1) downTo 0) {
             val cache = caches[cacheIndex]
             for (i in cache.rootIndices.size().indices) {
                 val rootIndex = cache.rootIndices[i]
-                if (rootIndex <= lastMaxIndex) continue
+                if (rootIndex <= lastMaxRootIndex) continue
 
                 val dir = travelPath(rootIndex, packagesPath, cacheIndex, caches) ?: continue
                 val root = roots[rootIndex]
@@ -152,7 +153,7 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
                     return found(dir, root, result)
                 }
             }
-            lastMaxIndex = cache.rootIndices.lastOrNull() ?: lastMaxIndex
+            lastMaxRootIndex = cache.rootIndices.lastOrNull() ?: lastMaxRootIndex
         }
         return notFound()
     }
@@ -192,7 +193,7 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
         return caches
     }
 
-    class Cache {
+    private class Cache {
         private val innerCaches = HashMap<String, Cache>()
 
         fun get(name: String) = innerCaches.getOrPut(name) { Cache() }

@@ -32,10 +32,8 @@ import org.jetbrains.kotlin.name.Name
 import java.util.ArrayList
 import kotlin.properties.Delegates
 
-//TODO_R: packages cache injection
-public class CoreJavaFileManagerExt(private val myPsiManager: PsiManager) : CoreJavaFileManager(myPsiManager) {
+public class KotlinCliJavaFileManager(private val myPsiManager: PsiManager) : CoreJavaFileManager(myPsiManager) {
 
-    private val myClasspath = ArrayList<VirtualFile>()
     private var packagesCache: JvmDependenciesIndex by Delegates.notNull()
 
     public fun initCache(packagesCache: JvmDependenciesIndex) {
@@ -51,6 +49,7 @@ public class CoreJavaFileManagerExt(private val myPsiManager: PsiManager) : Core
 
     override fun findClass(qName: String, scope: GlobalSearchScope): PsiClass? {
         //TODO_R: comment
+        //Most classes are top level classes, but since we have to support this API java we must fallback o
         val classIdAsTopLevelClass = ClassId.topLevel(FqName(qName))
         return findClass(classIdAsTopLevelClass, scope) ?: super.findClass(qName, scope)
     }
@@ -96,12 +95,6 @@ public class CoreJavaFileManagerExt(private val myPsiManager: PsiManager) : Core
 
         val file = myPsiManager.findFile(vFile) as? PsiClassOwner ?: return null
         return findClassInPsiFile(classNameWithInnerClasses, file)
-    }
-
-
-    override fun addToClasspath(root: VirtualFile) {
-        super.addToClasspath(root)
-        myClasspath.add(root)
     }
 
     override fun findPackage(packageName: String): PsiPackage? {

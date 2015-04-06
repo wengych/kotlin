@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.resolve.jvm;
 
-import com.intellij.core.CoreJavaFileManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -44,7 +43,7 @@ import com.intellij.util.messages.MessageBus;
 import kotlin.Function1;
 import kotlin.KotlinPackage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.cli.jvm.compiler.CoreJavaFileManagerExt;
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCliJavaFileManager;
 import org.jetbrains.kotlin.name.ClassId;
 
 import java.util.ArrayList;
@@ -103,8 +102,8 @@ public class KotlinJavaPsiFacade {
         }
 
         for (KotlinPsiElementFinderWrapper finder : finders()) {
-            if (finder instanceof KotlinPsiElementFinderWrapperEx) {
-                PsiClass aClass = ((KotlinPsiElementFinderWrapperEx) finder).findClass(classId, scope);
+            if (finder instanceof KotlinPsiElementFinderImpl) {
+                PsiClass aClass = ((KotlinPsiElementFinderImpl) finder).findClass(classId, scope);
                 if (aClass != null) return aClass;
             }
             else {
@@ -259,10 +258,6 @@ public class KotlinJavaPsiFacade {
         boolean isSameResultForAnyScope();
     }
 
-    interface KotlinPsiElementFinderWrapperEx extends KotlinPsiElementFinderWrapper {
-        PsiClass findClass(@NotNull ClassId qualifiedName, @NotNull GlobalSearchScope scope);
-    }
-
     private static class KotlinPsiElementFinderWrapperImpl implements KotlinPsiElementFinderWrapper {
         private final PsiElementFinder finder;
 
@@ -298,16 +293,16 @@ public class KotlinJavaPsiFacade {
         }
     }
 
-    static class KotlinPsiElementFinderImpl implements KotlinPsiElementFinderWrapperEx, DumbAware {
+    static class KotlinPsiElementFinderImpl implements KotlinPsiElementFinderWrapper, DumbAware {
         private final JavaFileManager javaFileManager;
-        private final boolean isCoreJavaFileManager;
+        private final boolean isCliFileManager;
 
         private final PsiManager psiManager;
         private final PackageIndex packageIndex;
 
         public KotlinPsiElementFinderImpl(Project project) {
             this.javaFileManager = findJavaFileManager(project);
-            this.isCoreJavaFileManager = javaFileManager instanceof CoreJavaFileManager;
+            this.isCliFileManager = javaFileManager instanceof KotlinCliJavaFileManager;
 
             this.packageIndex = PackageIndex.getInstance(project);
             this.psiManager = PsiManager.getInstance(project);
@@ -329,17 +324,16 @@ public class KotlinJavaPsiFacade {
             return javaFileManager.findClass(qualifiedName, scope);
         }
 
-        @Override
-        public PsiClass findClass(@NotNull ClassId qualifiedName, @NotNull GlobalSearchScope scope) {
-            if (javaFileManager instanceof CoreJavaFileManagerExt) {
-                return ((CoreJavaFileManagerExt) javaFileManager).findClass(qualifiedName, scope);
+        public PsiClass findClass(@NotNull ClassId classId, @NotNull GlobalSearchScope scope) {
+            if (isCliFileManager) {
+                return ((KotlinCliJavaFileManager) javaFileManager).findClass(classId, scope);
             }
-            return findClass(qualifiedName.asSingleFqName().asString(), scope);
+            return findClass(classId.asSingleFqName().asString(), scope);
         }
 
         @Override
         public PsiPackage findPackage(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-            if (isCoreJavaFileManager) {
+            if (isCliFileManager) {
                 return javaFileManager.findPackage(qualifiedName);
             }
 

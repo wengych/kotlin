@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory;
 import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.psi.JetDeclaration;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
+import org.jetbrains.kotlin.types.ErrorUtils;
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils;
 
 import static org.jetbrains.kotlin.load.kotlin.PackageClassUtils.getPackageClassId;
@@ -78,10 +79,11 @@ public final class DecompiledNavigationUtils {
             @NotNull Project project,
             @NotNull DeclarationDescriptor referencedDescriptor
     ) {
+        if (ErrorUtils.isError(referencedDescriptor)) return null;
+
         ClassId containerClassId = getContainerClassId(referencedDescriptor);
-        if (containerClassId == null) {
-            return null;
-        }
+        if (containerClassId == null) return null;
+
         GlobalSearchScope scopeToSearchIn = JetSourceFilterScope.kotlinSourceAndClassFiles(GlobalSearchScope.allScope(project), project);
         VirtualFileFinder fileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(scopeToSearchIn);
         return fileFinder.findVirtualFileWithHeader(containerClassId);

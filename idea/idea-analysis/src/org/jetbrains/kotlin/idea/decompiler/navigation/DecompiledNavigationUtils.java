@@ -84,11 +84,7 @@ public final class DecompiledNavigationUtils {
         }
         GlobalSearchScope scopeToSearchIn = JetSourceFilterScope.kotlinSourceAndClassFiles(GlobalSearchScope.allScope(project), project);
         VirtualFileFinder fileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(scopeToSearchIn);
-        VirtualFile virtualFile = fileFinder.findVirtualFileWithHeader(containerClassId);
-        if (virtualFile == null) {
-            return null;
-        }
-        return virtualFile;
+        return fileFinder.findVirtualFileWithHeader(containerClassId);
     }
 
     //TODO: navigate to inner classes

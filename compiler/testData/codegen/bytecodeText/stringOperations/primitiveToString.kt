@@ -1,4 +1,5 @@
 fun main() {
+    false.toString()
     1.toByte().toString()
     1.toShort().toString()
     1.toString()
@@ -9,5 +10,5 @@ fun main() {
 }
 
 /*Check that all "valueOf" are String ones and there is no boxing*/
-// 7 valueOf
-// 7 INVOKESTATIC java/lang/String.valueOf
+// 8 valueOf
+// 8 INVOKESTATIC java/lang/String.valueOf

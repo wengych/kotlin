@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import kotlin.KotlinPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage;
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes;
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName;
 import org.jetbrains.kotlin.serialization.ProtoBuf;
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedSimpleFunctionDescriptor;
 import org.jetbrains.kotlin.serialization.jvm.JvmProtoBuf;
@@ -59,6 +61,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.ListIterator;
 
+import static kotlin.KotlinPackage.substringAfterLast;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.getFqName;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.isTrait;
 
@@ -177,9 +180,13 @@ public class InlineCodegenUtil {
     }
 
     @Nullable
-    public static VirtualFile findVirtualFile(@NotNull Project project, @NotNull ClassId classId) {
+    public static VirtualFile findVirtualFile(@NotNull Project project, @NotNull String internalClassName) {
+        FqName packageFqName = JvmClassName.byInternalName(internalClassName).getPackageFqName();
+        String classNameWithDollars = substringAfterLast(internalClassName, "/", internalClassName);
         VirtualFileFinder fileFinder = VirtualFileFinder.SERVICE.getInstance(project);
-        return fileFinder.findVirtualFileWithHeader(classId);
+        //TODO: we cannot construct proper classId at this point, we need to read InnerClasses info from class file
+        // we construct valid.package.name/RelativeClassNameAsSingleName that should work in compiler, but fails for inner classes in IDE
+        return fileFinder.findVirtualFileWithHeader(new ClassId(packageFqName, Name.identifier(classNameWithDollars)));
     }
 
     //TODO: navigate to inner classes
@@ -403,8 +410,7 @@ public class InlineCodegenUtil {
             if (outputFile != null) {
                 return new ClassReader(outputFile.asByteArray());
             } else {
-                ClassId classIdFromInternalName = ClassId.fromString(internalName);
-                VirtualFile file = findVirtualFile(state.getProject(), classIdFromInternalName);
+                VirtualFile file = findVirtualFile(state.getProject(), internalName);
                 if (file == null) {
                     throw new RuntimeException("Couldn't find virtual file for " + internalName);
                 }

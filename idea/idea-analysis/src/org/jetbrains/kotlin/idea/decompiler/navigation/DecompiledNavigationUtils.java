@@ -27,15 +27,16 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor;
 import org.jetbrains.kotlin.descriptors.ClassOrPackageFragmentDescriptor;
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor;
-import org.jetbrains.kotlin.idea.caches.resolve.JsProjectDetector;
 import org.jetbrains.kotlin.idea.decompiler.DecompilerPackage;
 import org.jetbrains.kotlin.idea.decompiler.KotlinClsFileBase;
+import org.jetbrains.kotlin.idea.decompiler.KotlinJavascriptMetaFileType;
 import org.jetbrains.kotlin.idea.stubindex.JetSourceFilterScope;
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder;
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory;
 import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.psi.JetDeclaration;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
+import org.jetbrains.kotlin.serialization.js.KotlinJavascriptPackageFragment;
 import org.jetbrains.kotlin.types.ErrorUtils;
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils;
 
@@ -49,19 +50,11 @@ public final class DecompiledNavigationUtils {
             @NotNull Project project,
             @NotNull DeclarationDescriptor referencedDescriptor
     ) {
-        VirtualFile virtualFile;
+        VirtualFile virtualFile = findVirtualFileContainingDescriptor(project, referencedDescriptor);
 
-        if (JsProjectDetector.isJsProject(project) &&
-            NavigationPackage.getKotlinJavascriptLibraryWithMetadata(referencedDescriptor, project) != null)
-        {
-            JsMetaFileVirtualFileHolder system = JsMetaFileVirtualFileHolder.getInstance(project);
-            virtualFile = system.getFile(referencedDescriptor);
-            if (virtualFile == null) return null;
-        }
-        else {
-            virtualFile = findVirtualFileContainingDescriptor(project, referencedDescriptor);
-            if (virtualFile == null || !DecompilerPackage.isKotlinCompiledFile(virtualFile)) return null;
-        }
+        if (virtualFile == null ||
+            !DecompilerPackage.isKotlinCompiledFile(virtualFile) &&
+            virtualFile.getFileType() != KotlinJavascriptMetaFileType.INSTANCE) return null;
 
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (!(psiFile instanceof KotlinClsFileBase)) {
@@ -86,7 +79,18 @@ public final class DecompiledNavigationUtils {
 
         GlobalSearchScope scopeToSearchIn = JetSourceFilterScope.kotlinSourceAndClassFiles(GlobalSearchScope.allScope(project), project);
         VirtualFileFinder fileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(scopeToSearchIn);
-        return fileFinder.findVirtualFileWithHeader(containerClassId);
+        if (isFromKotlinJavascript(referencedDescriptor)) {
+            return fileFinder.findKotlinJavascriptVirtualFileWithHeader(containerClassId);
+        }
+        else {
+            return fileFinder.findVirtualFileWithHeader(containerClassId);
+        }
+    }
+
+    private static boolean isFromKotlinJavascript(@NotNull DeclarationDescriptor referencedDescriptor) {
+        PackageFragmentDescriptor packageFragmentDescriptor =
+                DescriptorUtils.getParentOfType(referencedDescriptor, PackageFragmentDescriptor.class, false);
+        return packageFragmentDescriptor instanceof KotlinJavascriptPackageFragment;
     }
 
     //TODO: navigate to inner classes

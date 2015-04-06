@@ -18,9 +18,7 @@ package org.jetbrains.kotlin.cli.jvm.compiler;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -35,19 +33,11 @@ import kotlin.io.IoPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.backend.common.output.OutputFile;
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
-import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil;
-import org.jetbrains.kotlin.cli.common.modules.Module;
 import org.jetbrains.kotlin.cli.common.modules.ModuleScriptData;
 import org.jetbrains.kotlin.cli.common.modules.ModuleXmlParser;
-import org.jetbrains.kotlin.cli.jvm.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.codegen.ClassFileFactory;
-import org.jetbrains.kotlin.codegen.GeneratedClassLoader;
-import org.jetbrains.kotlin.codegen.state.GenerationState;
-import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.idea.JetFileType;
-import org.jetbrains.kotlin.load.kotlin.PackageClassUtils;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.utils.KotlinPaths;
@@ -55,85 +45,29 @@ import org.jetbrains.kotlin.utils.PathUtil;
 import org.jetbrains.kotlin.utils.UtilsPackage;
 
 import java.io.*;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.jar.*;
 
 import static org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation.NO_LOCATION;
 import static org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR;
-import static org.jetbrains.kotlin.cli.jvm.config.ConfigPackage.addJvmClasspathRoot;
-import static org.jetbrains.kotlin.cli.jvm.config.ConfigPackage.addJvmClasspathRoots;
-import static org.jetbrains.kotlin.config.ConfigPackage.addKotlinSourceRoot;
 
 public class CompileEnvironmentUtil {
 
     @NotNull
-    public static ModuleScriptData loadModuleDescriptions(KotlinPaths paths, String moduleDefinitionFile, MessageCollector messageCollector) {
+    public static ModuleScriptData loadModuleDescriptions(String moduleDefinitionFile, MessageCollector messageCollector) {
         File file = new File(moduleDefinitionFile);
         if (!file.exists()) {
             messageCollector.report(ERROR, "Module definition file does not exist: " + moduleDefinitionFile, NO_LOCATION);
             return ModuleScriptData.EMPTY;
         }
         String extension = FileUtilRt.getExtension(moduleDefinitionFile);
-        if ("ktm".equalsIgnoreCase(extension)) {
-            return loadModuleScript(paths, moduleDefinitionFile, messageCollector);
-        }
         if ("xml".equalsIgnoreCase(extension)) {
             return ModuleXmlParser.parseModuleScript(moduleDefinitionFile, messageCollector);
         }
         messageCollector.report(ERROR, "Unknown module definition type: " + moduleDefinitionFile, NO_LOCATION);
         return ModuleScriptData.EMPTY;
-    }
-
-    @NotNull
-    private static ModuleScriptData loadModuleScript(KotlinPaths paths, String moduleScriptFile, MessageCollector messageCollector) {
-        CompilerConfiguration configuration = new CompilerConfiguration();
-        File runtimePath = paths.getRuntimePath();
-        if (runtimePath.exists()) {
-            addJvmClasspathRoot(configuration, runtimePath);
-        }
-        addJvmClasspathRoots(configuration, PathUtil.getJdkClassesRoots());
-
-        File jdkAnnotationsPath = paths.getJdkAnnotationsPath();
-        if (jdkAnnotationsPath.exists()) {
-            configuration.add(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY, jdkAnnotationsPath);
-        }
-        addKotlinSourceRoot(configuration, moduleScriptFile);
-        configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector);
-
-        List<Module> modules;
-
-        Disposable disposable = Disposer.newDisposable();
-        try {
-            KotlinCoreEnvironment scriptEnvironment =
-                    KotlinCoreEnvironment.createForProduction(disposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES);
-            GenerationState generationState = KotlinToJVMBytecodeCompiler.analyzeAndGenerate(scriptEnvironment);
-            if (generationState == null) {
-                throw new CompileEnvironmentException("Module script " + moduleScriptFile + " analyze failed:\n" +
-                                                      loadModuleScriptText(moduleScriptFile));
-            }
-
-            modules = runDefineModules(paths, generationState.getFactory());
-        }
-        finally {
-            Disposer.dispose(disposable);
-        }
-
-        if (modules == null) {
-            throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
-        }
-
-        if (modules.isEmpty()) {
-            throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
-        }
-        return new ModuleScriptData(modules);
-    }
-
-    private static List<Module> runDefineModules(KotlinPaths paths, ClassFileFactory factory) {
-        return Collections.emptyList();
     }
 
     // TODO: includeRuntime should be not a flag but a path to runtime
@@ -200,16 +134,6 @@ public class CompileEnvironmentUtil {
         }
         finally {
             jis.close();
-        }
-    }
-
-    // Used for debug output only
-    private static String loadModuleScriptText(String moduleScriptFile) {
-        try {
-            return FileUtil.loadFile(new File(moduleScriptFile));
-        }
-        catch (IOException e) {
-            return "Can't load module script text:\n" + OutputMessageUtil.renderException(e);
         }
     }
 

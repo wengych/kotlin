@@ -50,26 +50,6 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
 
     private var searchCache: ClassSearchCache? = null
 
-    private fun cachedResult(request: FindClassRequest): SearchResult? {
-        if (searchCache == null) return null
-
-        val (cachedRequest, cachedResult) = searchCache!!
-
-        when (cachedResult) {
-            is SearchResult.Failure -> {
-                if (cachedRequest.broaderThan(request)) {
-                    return SearchResult.Failure
-                }
-            }
-            is SearchResult.Success -> {
-                if (cachedRequest == request) {
-                    return cachedResult
-                }
-            }
-        }
-        return null
-    }
-
     fun <T : Any> findClass(
             classId: ClassId,
             acceptedRootTypes: Set<JavaRoot.RootType> = EnumSet.allOf(javaClass<JavaRoot.RootType>()),
@@ -97,6 +77,33 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
             request: SearchRequest,
             handler: (VirtualFile, JavaRoot.RootType) -> HandleResult<T>
     ): T? {
+
+        if (request is FindClassRequest && searchCache != null) {
+            val (cachedRequest, cachedResult) = searchCache!!
+            when (cachedResult) {
+                is SearchResult.NotFound -> {
+                    if (cachedRequest.broaderThan(request)) {
+                        return null
+                    }
+                }
+                is SearchResult.Found -> {
+                    if (cachedRequest == request) {
+                        return handler(cachedResult.packageDirectory, cachedResult.root.type).result
+                    }
+                    else {
+                        val limitedRootTypes = request.acceptedRootTypes.toHashSet()
+                        limitedRootTypes.removeAll(cachedRequest.acceptedRootTypes)
+                        return search(FindClassRequest(request.classId, limitedRootTypes), handler)
+                    }
+                }
+            }
+        }
+
+        return doSearch(request, handler)
+    }
+
+    private fun <T : Any> doSearch(request: SearchRequest, handler: (VirtualFile, JavaRoot.RootType) -> HandleResult<T>): T? {
+        val findClassRequest = request as? FindClassRequest
         fun handle(root: JavaRoot, targetDirInRoot: VirtualFile): T? {
             if (root.type in request.acceptedRootTypes) {
                 val (result, shouldContinue) = handler(targetDirInRoot, root.type)
@@ -107,28 +114,16 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
             return null
         }
 
-        val findClassRequest = request as? FindClassRequest
-        if (findClassRequest != null) {
-            val cachedResult = cachedResult(findClassRequest)
-            when (cachedResult) {
-                is SearchResult.Failure -> return null
-                is SearchResult.Success -> return handler(cachedResult.packageDirectory, cachedResult.root.type).result
-                else -> {
-                    //do nothing
-                }
-            }
-        }
-
-        fun <T: Any> success(packageDirectory: VirtualFile, root: JavaRoot, result: T): T {
+        fun <T : Any> found(packageDirectory: VirtualFile, root: JavaRoot, result: T): T {
             if (findClassRequest != null) {
-                searchCache = ClassSearchCache(findClassRequest, SearchResult.Success(packageDirectory, root))
+                searchCache = ClassSearchCache(findClassRequest, SearchResult.Found(packageDirectory, root))
             }
             return result
         }
 
-        fun <T: Any> failure(): T? {
+        fun <T : Any> notFound(): T? {
             if (findClassRequest != null) {
-                searchCache = ClassSearchCache(findClassRequest, SearchResult.Failure)
+                searchCache = ClassSearchCache(findClassRequest, SearchResult.NotFound)
             }
             return null
         }
@@ -147,12 +142,12 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
                 val root = roots[rootIndex]
                 val result = handle(root, dir)
                 if (result != null) {
-                    return success(dir, root, result)
+                    return found(dir, root, result)
                 }
             }
             lastMaxIndex = cache.rootIndices.lastOrNull() ?: lastMaxIndex
         }
-        return failure()
+        return notFound()
     }
 
     /**
@@ -160,7 +155,7 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
      * [org, jet, language]
      */
     private fun travelPath(rootIndex: Int, packagesPath: List<String>, fillCachesAfter: Int, cachesPath: List<Cache>): VirtualFile? {
-        if (oob(rootIndex)) {
+        if (rootIndex >= maxIndex) {
             for (i in (fillCachesAfter + 1)..cachesPath.size() - 1) {
                 cachesPath[i].rootIndices.add(maxIndex)
                 cachesPath[i].rootIndices.trimToSize()
@@ -188,11 +183,6 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
             caches.add(currentCache)
         }
         return caches
-    }
-
-    //TODO_R: inline
-    private fun oob(index: Int): Boolean {
-        return index >= maxIndex
     }
 
     class Cache {
@@ -225,9 +215,9 @@ class JvmDependenciesIndex(val roots: List<JavaRoot>) {
     }
 
     trait SearchResult {
-        class Success(val packageDirectory: VirtualFile, val root: JavaRoot) : SearchResult
+        class Found(val packageDirectory: VirtualFile, val root: JavaRoot) : SearchResult
 
-        object Failure : SearchResult
+        object NotFound : SearchResult
     }
 }
 

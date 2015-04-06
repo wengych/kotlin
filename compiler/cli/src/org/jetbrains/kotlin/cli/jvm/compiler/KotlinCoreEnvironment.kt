@@ -116,7 +116,7 @@ public class KotlinCoreEnvironment private(
         fillClasspath(configuration)
         val fileManagerExt = ServiceManager.getService(project, javaClass<CoreJavaFileManager>())
         val packagesCache = JvmDependenciesIndex(javaRoots)
-        (fileManagerExt as CoreJavaFileManagerExt).initCache(packagesCache)
+        (fileManagerExt as KotlinCliJavaFileManager).initCache(packagesCache)
 
         for (path in configuration.getList(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY)) {
             addExternalAnnotationsRoot(path)
@@ -138,7 +138,7 @@ public class KotlinCoreEnvironment private(
         ExternalDeclarationsProvider.registerExtensionPoint(project)
         ExpressionCodegenExtension.registerExtensionPoint(project)
 
-        for (registrar in configuration.getList<ComponentRegistrar>(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS)) {
+        for (registrar in configuration.getList(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS)) {
             registrar.registerProjectComponents(project, configuration)
         }
     }

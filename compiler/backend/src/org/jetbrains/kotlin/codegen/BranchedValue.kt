@@ -133,7 +133,7 @@ class And(arg1: StackValue, arg2: StackValue) :
         BranchedValue(BranchedValue.condJump(arg1), BranchedValue.condJump(arg2), Type.BOOLEAN_TYPE, IFEQ) {
 
     override fun condJump(jumpLabel: Label, v: InstructionAdapter, jumpIfFalse: Boolean) {
-        val stayLabel = Label();
+        val stayLabel = Label()
         (arg1 as CondJump).condJump(if (jumpIfFalse) jumpLabel else stayLabel, v, true)
         (arg2 as CondJump).condJump(jumpLabel, v, jumpIfFalse)
         v.visitLabel(stayLabel)
@@ -144,7 +144,7 @@ class Or(arg1: StackValue, arg2: StackValue) :
         BranchedValue(BranchedValue.condJump(arg1), BranchedValue.condJump(arg2), Type.BOOLEAN_TYPE, IFEQ) {
 
     override fun condJump(jumpLabel: Label, v: InstructionAdapter, jumpIfFalse: Boolean) {
-        val stayLabel = Label();
+        val stayLabel = Label()
         (arg1 as CondJump).condJump(if (jumpIfFalse) stayLabel else jumpLabel, v, false)
         (arg2 as CondJump).condJump(jumpLabel, v, jumpIfFalse)
         v.visitLabel(stayLabel)
@@ -221,9 +221,4 @@ class ObjectCompare(val opToken: IElementType, operandType: Type, left: StackVal
             }
         }
     }
-}
-
-fun main(args: Array<String>) {
-    val p = true
-    val szzz = p && p
 }

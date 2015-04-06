@@ -29,22 +29,6 @@ import java.io.File
 open class KotlinCoreProjectEnvironment(
         disposable: Disposable,
         applicationEnvironment: JavaCoreApplicationEnvironment
-)
-: JavaCoreProjectEnvironment(disposable, applicationEnvironment) {
-    override fun createCoreFileManager() = CoreJavaFileManagerExt(PsiManager.getInstance(getProject()))
-
-    public fun addRootToClasspath(file: VirtualFile) {
-        val packageIndex = ServiceManager.getService(getProject(), javaClass<CorePackageIndex>())
-        packageIndex.addToClasspath(file)
-
-        val fileIndexFacade = ServiceManager.getService(getProject(), javaClass<MockFileIndexFacade>())
-        fileIndexFacade.addLibraryRoot(file)
-
-        val fileManager = ServiceManager.getService(getProject(), javaClass<CoreJavaFileManagerExt>())
-        fileManager.addToClasspath(file)
-    }
-
-    public fun addJavaSourceRoot(file: VirtualFile) {
-        addRootToClasspath(file)
-    }
+) : JavaCoreProjectEnvironment(disposable, applicationEnvironment) {
+    override fun createCoreFileManager() = KotlinCliJavaFileManager(PsiManager.getInstance(getProject()))
 }

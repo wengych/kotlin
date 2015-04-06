@@ -30,16 +30,11 @@ import java.util.EnumSet
 public class CliVirtualFileFinder(private val packagesCache: JvmDependenciesIndex) : VirtualFileKotlinClassFinder(), VirtualFileFinder {
 
     override fun findVirtualFileWithHeader(classId: ClassId): VirtualFile? {
-        val relativeClassName = classId.getRelativeClassName().asString().replace('.', '$')
+        val classFileName = classId.getRelativeClassName().asString().replace('.', '$')
         return packagesCache.findClass(classId, acceptedRootTypes = EnumSet.of(JavaRoot.RootType.BINARY)) { dir, _ ->
-            dir.findChild("$relativeClassName.class")?.let {
+            dir.findChild("$classFileName.class")?.let {
                 if (it.isValid()) it else null
             }
         }
-    }
-
-    override fun findKotlinClass(classId: ClassId): KotlinJvmBinaryClass? {
-        val file = findVirtualFileWithHeader(classId) ?: return null
-        return KotlinBinaryClassCache.getKotlinBinaryClass(file)
     }
 }

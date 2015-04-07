@@ -36,7 +36,7 @@ public class Not : IntrinsicMethod() {
         else {
             stackValue = receiver
         }
-        return StackValue.not(StackValue.coercion(stackValue, Type.BOOLEAN_TYPE))
+        return StackValue.not(stackValue)
     }
 
     override fun toCallable(method: CallableMethod): Callable {
@@ -50,7 +50,7 @@ public class Not : IntrinsicMethod() {
                         else {
                             StackValue.receiver(resolvedCall, receiver, codegen, this)
                         }
-                return StackValue.not(StackValue.coercion(stackValue, Type.BOOLEAN_TYPE))
+                return StackValue.not(stackValue)
             }
         }
     }

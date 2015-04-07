@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.kotlin.cache
+package org.jetbrains.kotlin.cli.jvm
 
-import com.intellij.core.CoreJavaFileManager
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.search.GlobalSearchScope
@@ -24,17 +23,14 @@ import com.intellij.testFramework.PsiTestCase
 import com.intellij.testFramework.PsiTestUtil
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCliJavaFileManager
 import org.jetbrains.kotlin.cli.jvm.compiler.JavaRoot
 import org.jetbrains.kotlin.cli.jvm.compiler.JvmDependenciesIndex
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCliJavaFileManager
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 
-
-//TODO_R: package and name
-public class CoreJavaFileManagerTest : PsiTestCase() {
-
-    throws(javaClass<Exception>())
+//Partial copy of CoreJavaFileManagerTest
+public class KotlinCliJavaFileManagerTest : PsiTestCase() {
     public fun testCommon() {
         val manager = configureManager("package foo;\n\n" + "public class TopLevel {\n" + "public class Inner {\n" + "   public class Inner {}\n" + "}\n" + "\n" + "}", "TopLevel")
 
@@ -47,7 +43,6 @@ public class CoreJavaFileManagerTest : PsiTestCase() {
         assertCannotFind(manager, "foo", "TopLevel.Inner.Inner.Inner")
     }
 
-    throws(javaClass<Exception>())
     public fun testInnerClassesWithDollars() {
         val manager = configureManager("package foo;\n\n" + "public class TopLevel {\n" +
                                        "public class I\$nner {" + "   public class I\$nner{}" + "   public class \$Inner{}" + "   public class In\$ne\$r\${}" + "   public class Inner\$\${}" + "   public class \$\$\$\$\${}" + "}\n" + "public class Inner\$ {" + "   public class I\$nner{}" + "   public class \$Inner{}" + "   public class In\$ne\$r\${}" + "   public class Inner\$\${}" + "   public class \$\$\$\$\${}" + "}\n" + "public class In\$ner\$\$ {" + "   public class I\$nner{}" + "   public class \$Inner{}" + "   public class In\$ne\$r\${}" + "   public class Inner\$\${}" + "   public class \$\$\$\$\${}" + "}\n" + "\n" + "}", "TopLevel")
@@ -82,7 +77,6 @@ public class CoreJavaFileManagerTest : PsiTestCase() {
         assertCannotFind(manager, "foo", "TopLevel.In.ner\$\$.\$\$\$\$\$")
     }
 
-    throws(javaClass<Exception>())
     public fun testTopLevelClassesWithDollars() {
         val inTheMiddle = configureManager("package foo;\n\n public class Top\$Level {}", "Top\$Level")
         assertCanFind(inTheMiddle, "foo", "Top\$Level")
@@ -119,7 +113,15 @@ public class CoreJavaFileManagerTest : PsiTestCase() {
         assertCannotFind(manager, "foo", "Top.Level\$\$.I\$nner.\$\$\$\$\$")
     }
 
-    throws(javaClass<Exception>())
+    public fun testDoNotThrowOnMalformedInput() {
+        val fileWithEmptyName = configureManager("package foo;\n\n public class Top\$Level {}", "")
+        val allScope = GlobalSearchScope.allScope(getProject())
+        fileWithEmptyName.findClass("foo.", allScope)
+        fileWithEmptyName.findClass(".", allScope)
+        fileWithEmptyName.findClass("..", allScope)
+        fileWithEmptyName.findClass(".foo", allScope)
+    }
+
     public fun testSeveralClassesInOneFile() {
         val manager = configureManager("package foo;\n\n" + "public class One {}\n" + "class Two {}\n" + "class Three {}", "One")
 

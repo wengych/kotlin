@@ -52,13 +52,14 @@ public class KotlinCliJavaFileManager(private val myPsiManager: PsiManager) : Co
         // which supposedly should compile so the dependencies exist in general
         // Most classes are top level classes so we will try to find them fast
         // but we must sometimes fallback to support finding inner/nested classes
-        val classIdAsTopLevelClass = ClassId.topLevel(FqName(qName))
-        return findClass(classIdAsTopLevelClass, scope) ?: super.findClass(qName, scope)
+        return qName.toSafeTopLevelClassId()?.let { classId -> findClass(classId, scope) }
+               ?: super.findClass(qName, scope)
     }
 
     override fun findClasses(qName: String, scope: GlobalSearchScope): Array<PsiClass> {
+        val classIdAsTopLevelClass = qName.toSafeTopLevelClassId() ?: return super.findClasses(qName, scope)
+
         val result = ArrayList<PsiClass>()
-        val classIdAsTopLevelClass = ClassId.topLevel(FqName(qName))
         val classNameWithInnerClasses = classIdAsTopLevelClass.getRelativeClassName().asString()
         packagesCache.traverseDirectoriesInPackage(classIdAsTopLevelClass.getPackageFqName()) { dir, rootType ->
             val psiClass = findClassGivenPackage(scope, dir, classNameWithInnerClasses, rootType)
@@ -146,4 +147,12 @@ public class KotlinCliJavaFileManager(private val myPsiManager: PsiManager) : Co
             return curClass
         }
     }
+}
+
+// a sad workaround to avoid throwing exception when called from inside IDEA code
+private fun String.toSafeTopLevelClassId(): ClassId? = try {
+    ClassId.topLevel(FqName(this))
+}
+catch (e: Exception) {
+    null
 }

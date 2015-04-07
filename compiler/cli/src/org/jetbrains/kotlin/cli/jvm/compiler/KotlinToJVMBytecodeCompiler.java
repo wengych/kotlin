@@ -66,9 +66,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.kotlin.cli.jvm.config.ConfigPackage.addJavaSourceRoot;
-import static org.jetbrains.kotlin.cli.jvm.config.ConfigPackage.addJvmClasspathRoot;
-import static org.jetbrains.kotlin.cli.jvm.config.ConfigPackage.getJvmClasspathRoots;
+import static org.jetbrains.kotlin.cli.jvm.config.ConfigPackage.*;
 import static org.jetbrains.kotlin.config.ConfigPackage.addKotlinSourceRoots;
 
 public class KotlinToJVMBytecodeCompiler {
@@ -274,10 +272,10 @@ public class KotlinToJVMBytecodeCompiler {
             for (File file : getJvmClasspathRoots(configuration)) {
                 classPaths.add(file.toURI().toURL());
             }
+            //noinspection UnnecessaryFullyQualifiedName
             classLoader = new GeneratedClassLoader(state.getFactory(),
                                                    new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]),
-                                                                      //TODO_R: HACK!!!ASDASDASKDASK
-                                                                      URLClassLoader.class.getClassLoader())
+                                                                      kotlin.KotlinPackage.class.getClassLoader())
             );
 
             FqName nameForScript = ScriptNameUtil.classNameForScript(environment.getSourceFiles().get(0).getScript());

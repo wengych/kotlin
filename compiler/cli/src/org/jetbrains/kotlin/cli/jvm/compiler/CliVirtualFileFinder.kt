@@ -17,21 +17,15 @@
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
-import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.load.kotlin.VirtualFileKotlinClassFinder
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import java.util.EnumSet
 
 public class CliVirtualFileFinder(private val packagesCache: JvmDependenciesIndex) : VirtualFileKotlinClassFinder(), VirtualFileFinder {
 
     override fun findVirtualFileWithHeader(classId: ClassId): VirtualFile? {
         val classFileName = classId.getRelativeClassName().asString().replace('.', '$')
-        return packagesCache.findClass(classId, acceptedRootTypes = EnumSet.of(JavaRoot.RootType.BINARY)) { dir, _ ->
+        return packagesCache.findClass(classId, acceptedRootTypes = JavaRoot.OnlyBinary) { dir, _ ->
             dir.findChild("$classFileName.class")?.let {
                 if (it.isValid()) it else null
             }

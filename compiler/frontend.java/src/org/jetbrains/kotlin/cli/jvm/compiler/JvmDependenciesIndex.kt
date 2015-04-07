@@ -25,12 +25,15 @@ import java.util.EnumSet
 import java.util.HashMap
 import kotlin.properties.Delegates
 
-//TODO_R: not public?
 public data class JavaRoot(public val file: VirtualFile, public val type: JavaRoot.RootType) {
-    //TODO_R: constant enum sets
     public enum class RootType {
         SOURCE
         BINARY
+    }
+
+    companion object RootTypes {
+        public val OnlyBinary: Set<RootType> = EnumSet.of(RootType.BINARY)
+        public val SourceAndBinary: Set<RootType> = EnumSet.of(RootType.BINARY, RootType.SOURCE)
     }
 }
 
@@ -53,7 +56,7 @@ class JvmDependenciesIndex(private val roots: List<JavaRoot>) {
 
     fun <T : Any> findClass(
             classId: ClassId,
-            acceptedRootTypes: Set<JavaRoot.RootType> = EnumSet.allOf(javaClass<JavaRoot.RootType>()),
+            acceptedRootTypes: Set<JavaRoot.RootType> = JavaRoot.SourceAndBinary,
             findClassGivenDirectory: (VirtualFile, JavaRoot.RootType) -> T?
     ): T? {
         return search(FindClassRequest(classId, acceptedRootTypes)) { dir, rootType ->
@@ -64,7 +67,7 @@ class JvmDependenciesIndex(private val roots: List<JavaRoot>) {
 
     fun traverseDirectoriesInPackage(
             packageFqName: FqName,
-            acceptedRootTypes: Set<JavaRoot.RootType> = EnumSet.allOf(javaClass<JavaRoot.RootType>()),
+            acceptedRootTypes: Set<JavaRoot.RootType> = JavaRoot.SourceAndBinary,
             continueSearch: (VirtualFile, JavaRoot.RootType) -> Boolean
     ): Unit {
         search(TraverseRequest(packageFqName, acceptedRootTypes)) { dir, rootType ->

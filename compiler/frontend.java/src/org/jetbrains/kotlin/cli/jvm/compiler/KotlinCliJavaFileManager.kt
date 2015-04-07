@@ -48,8 +48,10 @@ public class KotlinCliJavaFileManager(private val myPsiManager: PsiManager) : Co
     }
 
     override fun findClass(qName: String, scope: GlobalSearchScope): PsiClass? {
-        //TODO_R: comment
-        //Most classes are top level classes, but since we have to support this API java we must fallback o
+        // this method is called from IDEA to resolve dependencies in Java code
+        // which supposedly should compile so the dependencies exist in general
+        // Most classes are top level classes so we will try to find them fast
+        // but we must sometimes fallback to support finding inner/nested classes
         val classIdAsTopLevelClass = ClassId.topLevel(FqName(qName))
         return findClass(classIdAsTopLevelClass, scope) ?: super.findClass(qName, scope)
     }
@@ -111,8 +113,7 @@ public class KotlinCliJavaFileManager(private val myPsiManager: PsiManager) : Co
     }
 
     companion object {
-        //TODO_R:
-        private val LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager")
+        private val LOG = Logger.getInstance(javaClass<KotlinCliJavaFileManager>())
 
         private fun findClassInPsiFile(classNameWithInnerClassesDotSeparated: String, file: PsiClassOwner): PsiClass? {
             for (topLevelClass in file.getClasses()) {

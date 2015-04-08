@@ -17,7 +17,7 @@ inline fun test(): String {
 fun box(): String {
     var expected = test();
 
-    return expected
+    return expected /*+ "1"*/
 }
 
 //SMAP

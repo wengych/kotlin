@@ -4,9 +4,9 @@ fun testProperLineNumberAfterInline(): String {
         checkEquals(test(),
                     "12")
     } catch(e: AssertionError) {
-        val entry = e.getStackTrace()!![1]
+        val entry = (e as java.lang.Throwable).getStackTrace()!!.get(1)
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        if ("stackTrace.kt:4" != actual) {
+        if ("stackTraceAndSmap.kt:4" != actual) {
             return "fail 1: ${actual}"
         }
         exceptionCount++
@@ -18,7 +18,7 @@ fun testProperLineNumberAfterInline(): String {
     } catch(e: AssertionError) {
         val entry = e.getStackTrace()!![1]
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        if ("stackTrace.kt:16" != actual) {
+        if ("stackTraceAndSmap.kt:16" != actual) {
             return "fail 1: ${actual}"
         }
         exceptionCount++
@@ -35,11 +35,11 @@ fun testProperLineForOtherParameters(): String {
     } catch(e: AssertionError) {
         val entry = e.getStackTrace()!![1]
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        e.printStackTrace()
-        if ("stackTrace.kt:33" != actual) {
+        if ("stackTraceAndSmap.kt:33" != actual) {
             return "fail 3: ${actual}"
         }
         exceptionCount++
+
     }
 
     try {
@@ -48,19 +48,19 @@ fun testProperLineForOtherParameters(): String {
     } catch(e: AssertionError) {
         val entry = e.getStackTrace()!![1]
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        if ("stackTrace.kt:46" != actual) {
+        if ("stackTraceAndSmap.kt:46" != actual) {
             return "fail 4: ${actual}"
         }
         exceptionCount++
     }
 
-    return if (exceptionCount == 2) "O1K" else "fail"
+    return if (exceptionCount == 2) "OK" else "fail"
 }
 
 
 fun box(): String {
     val res = testProperLineNumberAfterInline()
-    if (res != "OK") return "fail $res"
+    if (res != "OK") return "$res"
 
     return testProperLineForOtherParameters()
 }

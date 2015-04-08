@@ -1404,6 +1404,7 @@ public class BlackBoxWithStdlibCodegenTestGenerated extends AbstractBlackBoxCode
     @InnerTestClasses({
             FullJdk.Native.class,
             FullJdk.Regressions.class,
+            FullJdk.Smap.class,
             FullJdk.Synchronized.class,
     })
     @RunWith(JUnit3RunnerWithInners.class)
@@ -1469,12 +1470,6 @@ public class BlackBoxWithStdlibCodegenTestGenerated extends AbstractBlackBoxCode
         @TestMetadata("platformTypeAssertionStackTrace.kt")
         public void testPlatformTypeAssertionStackTrace() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/platformTypeAssertionStackTrace.kt");
-            doTestWithStdlib(fileName);
-        }
-
-        @TestMetadata("stackTraceAndSmap.kt")
-        public void testStackTraceAndSmap() throws Exception {
-            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/stackTraceAndSmap.kt");
             doTestWithStdlib(fileName);
         }
 
@@ -1588,6 +1583,33 @@ public class BlackBoxWithStdlibCodegenTestGenerated extends AbstractBlackBoxCode
             @TestMetadata("kt864.kt")
             public void testKt864() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/regressions/kt864.kt");
+                doTestWithStdlib(fileName);
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/smap")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Smap extends AbstractBlackBoxCodegenTest {
+            public void testAllFilesPresentInSmap() throws Exception {
+                JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/boxWithStdlib/fullJdk/smap"), Pattern.compile("^(.+)\\.kt$"), true);
+            }
+
+            @TestMetadata("chainCalls.kt")
+            public void testChainCalls() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/smap/chainCalls.kt");
+                doTestWithStdlib(fileName);
+            }
+
+            @TestMetadata("infixCalls.kt")
+            public void testInfixCalls() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/smap/infixCalls.kt");
+                doTestWithStdlib(fileName);
+            }
+
+            @TestMetadata("simpleCallWithParams.kt")
+            public void testSimpleCallWithParams() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/fullJdk/smap/simpleCallWithParams.kt");
                 doTestWithStdlib(fileName);
             }
         }

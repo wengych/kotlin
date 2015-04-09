@@ -295,13 +295,26 @@ public class JetTypeMapper {
             TypeProjection memberProjection = jetType.getArguments().get(0);
             JetType memberType = memberProjection.getType();
 
-            if (signatureVisitor != null) {
-                signatureVisitor.writeArrayType();
-                mapType(memberType, signatureVisitor, JetTypeMapperMode.TYPE_PARAMETER, memberProjection.getProjectionKind(), true);
-                signatureVisitor.writeArrayEnd();
+
+
+            Type arrayElementType;
+            if (memberProjection.getProjectionKind() == Variance.IN_VARIANCE) {
+                arrayElementType = AsmTypes.OBJECT_TYPE;
+                if (signatureVisitor != null) {
+                    signatureVisitor.writeArrayType();
+                    signatureVisitor.writeAsmType(arrayElementType);
+                    signatureVisitor.writeArrayEnd();
+                }
+            } else {
+                arrayElementType = boxType(mapType(memberType, kind));
+                if (signatureVisitor != null) {
+                    signatureVisitor.writeArrayType();
+                    mapType(memberType, signatureVisitor, JetTypeMapperMode.TYPE_PARAMETER, memberProjection.getProjectionKind(), true);
+                    signatureVisitor.writeArrayEnd();
+                }
             }
 
-            return Type.getType("[" + boxType(mapType(memberType, kind)).getDescriptor());
+            return Type.getType("[" + arrayElementType.getDescriptor());
         }
 
         if (descriptor instanceof ClassDescriptor) {

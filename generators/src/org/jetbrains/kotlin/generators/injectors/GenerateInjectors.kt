@@ -214,9 +214,10 @@ private fun generatorForTests() =
 
             publicField<DescriptorResolver>()
             publicField<FunctionDescriptorResolver>()
-            publicField<ExpressionTypingServices>()
-            publicField<ExpressionTypingUtils>()
             publicField<TypeResolver>()
+            publicField<FakeCallResolver>()
+            publicField<KotlinJvmCheckerProvider>(name = "additionalCheckerProvider")
+            publicField<ExpressionTypingServices>()
             publicField<QualifiedExpressionResolver>()
 
             field<GlobalContext>(init = GivenExpression("org.jetbrains.kotlin.context.ContextPackage.GlobalContext()"),

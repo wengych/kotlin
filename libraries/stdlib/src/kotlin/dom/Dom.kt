@@ -138,6 +138,7 @@ public fun NodeList?.toElementList(): List<Element> {
 }
 
 /** Searches for elements using the element name, an element ID (if prefixed with dot) or element class (if prefixed with #) */
+deprecated("Please use document.querySelector or document.querySelectorAll")
 public fun Document?.get(selector: String): List<Element> {
     val root = this?.documentElement
     return if (root != null) {
@@ -162,6 +163,7 @@ public fun Document?.get(selector: String): List<Element> {
 }
 
 /** Searches for elements using the element name, an element ID (if prefixed with dot) or element class (if prefixed with #) */
+deprecated("Please use document.querySelector or document.querySelectorAll")
 public fun Element.get(selector: String): List<Element> {
     return if (selector == "*") {
         elements
@@ -179,39 +181,73 @@ public fun Element.get(selector: String): List<Element> {
     }
 }
 
-
-// Helper methods
-
-/** TODO this approach generates compiler errors...
-
-fun Element.addClass(varargs cssClasses: Array<String>): Boolean {
-    val set = this.classSet
-    var answer = false
-    for (cs in cssClasses) {
-        if (set.add(cs)) {
-            answer = true
-        }
+/**
+ * Adds CSS class to element. Has no effect if all specified classes are already in class attribute of the element
+ */
+public fun Element.addClass(vararg cssClasses: String): Boolean {
+    val missingClasses = cssClasses.filterNot { hasClass(it) }
+    if (missingClasses.isNotEmpty()) {
+        classes = StringBuilder {
+            append(classes)
+            missingClasses.joinTo(this, " ", " ")
+        }.toString()
+        return true
     }
-    if (answer) {
-        this.classSet = classSet
-    }
-    return answer
+
+    return false
 }
 
-fun Element.removeClass(varargs cssClasses: Array<String>): Boolean {
-    val set = this.classSet
-    var answer = false
-    for (cs in cssClasses) {
-        if (set.remove(cs)) {
-            answer = true
-        }
+/**
+ * Removes all [cssClasses] from element. Has no effect if all specified classes are missing in class attribute of the element
+ */
+public fun Element.removeClass(vararg cssClasses: String): Boolean {
+    if (cssClasses.any { hasClass(it) }) {
+        val toBeRemoved = cssClasses.toSet()
+        classes = classes.split("\\s+").filter { it !in toBeRemoved }.joinToString(" ")
+        return true
     }
-    if (answer) {
-        this.classSet = classSet
-    }
-    return answer
+
+    return false
 }
-*/
+
+/**
+ * Adds [cssClasses] to element if []condition] is true or removes it otherwise.
+ * Has no effect if class attribute already has corresponding content
+ */
+public fun Element.addOrRemoveClassWhen(condition : Boolean, vararg cssClasses : String) {
+    if (condition) {
+        addClass(*cssClasses)
+    } else {
+        removeClass(*cssClasses)
+    }
+}
+
+/**
+ * Adds [trueClassName] class to element if [condition] is true and removes [falseClassName].
+ * If [condition] is false then [trueClassName] will be removed and [falseClassName] will be added.
+ * Has no effect if class attribute already has corresponding content
+ */
+public fun Element.swapClassWhen(condition: Boolean, trueClassName: String, falseClassName: String) {
+    if (condition) {
+        addClass(trueClassName)
+        removeClass(falseClassName)
+    } else {
+        removeClass(trueClassName)
+        addClass(falseClassName)
+    }
+}
+
+/**
+ * If [condition] is true then [attributeName] with value [attributeValue] will be added to the element, otherwise attribute with
+ * name [attributeName] will be removed
+ */
+public fun Element.addOrRemoveAttributeWhen(condition : Boolean, attributeName : String, attributeValue : String = attributeName) {
+    if (condition) {
+        setAttribute(attributeName, attributeValue)
+    } else {
+        removeAttribute(attributeName)
+    }
+}
 
 private class NodeListAsList(private val nodeList: NodeList) : AbstractList<Node>() {
     override fun get(index: Int): Node {

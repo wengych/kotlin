@@ -1,6 +1,7 @@
 package kotlin.js.dom.html
 
 import org.w3c.dom.*
+import kotlin.js.*
 
 native
 public val window: Window = noImpl
@@ -299,7 +300,7 @@ public native trait HTMLBodyElement : HTMLElement {
     public native var onunload: () -> Unit
 }
 
-public native trait HTMLFormElement {
+public native trait HTMLFormElement : HTMLElement {
     public native val elements: HTMLCollection
     public native val length: Double
     public native var name: String
@@ -442,6 +443,9 @@ public native trait HTMLMenuElement : HTMLElement {
 public native trait HTMLLIElement : HTMLElement {
     public native var type: String
     public native var value: Double
+}
+
+public native trait HTMLSpanElement : HTMLElement {
 }
 
 public native trait HTMLDivElement : HTMLElement {

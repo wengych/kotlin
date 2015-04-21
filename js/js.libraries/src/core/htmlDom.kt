@@ -163,8 +163,8 @@ public native trait Global {
 
 public native trait HTMLCollection {
     public native val length: Double
-    public native fun item(index: Number): Node?
-    public native fun namedItem(name: String): Node?
+    public native fun item(index: Number): HTMLElement?
+    public native fun namedItem(name: String): HTMLElement?
 }
 
 public native trait HTMLOptionsCollection {

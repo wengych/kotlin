@@ -243,6 +243,12 @@ native public trait Node {
     }
 }
 
+native public trait HTMLCollection {
+    val length : Int
+    fun item(index : Int) : Element
+    fun namedItem(name : String) : Element
+}
+
 native public trait NodeList {
     public val length: Int
     public fun item(arg1: Int): Node = noImpl

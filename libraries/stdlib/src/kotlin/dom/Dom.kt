@@ -116,15 +116,11 @@ public fun Document?.elements(namespaceUri: String, localName: String): List<Ele
     return this?.getElementsByTagNameNS(namespaceUri, localName).toElementList()
 }
 
-public fun NodeList?.toList(): List<Node> {
-    return if (this == null) {
-        // TODO the following is easier to convert to JS
-        emptyList()
-    }
-    else {
-        NodeListAsList(this)
-    }
-}
+deprecated("Use NodeList.asList() instead")
+public fun NodeList?.toList(): List<Node> = asList()
+
+public fun NodeList?.asList(): List<Node> = if (this == null) emptyList()
+    else NodeListAsList(this)
 
 public fun NodeList?.toElementList(): List<Element> {
     return if (this == null) {

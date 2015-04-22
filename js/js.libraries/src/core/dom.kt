@@ -61,6 +61,7 @@ native public trait Document: Node {
     public fun getElementById(arg1: String?): Element = noImpl
     public fun getElementsByTagName(arg1: String?): NodeList = noImpl
     public fun getElementsByTagNameNS(arg1: String?, arg2: String?): NodeList = noImpl
+    public fun getElementsByClassName(classes : String): HTMLCollection
     public fun importNode(arg1: Node, arg2: Boolean): Node = noImpl
     public fun normalizeDocument(): Unit = noImpl
     public fun renameNode(arg1: Node, arg2: String?, arg3: String?): Node = noImpl
@@ -140,6 +141,7 @@ native public trait Element: Node {
     public fun getAttributeNodeNS(arg1: String?, arg2: String?): Attr = noImpl
     public fun getElementsByTagName(arg1: String?): NodeList = noImpl
     public fun getElementsByTagNameNS(arg1: String?, arg2: String?): NodeList = noImpl
+    public fun getElementsByClassName(classes : String): HTMLCollection
     public fun hasAttribute(arg1: String?): Boolean = noImpl
     public fun hasAttributeNS(arg1: String?, arg2: String?): Boolean = noImpl
     public fun removeAttribute(arg1: String?): Unit = noImpl

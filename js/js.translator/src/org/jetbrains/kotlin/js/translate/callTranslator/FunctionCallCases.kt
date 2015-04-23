@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.psi.JetBinaryExpression
 import org.jetbrains.kotlin.lexer.JetTokens
 import org.jetbrains.kotlin.psi.JetOperationExpression
 import org.jetbrains.kotlin.js.translate.utils.PsiUtils
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtins
 
 public fun addReceiverToArgs(receiver: JsExpression, arguments: List<JsExpression>): List<JsExpression> {
     if (arguments.isEmpty())
@@ -178,17 +179,18 @@ object NativeSetterCallCase : AnnotatedAsNativeXCallCase(PredefinedAnnotation.NA
 
 object InvokeIntrinsic : FunctionCallCase {
     fun canApply(callInfo: FunctionCallInfo): Boolean {
-        if (!callInfo.callableDescriptor.getName().asString().equals("invoke"))
+        val callableDescriptor = callInfo.callableDescriptor
+        if (!callableDescriptor.getName().asString().equals("invoke"))
             return false
-        val parameterCount = callInfo.callableDescriptor.getValueParameters().size()
-        val funDeclaration = callInfo.callableDescriptor.getContainingDeclaration()
+        val parameterCount = callableDescriptor.getValueParameters().size()
+        val funDeclaration = callableDescriptor.getContainingDeclaration()
 
         val reflectionTypes = callInfo.context.getReflectionTypes()
-        return if (callInfo.callableDescriptor.getExtensionReceiverParameter() == null)
-            funDeclaration == KotlinBuiltIns.getInstance().getFunction(parameterCount) ||
+        return if (callableDescriptor.getExtensionReceiverParameter() == null)
+            funDeclaration == callableDescriptor.builtins.getFunction(parameterCount) ||
             funDeclaration == reflectionTypes.getKFunction(parameterCount)
         else
-            funDeclaration == KotlinBuiltIns.getInstance().getExtensionFunction(parameterCount) ||
+            funDeclaration == callableDescriptor.builtins.getExtensionFunction(parameterCount) ||
             funDeclaration == reflectionTypes.getKExtensionFunction(parameterCount) ||
             funDeclaration == reflectionTypes.getKMemberFunction(parameterCount)
     }

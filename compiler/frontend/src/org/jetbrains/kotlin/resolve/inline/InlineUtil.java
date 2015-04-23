@@ -71,9 +71,7 @@ public class InlineUtil {
     }
 
     private static boolean hasInlineOption(@NotNull ValueParameterDescriptor descriptor, @NotNull InlineOption option) {
-        AnnotationDescriptor annotation = descriptor.getAnnotations().findAnnotation(
-                DescriptorUtils.getFqNameSafe(KotlinBuiltIns.getInstance().getInlineOptionsClassAnnotation())
-        );
+        AnnotationDescriptor annotation = descriptor.getAnnotations().findAnnotation(KotlinBuiltIns.getInlineOptionsFqName());
         if (annotation != null) {
             CompileTimeConstant<?> argument = firstOrNull(annotation.getAllValueArguments().values());
             if (argument instanceof ArrayValue) {

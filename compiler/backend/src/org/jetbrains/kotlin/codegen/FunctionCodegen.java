@@ -69,6 +69,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.kotlin.builtins.KotlinBuiltIns.isNullableAny;
 import static org.jetbrains.kotlin.codegen.AsmUtil.*;
 import static org.jetbrains.kotlin.codegen.JvmSerializationBindings.*;
 import static org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DECLARATION;
@@ -523,7 +524,7 @@ public class FunctionCodegen {
         }
         else if (parameters.size() == 1 && name.equals("equals")) {
             ValueParameterDescriptor parameter = parameters.get(0);
-            return parameter.getType().equals(KotlinBuiltIns.getInstance().getNullableAnyType());
+            return isNullableAny(parameter.getType());
         }
         return false;
     }

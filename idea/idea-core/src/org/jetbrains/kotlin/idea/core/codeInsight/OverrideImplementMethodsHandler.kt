@@ -270,7 +270,7 @@ public abstract class OverrideImplementMethodsHandler : LanguageCodeInsightActio
             val returnType = descriptor.getReturnType()
             val builtIns = KotlinBuiltIns.getInstance()
 
-            val returnsNotUnit = returnType != null && builtIns.getUnitType() != returnType
+            val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
             val isAbstract = descriptor.getModality() == Modality.ABSTRACT
 
             val delegation = generateUnsupportedOrSuperCall(classOrObject, descriptor)

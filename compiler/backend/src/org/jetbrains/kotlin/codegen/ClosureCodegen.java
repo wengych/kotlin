@@ -22,7 +22,6 @@ import kotlin.Function1;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.codegen.binding.CalculatedClosure;
 import org.jetbrains.kotlin.codegen.context.ClosureContext;
 import org.jetbrains.kotlin.codegen.inline.InlineCodegenUtil;
@@ -48,8 +47,10 @@ import java.util.List;
 
 import static org.jetbrains.kotlin.codegen.AsmUtil.*;
 import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.isConst;
-import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.*;
+import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.CLOSURE;
+import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.asmTypeForAnonymousClass;
 import static org.jetbrains.kotlin.load.java.JvmAnnotationNames.KotlinSyntheticClass;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
 import static org.jetbrains.kotlin.resolve.jvm.diagnostics.DiagnosticsPackage.OtherOrigin;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
@@ -106,7 +107,7 @@ public class ClosureCodegen extends MemberCodegen<JetElement> {
         }
         else {
             this.superInterfaceTypes = Collections.singletonList(samType.getType());
-            this.superClassType = KotlinBuiltIns.getInstance().getAnyType();
+            this.superClassType = getBuiltins(funDescriptor).getAnyType();
         }
 
         this.closure = bindingContext.get(CLOSURE, classDescriptor);
@@ -363,8 +364,8 @@ public class ClosureCodegen extends MemberCodegen<JetElement> {
     public static FunctionDescriptor getErasedInvokeFunction(@NotNull FunctionDescriptor elementDescriptor) {
         int arity = elementDescriptor.getValueParameters().size();
         ClassDescriptor elementClass = elementDescriptor.getExtensionReceiverParameter() == null
-                                   ? KotlinBuiltIns.getInstance().getFunction(arity)
-                                   : KotlinBuiltIns.getInstance().getExtensionFunction(arity);
+                                   ? getBuiltins(elementDescriptor).getFunction(arity)
+                                   : getBuiltins(elementDescriptor).getExtensionFunction(arity);
         return elementClass.getDefaultType().getMemberScope().getFunctions(Name.identifier("invoke")).iterator().next();
     }
 }

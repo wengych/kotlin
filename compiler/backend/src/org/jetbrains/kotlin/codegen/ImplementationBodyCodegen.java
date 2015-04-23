@@ -77,6 +77,7 @@ import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.*;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.enumEntryNeedSubclass;
 import static org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.descriptorToDeclaration;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
 import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getSecondaryConstructors;
 import static org.jetbrains.kotlin.resolve.jvm.AsmTypes.*;
 import static org.jetbrains.kotlin.resolve.jvm.diagnostics.DiagnosticsPackage.*;
@@ -337,7 +338,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
 
         if (superClassType == null) {
             if (descriptor.getKind() == ClassKind.ENUM_CLASS) {
-                superClassType = KotlinBuiltIns.getInstance().getEnumType(descriptor.getDefaultType());
+                superClassType = getBuiltins(descriptor).getEnumType(descriptor.getDefaultType());
                 superClassAsmType = typeMapper.mapType(superClassType);
             }
             if (descriptor.getKind() == ClassKind.ENUM_ENTRY) {
@@ -422,8 +423,8 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
             JetType paramType = function.getValueParameters().get(0).getType();
             if (KotlinBuiltIns.isArray(returnType) && KotlinBuiltIns.isArray(paramType)) {
                 JetType elementType = function.getTypeParameters().get(0).getDefaultType();
-                if (JetTypeChecker.DEFAULT.equalTypes(elementType, KotlinBuiltIns.getInstance().getArrayElementType(returnType))
-                        && JetTypeChecker.DEFAULT.equalTypes(elementType, KotlinBuiltIns.getInstance().getArrayElementType(paramType))) {
+                if (JetTypeChecker.DEFAULT.equalTypes(elementType, getBuiltins(descriptor).getArrayElementType(returnType))
+                        && JetTypeChecker.DEFAULT.equalTypes(elementType, getBuiltins(descriptor).getArrayElementType(paramType))) {
                     return true;
                 }
             }
@@ -433,7 +434,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     }
 
     private void generateToArray() {
-        KotlinBuiltIns builtIns = KotlinBuiltIns.getInstance();
+        KotlinBuiltIns builtIns = DescriptorUtilPackage.getBuiltins(descriptor);
         if (!isSubclass(descriptor, builtIns.getCollection())) return;
 
         int access = descriptor.getKind() == ClassKind.TRAIT ?
@@ -489,10 +490,11 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
 
         @Override
         public void generateEqualsMethod(@NotNull List<PropertyDescriptor> properties) {
+            KotlinBuiltIns builtins = DescriptorUtilPackage.getBuiltins(descriptor);
             FunctionDescriptor equalsFunction = CodegenUtil.getDeclaredFunctionByRawSignature(
                     descriptor, Name.identifier(CodegenUtil.EQUALS_METHOD_NAME),
-                    KotlinBuiltIns.getInstance().getBoolean(),
-                    KotlinBuiltIns.getInstance().getAny()
+                    builtins.getBoolean(),
+                    builtins.getAny()
             );
 
             assert equalsFunction != null : String.format("Should be called only for classes with non-trivial '%s'. In %s, %s",
@@ -565,7 +567,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         public void generateHashCodeMethod(@NotNull List<PropertyDescriptor> properties) {
             FunctionDescriptor hashCodeFunction = CodegenUtil.getDeclaredFunctionByRawSignature(
                     descriptor, Name.identifier(CodegenUtil.HASH_CODE_METHOD_NAME),
-                    KotlinBuiltIns.getInstance().getInt()
+                    DescriptorUtilPackage.getBuiltins(descriptor).getInt()
             );
 
             assert hashCodeFunction != null : String.format("Should be called only for classes with non-trivial '%s'. In %s, %s",
@@ -621,7 +623,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         public void generateToStringMethod(@NotNull List<PropertyDescriptor> properties) {
             FunctionDescriptor toString = CodegenUtil.getDeclaredFunctionByRawSignature(
                     descriptor, Name.identifier(CodegenUtil.TO_STRING_METHOD_NAME),
-                    KotlinBuiltIns.getInstance().getString()
+                    DescriptorUtilPackage.getBuiltins(descriptor).getString()
             );
 
             assert toString != null : String.format("Should be called only for classes with non-trivial '%s'. In %s, %s",
@@ -795,7 +797,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     }
 
     private void generateEnumValuesMethod() {
-        Type type = typeMapper.mapType(KotlinBuiltIns.getInstance().getArrayType(INVARIANT, descriptor.getDefaultType()));
+        Type type = typeMapper.mapType(DescriptorUtilPackage.getBuiltins(descriptor).getArrayType(INVARIANT, descriptor.getDefaultType()));
 
         FunctionDescriptor valuesFunction =
                 KotlinPackage.single(descriptor.getStaticScope().getFunctions(ENUM_VALUES), new Function1<FunctionDescriptor, Boolean>() {
@@ -1445,7 +1447,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                             reg += argTypes[i].getSize();
                         }
 
-                        if (KotlinBuiltIns.getInstance().isCloneable(containingTrait) && traitMethod.getName().equals("clone")) {
+                        if (KotlinBuiltIns.isCloneable(containingTrait) && traitMethod.getName().equals("clone")) {
                             // A special hack for Cloneable: there's no kotlin/Cloneable$$TImpl class at runtime,
                             // and its 'clone' method is actually located in java/lang/Object
                             iv.invokespecial("java/lang/Object", "clone", "()Ljava/lang/Object;", false);
@@ -1654,7 +1656,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         ExpressionCodegen codegen = createOrGetClInitCodegen();
         InstructionAdapter iv = codegen.v;
 
-        Type arrayAsmType = typeMapper.mapType(KotlinBuiltIns.getInstance().getArrayType(INVARIANT, descriptor.getDefaultType()));
+        Type arrayAsmType = typeMapper.mapType(DescriptorUtilPackage.getBuiltins(descriptor).getArrayType(INVARIANT, descriptor.getDefaultType()));
         v.newField(OtherOrigin(myClass), ACC_PRIVATE | ACC_STATIC | ACC_FINAL | ACC_SYNTHETIC, ENUM_VALUES_FIELD_NAME,
                    arrayAsmType.getDescriptor(), null, null);
 

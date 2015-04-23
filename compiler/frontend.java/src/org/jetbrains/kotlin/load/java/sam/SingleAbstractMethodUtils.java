@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.types.*;
 
 import java.util.*;
 
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
 import static org.jetbrains.kotlin.types.Variance.INVARIANT;
 
 public class SingleAbstractMethodUtils {
@@ -121,7 +122,7 @@ public class SingleAbstractMethodUtils {
         for (ValueParameterDescriptor parameter : valueParameters) {
             parameterTypes.add(parameter.getType());
         }
-        return KotlinBuiltIns.getInstance().getFunctionType(
+        return getBuiltins(function).getFunctionType(
                 Annotations.EMPTY, null, parameterTypes, returnType);
     }
 

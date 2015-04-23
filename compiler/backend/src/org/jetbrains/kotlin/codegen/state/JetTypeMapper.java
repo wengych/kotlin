@@ -71,6 +71,7 @@ import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.*;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.*;
 import static org.jetbrains.kotlin.resolve.BindingContextUtils.isVarCapturedInClosure;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 public class JetTypeMapper {
@@ -185,7 +186,7 @@ public class JetTypeMapper {
             return Type.VOID_TYPE;
         }
 
-        if (returnType.equals(KotlinBuiltIns.getInstance().getUnitType())
+        if (returnType.equals(getBuiltins(descriptor).getUnitType())
             && !TypeUtils.isNullableType(returnType)
             && !(descriptor instanceof PropertyGetterDescriptor)) {
             if (sw != null) {
@@ -935,8 +936,8 @@ public class JetTypeMapper {
 
         ClassDescriptor containingDeclaration = descriptor.getContainingDeclaration();
         if (containingDeclaration.getKind() == ClassKind.ENUM_CLASS || containingDeclaration.getKind() == ClassKind.ENUM_ENTRY) {
-            writeParameter(sw, JvmMethodParameterKind.ENUM_NAME_OR_ORDINAL, KotlinBuiltIns.getInstance().getStringType());
-            writeParameter(sw, JvmMethodParameterKind.ENUM_NAME_OR_ORDINAL, KotlinBuiltIns.getInstance().getIntType());
+            writeParameter(sw, JvmMethodParameterKind.ENUM_NAME_OR_ORDINAL, getBuiltins(descriptor).getStringType());
+            writeParameter(sw, JvmMethodParameterKind.ENUM_NAME_OR_ORDINAL, getBuiltins(descriptor).getIntType());
         }
 
         if (closure == null) return;

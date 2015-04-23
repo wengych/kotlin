@@ -50,6 +50,7 @@ import java.util.*;
 
 import static org.jetbrains.kotlin.load.java.components.TypeUsage.*;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.getFqName;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
 import static org.jetbrains.kotlin.types.Variance.INVARIANT;
 
 public class SignaturesPropagationData {
@@ -263,7 +264,7 @@ public class SignaturesPropagationData {
                         stableName != null ? stableName : originalParam.getName(),
                         altType,
                         originalParam.declaresDefaultValue(),
-                        varargCheckResult.isVararg ? KotlinBuiltIns.getInstance().getArrayElementType(altType) : null,
+                        varargCheckResult.isVararg ? getBuiltins(originalParam).getArrayElementType(altType) : null,
                         SourceElement.NO_SOURCE
                 ));
             }

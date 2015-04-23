@@ -37,6 +37,7 @@ import java.util.ArrayList
 import org.jetbrains.kotlin.utils.toReadOnlyList
 import org.jetbrains.kotlin.load.java.structure.JavaType
 import org.jetbrains.kotlin.load.java.structure.JavaClassifierType
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtins
 
 class LazyJavaClassDescriptor(
         private val outerC: LazyJavaResolverContext,
@@ -138,7 +139,7 @@ class LazyJavaClassDescriptor(
                 })
             }
 
-            if (result.isNotEmpty()) result.toReadOnlyList() else listOf(KotlinBuiltIns.getInstance().getAnyType())
+            if (result.isNotEmpty()) result.toReadOnlyList() else listOf(getContainingDeclaration().builtins.getAnyType())
         }
 
         override fun getSupertypes(): Collection<JetType> = supertypes()

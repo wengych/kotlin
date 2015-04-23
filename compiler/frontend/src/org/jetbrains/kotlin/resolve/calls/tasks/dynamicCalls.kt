@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.psi.ValueArgument
 import java.util.ArrayList
 import org.jetbrains.kotlin.psi.JetFunctionLiteralExpression
 import org.jetbrains.kotlin.psi.JetPsiUtil
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtins
 
 object DynamicCallableDescriptors {
 
@@ -195,7 +196,7 @@ object DynamicCallableDescriptors {
             val receiverType = funLiteral.getReceiverTypeReference()?.let { DynamicType }
             val parameterTypes = funLiteral.getValueParameters().map { DynamicType }
 
-            return KotlinBuiltIns.getInstance().getFunctionType(Annotations.EMPTY, receiverType, parameterTypes, DynamicType)
+            return owner.builtins.getFunctionType(Annotations.EMPTY, receiverType, parameterTypes, DynamicType)
         }
 
         for (arg in call.getValueArguments()) {
@@ -213,7 +214,7 @@ object DynamicCallableDescriptors {
 
                 arg.getSpreadElement() != null -> {
                     hasSpreadOperator = true
-                    outType = KotlinBuiltIns.getInstance().getArrayType(Variance.OUT_VARIANCE, DynamicType)
+                    outType = owner.builtins.getArrayType(Variance.OUT_VARIANCE, DynamicType)
                     varargElementType = DynamicType
                 }
 

@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.resolve.TypeResolver;
 import org.jetbrains.kotlin.context.GlobalContext;
 import org.jetbrains.kotlin.storage.StorageManager;
 import org.jetbrains.kotlin.resolve.AdditionalCheckerProvider.DefaultProvider;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.resolve.StatementFilter;
 import org.jetbrains.kotlin.resolve.AnnotationResolver;
 import org.jetbrains.kotlin.resolve.calls.CallExpressionResolver;
@@ -66,6 +67,7 @@ public class InjectorForMacros {
     private final GlobalContext globalContext;
     private final StorageManager storageManager;
     private final DefaultProvider defaultProvider;
+    private final SymbolUsageValidator symbolUsageValidator;
     private final StatementFilter statementFilter;
     private final AnnotationResolver annotationResolver;
     private final CallExpressionResolver callExpressionResolver;
@@ -108,6 +110,7 @@ public class InjectorForMacros {
         this.dynamicTypesSettings = new DynamicTypesSettings();
         this.typeResolver = new TypeResolver(annotationResolver, qualifiedExpressionResolver, moduleDescriptor, flexibleTypeCapabilitiesProvider, storageManager, typeLazinessToken, dynamicTypesSettings);
         this.defaultProvider = DefaultProvider.INSTANCE$;
+        this.symbolUsageValidator = defaultProvider.getSymbolUsageValidator();
         this.statementFilter = new StatementFilter();
         this.callExpressionResolver = new CallExpressionResolver(getCallResolver());
         this.controlStructureTypingUtils = new ControlStructureTypingUtils(getCallResolver());
@@ -117,7 +120,7 @@ public class InjectorForMacros {
         this.fakeCallResolver = new FakeCallResolver(project, getCallResolver());
         this.functionDescriptorResolver = new FunctionDescriptorResolver(getTypeResolver(), descriptorResolver, annotationResolver, storageManager, getExpressionTypingServices(), kotlinBuiltIns);
         this.localClassifierAnalyzer = new LocalClassifierAnalyzer(descriptorResolver, functionDescriptorResolver, getTypeResolver(), annotationResolver);
-        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, getTypeResolver());
+        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, getTypeResolver(), symbolUsageValidator);
         this.reflectionTypes = new ReflectionTypes(moduleDescriptor);
         this.valueParameterResolver = new ValueParameterResolver(defaultProvider, getExpressionTypingServices());
         this.argumentTypeResolver = new ArgumentTypeResolver();
@@ -143,6 +146,7 @@ public class InjectorForMacros {
         this.expressionTypingComponents.setMultiDeclarationResolver(multiDeclarationResolver);
         this.expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
         this.expressionTypingComponents.setReflectionTypes(reflectionTypes);
+        this.expressionTypingComponents.setSymbolUsageValidator(symbolUsageValidator);
         this.expressionTypingComponents.setTypeResolver(typeResolver);
         this.expressionTypingComponents.setValueParameterResolver(valueParameterResolver);
 
@@ -174,12 +178,15 @@ public class InjectorForMacros {
 
         forLoopConventionsChecker.setBuiltIns(kotlinBuiltIns);
         forLoopConventionsChecker.setFakeCallResolver(fakeCallResolver);
+        forLoopConventionsChecker.setSymbolUsageValidator(symbolUsageValidator);
 
         argumentTypeResolver.setBuiltIns(kotlinBuiltIns);
         argumentTypeResolver.setExpressionTypingServices(expressionTypingServices);
         argumentTypeResolver.setTypeResolver(typeResolver);
 
         candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
+
+        qualifiedExpressionResolver.setSymbolUsageValidator(symbolUsageValidator);
 
     }
 

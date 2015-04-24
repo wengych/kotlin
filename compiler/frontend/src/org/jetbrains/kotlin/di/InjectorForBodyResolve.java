@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.platform.PlatformToKotlinClassMap;
 import org.jetbrains.kotlin.resolve.AdditionalCheckerProvider;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.resolve.StatementFilter;
 import org.jetbrains.kotlin.resolve.BodyResolver;
 import org.jetbrains.kotlin.resolve.AnnotationResolver;
@@ -70,6 +71,7 @@ public class InjectorForBodyResolve {
     private final KotlinBuiltIns kotlinBuiltIns;
     private final PlatformToKotlinClassMap platformToKotlinClassMap;
     private final AdditionalCheckerProvider additionalCheckerProvider;
+    private final SymbolUsageValidator symbolUsageValidator;
     private final StatementFilter statementFilter;
     private final BodyResolver bodyResolver;
     private final AnnotationResolver annotationResolver;
@@ -118,6 +120,7 @@ public class InjectorForBodyResolve {
         this.kotlinBuiltIns = moduleDescriptor.getBuiltIns();
         this.platformToKotlinClassMap = moduleDescriptor.getPlatformToKotlinClassMap();
         this.additionalCheckerProvider = additionalCheckerProvider;
+        this.symbolUsageValidator = additionalCheckerProvider.getSymbolUsageValidator();
         this.statementFilter = statementFilter;
         this.bodyResolver = new BodyResolver();
         this.annotationResolver = new AnnotationResolver();
@@ -138,7 +141,7 @@ public class InjectorForBodyResolve {
         this.fakeCallResolver = new FakeCallResolver(project, callResolver);
         this.functionDescriptorResolver = new FunctionDescriptorResolver(typeResolver, descriptorResolver, annotationResolver, storageManager, expressionTypingServices, kotlinBuiltIns);
         this.localClassifierAnalyzer = new LocalClassifierAnalyzer(descriptorResolver, functionDescriptorResolver, typeResolver, annotationResolver);
-        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver);
+        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver, symbolUsageValidator);
         this.reflectionTypes = new ReflectionTypes(moduleDescriptor);
         this.valueParameterResolver = new ValueParameterResolver(additionalCheckerProvider, expressionTypingServices);
         this.candidateResolver = new CandidateResolver();
@@ -196,6 +199,7 @@ public class InjectorForBodyResolve {
         expressionTypingComponents.setMultiDeclarationResolver(multiDeclarationResolver);
         expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
         expressionTypingComponents.setReflectionTypes(reflectionTypes);
+        expressionTypingComponents.setSymbolUsageValidator(symbolUsageValidator);
         expressionTypingComponents.setTypeResolver(typeResolver);
         expressionTypingComponents.setValueParameterResolver(valueParameterResolver);
 
@@ -213,8 +217,11 @@ public class InjectorForBodyResolve {
         delegatedPropertyResolver.setCallResolver(callResolver);
         delegatedPropertyResolver.setExpressionTypingServices(expressionTypingServices);
 
+        qualifiedExpressionResolver.setSymbolUsageValidator(symbolUsageValidator);
+
         forLoopConventionsChecker.setBuiltIns(kotlinBuiltIns);
         forLoopConventionsChecker.setFakeCallResolver(fakeCallResolver);
+        forLoopConventionsChecker.setSymbolUsageValidator(symbolUsageValidator);
 
         candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
 

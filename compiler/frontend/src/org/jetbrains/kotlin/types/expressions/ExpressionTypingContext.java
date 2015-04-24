@@ -58,6 +58,7 @@ public class ExpressionTypingContext extends ResolutionContext<ExpressionTypingC
         return newContext(trace, scope, dataFlowInfo, expectedType,
                           ContextDependency.INDEPENDENT, new ResolutionResultsCacheImpl(),
                           callChecker != null ? callChecker : additionalCheckerProvider.getCallChecker(),
+                          additionalCheckerProvider.getSymbolUsageValidator(),
                           additionalCheckerProvider.getTypeChecker(),
                           StatementFilter.NONE, false);
     }

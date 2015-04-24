@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.resolve.lazy.ResolveSession;
 import org.jetbrains.kotlin.resolve.lazy.ScopeProvider;
 import org.jetbrains.kotlin.resolve.LazyTopDownAnalyzerForTopLevel;
 import org.jetbrains.kotlin.js.resolve.KotlinJsCheckerProvider;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.types.DynamicTypesAllowed;
 import org.jetbrains.kotlin.resolve.AnnotationResolver;
 import org.jetbrains.kotlin.resolve.calls.CallResolver;
@@ -87,6 +88,7 @@ public class InjectorForTopDownAnalyzerForJs {
     private final ScopeProvider scopeProvider;
     private final LazyTopDownAnalyzerForTopLevel lazyTopDownAnalyzerForTopLevel;
     private final KotlinJsCheckerProvider kotlinJsCheckerProvider;
+    private final SymbolUsageValidator symbolUsageValidator;
     private final DynamicTypesAllowed dynamicTypesAllowed;
     private final AnnotationResolver annotationResolver;
     private final CallResolver callResolver;
@@ -147,6 +149,7 @@ public class InjectorForTopDownAnalyzerForJs {
         this.scopeProvider = new ScopeProvider(getResolveSession());
         this.lazyTopDownAnalyzerForTopLevel = new LazyTopDownAnalyzerForTopLevel();
         this.kotlinJsCheckerProvider = KotlinJsCheckerProvider.INSTANCE$;
+        this.symbolUsageValidator = kotlinJsCheckerProvider.getSymbolUsageValidator();
         this.dynamicTypesAllowed = new DynamicTypesAllowed();
         this.annotationResolver = new AnnotationResolver();
         this.callResolver = new CallResolver();
@@ -165,7 +168,7 @@ public class InjectorForTopDownAnalyzerForJs {
         this.fakeCallResolver = new FakeCallResolver(project, callResolver);
         this.functionDescriptorResolver = new FunctionDescriptorResolver(typeResolver, descriptorResolver, annotationResolver, storageManager, expressionTypingServices, kotlinBuiltIns);
         this.localClassifierAnalyzer = new LocalClassifierAnalyzer(descriptorResolver, functionDescriptorResolver, typeResolver, annotationResolver);
-        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver);
+        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver, symbolUsageValidator);
         this.reflectionTypes = new ReflectionTypes(getModule());
         this.valueParameterResolver = new ValueParameterResolver(kotlinJsCheckerProvider, expressionTypingServices);
         this.statementFilter = new StatementFilter();
@@ -238,6 +241,7 @@ public class InjectorForTopDownAnalyzerForJs {
         expressionTypingComponents.setMultiDeclarationResolver(multiDeclarationResolver);
         expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
         expressionTypingComponents.setReflectionTypes(reflectionTypes);
+        expressionTypingComponents.setSymbolUsageValidator(symbolUsageValidator);
         expressionTypingComponents.setTypeResolver(typeResolver);
         expressionTypingComponents.setValueParameterResolver(valueParameterResolver);
 
@@ -255,8 +259,11 @@ public class InjectorForTopDownAnalyzerForJs {
         delegatedPropertyResolver.setCallResolver(callResolver);
         delegatedPropertyResolver.setExpressionTypingServices(expressionTypingServices);
 
+        qualifiedExpressionResolver.setSymbolUsageValidator(symbolUsageValidator);
+
         forLoopConventionsChecker.setBuiltIns(kotlinBuiltIns);
         forLoopConventionsChecker.setFakeCallResolver(fakeCallResolver);
+        forLoopConventionsChecker.setSymbolUsageValidator(symbolUsageValidator);
 
         candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
 

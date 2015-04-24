@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.scopes.JetScope
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator
 import org.jetbrains.kotlin.types.TypeUtils
 
 public class ValueParameterResolver(
@@ -36,8 +37,8 @@ public class ValueParameterResolver(
             trace: BindingTrace
     ) {
         resolveValueParameters(valueParameters, valueParameterDescriptors,
-                               ExpressionTypingContext.newContext(additionalCheckerProvider, trace,
-                                                                  declaringScope, dataFlowInfo, TypeUtils.NO_EXPECTED_TYPE)
+                               ExpressionTypingContext.newContext(additionalCheckerProvider, trace, declaringScope,
+                                                                  dataFlowInfo, TypeUtils.NO_EXPECTED_TYPE)
         )
     }
 

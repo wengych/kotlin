@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver;
 import org.jetbrains.kotlin.resolve.scopes.receivers.TransientReceiver;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice;
 
@@ -41,6 +42,7 @@ import static org.jetbrains.kotlin.resolve.BindingContext.*;
 public class ForLoopConventionsChecker {
 
     private KotlinBuiltIns builtIns;
+    private SymbolUsageValidator symbolUsageValidator;
     private FakeCallResolver fakeCallResolver;
 
     @Inject
@@ -51,6 +53,11 @@ public class ForLoopConventionsChecker {
     @Inject
     public void setFakeCallResolver(@NotNull FakeCallResolver fakeCallResolver) {
         this.fakeCallResolver = fakeCallResolver;
+    }
+
+    @Inject
+    public void setSymbolUsageValidator(SymbolUsageValidator symbolUsageValidator) {
+        this.symbolUsageValidator = symbolUsageValidator;
     }
 
     @Nullable
@@ -69,7 +76,7 @@ public class ForLoopConventionsChecker {
             context.trace.record(LOOP_RANGE_ITERATOR_RESOLVED_CALL, loopRangeExpression, iteratorResolvedCall);
             FunctionDescriptor iteratorFunction = iteratorResolvedCall.getResultingDescriptor();
 
-            expressionTypingServices.getSymbolUsageValidator().validateCall(iteratorFunction, context.trace, loopRangeExpression);
+            symbolUsageValidator.validateCall(iteratorFunction, context.trace, loopRangeExpression);
 
             JetType iteratorType = iteratorFunction.getReturnType();
             JetType hasNextType = checkConventionForIterator(context, loopRangeExpression, iteratorType, "hasNext",
@@ -120,7 +127,7 @@ public class ForLoopConventionsChecker {
             ResolvedCall<FunctionDescriptor> resolvedCall = nextResolutionResults.getResultingCall();
             context.trace.record(resolvedCallKey, loopRangeExpression, resolvedCall);
             FunctionDescriptor functionDescriptor = resolvedCall.getResultingDescriptor();
-            expressionTypingServices.getSymbolUsageValidator().validateCall(functionDescriptor, context.trace, loopRangeExpression);
+            symbolUsageValidator.validateCall(functionDescriptor, context.trace, loopRangeExpression);
             return functionDescriptor.getReturnType();
         }
         return null;

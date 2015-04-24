@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.platform.PlatformToKotlinClassMap;
 import org.jetbrains.kotlin.resolve.AdditionalCheckerProvider;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.types.DynamicTypesSettings;
 import org.jetbrains.kotlin.types.expressions.LocalClassDescriptorHolder;
 import org.jetbrains.kotlin.resolve.LazyTopDownAnalyzer;
@@ -80,6 +81,7 @@ public class InjectorForLazyLocalClassifierAnalyzer {
     private final KotlinBuiltIns kotlinBuiltIns;
     private final PlatformToKotlinClassMap platformToKotlinClassMap;
     private final AdditionalCheckerProvider additionalCheckerProvider;
+    private final SymbolUsageValidator symbolUsageValidator;
     private final DynamicTypesSettings dynamicTypesSettings;
     private final LocalClassDescriptorHolder localClassDescriptorHolder;
     private final LazyTopDownAnalyzer lazyTopDownAnalyzer;
@@ -139,6 +141,7 @@ public class InjectorForLazyLocalClassifierAnalyzer {
         this.kotlinBuiltIns = module.getBuiltIns();
         this.platformToKotlinClassMap = module.getPlatformToKotlinClassMap();
         this.additionalCheckerProvider = additionalCheckerProvider;
+        this.symbolUsageValidator = additionalCheckerProvider.getSymbolUsageValidator();
         this.dynamicTypesSettings = dynamicTypesSettings;
         this.localClassDescriptorHolder = localClassDescriptorHolder;
         this.lazyTopDownAnalyzer = new LazyTopDownAnalyzer();
@@ -164,7 +167,7 @@ public class InjectorForLazyLocalClassifierAnalyzer {
         this.fakeCallResolver = new FakeCallResolver(project, callResolver);
         this.functionDescriptorResolver = new FunctionDescriptorResolver(typeResolver, descriptorResolver, annotationResolver, storageManager, expressionTypingServices, kotlinBuiltIns);
         this.localClassifierAnalyzer = new LocalClassifierAnalyzer(descriptorResolver, functionDescriptorResolver, typeResolver, annotationResolver);
-        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver);
+        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver, symbolUsageValidator);
         this.reflectionTypes = new ReflectionTypes(module);
         this.valueParameterResolver = new ValueParameterResolver(additionalCheckerProvider, expressionTypingServices);
         this.statementFilter = new StatementFilter();
@@ -244,6 +247,7 @@ public class InjectorForLazyLocalClassifierAnalyzer {
         expressionTypingComponents.setMultiDeclarationResolver(multiDeclarationResolver);
         expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
         expressionTypingComponents.setReflectionTypes(reflectionTypes);
+        expressionTypingComponents.setSymbolUsageValidator(symbolUsageValidator);
         expressionTypingComponents.setTypeResolver(typeResolver);
         expressionTypingComponents.setValueParameterResolver(valueParameterResolver);
 
@@ -261,8 +265,11 @@ public class InjectorForLazyLocalClassifierAnalyzer {
         delegatedPropertyResolver.setCallResolver(callResolver);
         delegatedPropertyResolver.setExpressionTypingServices(expressionTypingServices);
 
+        qualifiedExpressionResolver.setSymbolUsageValidator(symbolUsageValidator);
+
         forLoopConventionsChecker.setBuiltIns(kotlinBuiltIns);
         forLoopConventionsChecker.setFakeCallResolver(fakeCallResolver);
+        forLoopConventionsChecker.setSymbolUsageValidator(symbolUsageValidator);
 
         candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
 

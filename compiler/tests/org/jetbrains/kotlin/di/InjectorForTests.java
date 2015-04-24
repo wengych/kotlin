@@ -25,7 +25,9 @@ import org.jetbrains.kotlin.resolve.FunctionDescriptorResolver;
 import org.jetbrains.kotlin.resolve.TypeResolver;
 import org.jetbrains.kotlin.types.expressions.FakeCallResolver;
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmCheckerProvider;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices;
+import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver;
 import org.jetbrains.kotlin.context.GlobalContext;
 import org.jetbrains.kotlin.storage.StorageManager;
 import org.jetbrains.kotlin.resolve.AnnotationResolver;
@@ -35,7 +37,6 @@ import org.jetbrains.kotlin.resolve.calls.CallCompleter;
 import org.jetbrains.kotlin.resolve.calls.CandidateResolver;
 import org.jetbrains.kotlin.resolve.calls.tasks.TaskPrioritizer;
 import org.jetbrains.kotlin.resolve.DelegatedPropertyResolver;
-import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver;
 import org.jetbrains.kotlin.resolve.TypeResolver.FlexibleTypeCapabilitiesProvider;
 import org.jetbrains.kotlin.context.TypeLazinessToken;
 import org.jetbrains.kotlin.types.DynamicTypesSettings;
@@ -64,7 +65,9 @@ public class InjectorForTests {
     private final TypeResolver typeResolver;
     private final FakeCallResolver fakeCallResolver;
     private final KotlinJvmCheckerProvider additionalCheckerProvider;
+    private final SymbolUsageValidator symbolUsageValidator;
     private final ExpressionTypingServices expressionTypingServices;
+    private final QualifiedExpressionResolver qualifiedExpressionResolver;
     private final GlobalContext globalContext;
     private final StorageManager storageManager;
     private final AnnotationResolver annotationResolver;
@@ -74,7 +77,6 @@ public class InjectorForTests {
     private final CandidateResolver candidateResolver;
     private final TaskPrioritizer taskPrioritizer;
     private final DelegatedPropertyResolver delegatedPropertyResolver;
-    private final QualifiedExpressionResolver qualifiedExpressionResolver;
     private final FlexibleTypeCapabilitiesProvider flexibleTypeCapabilitiesProvider;
     private final TypeLazinessToken typeLazinessToken;
     private final DynamicTypesSettings dynamicTypesSettings;
@@ -104,13 +106,14 @@ public class InjectorForTests {
         this.storageManager = globalContext.getStorageManager();
         this.typeLazinessToken = new TypeLazinessToken();
         this.dynamicTypesSettings = new DynamicTypesSettings();
-        this.typeResolver = new TypeResolver(annotationResolver, qualifiedExpressionResolver, moduleDescriptor, flexibleTypeCapabilitiesProvider, storageManager, typeLazinessToken, dynamicTypesSettings);
+        this.typeResolver = new TypeResolver(annotationResolver, getQualifiedExpressionResolver(), moduleDescriptor, flexibleTypeCapabilitiesProvider, storageManager, typeLazinessToken, dynamicTypesSettings);
         this.expressionTypingComponents = new ExpressionTypingComponents();
         this.expressionTypingServices = new ExpressionTypingServices(expressionTypingComponents);
         this.functionDescriptorResolver = new FunctionDescriptorResolver(getTypeResolver(), getDescriptorResolver(), annotationResolver, storageManager, getExpressionTypingServices(), kotlinBuiltIns);
         this.callResolver = new CallResolver();
         this.fakeCallResolver = new FakeCallResolver(project, callResolver);
         this.additionalCheckerProvider = KotlinJvmCheckerProvider.INSTANCE$;
+        this.symbolUsageValidator = additionalCheckerProvider.getSymbolUsageValidator();
         this.argumentTypeResolver = new ArgumentTypeResolver();
         this.candidateResolver = new CandidateResolver();
         this.callCompleter = new CallCompleter(argumentTypeResolver, candidateResolver);
@@ -120,7 +123,7 @@ public class InjectorForTests {
         this.controlStructureTypingUtils = new ControlStructureTypingUtils(callResolver);
         this.forLoopConventionsChecker = new ForLoopConventionsChecker();
         this.localClassifierAnalyzer = new LocalClassifierAnalyzer(getDescriptorResolver(), getFunctionDescriptorResolver(), getTypeResolver(), annotationResolver);
-        this.multiDeclarationResolver = new MultiDeclarationResolver(getFakeCallResolver(), getDescriptorResolver(), getTypeResolver());
+        this.multiDeclarationResolver = new MultiDeclarationResolver(getFakeCallResolver(), getDescriptorResolver(), getTypeResolver(), symbolUsageValidator);
         this.reflectionTypes = new ReflectionTypes(moduleDescriptor);
         this.valueParameterResolver = new ValueParameterResolver(getAdditionalCheckerProvider(), getExpressionTypingServices());
         this.statementFilter = new StatementFilter();
@@ -133,6 +136,8 @@ public class InjectorForTests {
         this.descriptorResolver.setTypeResolver(typeResolver);
 
         this.expressionTypingServices.setStatementFilter(statementFilter);
+
+        this.qualifiedExpressionResolver.setSymbolUsageValidator(symbolUsageValidator);
 
         annotationResolver.setCallResolver(callResolver);
         annotationResolver.setStorageManager(storageManager);
@@ -173,6 +178,7 @@ public class InjectorForTests {
         expressionTypingComponents.setMultiDeclarationResolver(multiDeclarationResolver);
         expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
         expressionTypingComponents.setReflectionTypes(reflectionTypes);
+        expressionTypingComponents.setSymbolUsageValidator(symbolUsageValidator);
         expressionTypingComponents.setTypeResolver(typeResolver);
         expressionTypingComponents.setValueParameterResolver(valueParameterResolver);
 
@@ -180,6 +186,7 @@ public class InjectorForTests {
 
         forLoopConventionsChecker.setBuiltIns(kotlinBuiltIns);
         forLoopConventionsChecker.setFakeCallResolver(fakeCallResolver);
+        forLoopConventionsChecker.setSymbolUsageValidator(symbolUsageValidator);
 
     }
 
@@ -209,6 +216,10 @@ public class InjectorForTests {
 
     public ExpressionTypingServices getExpressionTypingServices() {
         return this.expressionTypingServices;
+    }
+
+    public QualifiedExpressionResolver getQualifiedExpressionResolver() {
+        return this.qualifiedExpressionResolver;
     }
 
 }

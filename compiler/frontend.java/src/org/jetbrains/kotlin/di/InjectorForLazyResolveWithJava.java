@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.load.java.JavaFlexibleTypeCapabilitiesProvider;
 import org.jetbrains.kotlin.context.LazyResolveToken;
 import org.jetbrains.kotlin.resolve.jvm.JavaLazyAnalyzerPostConstruct;
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmCheckerProvider;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.resolve.AnnotationResolver;
 import org.jetbrains.kotlin.resolve.calls.CallResolver;
 import org.jetbrains.kotlin.resolve.calls.ArgumentTypeResolver;
@@ -111,6 +112,7 @@ public class InjectorForLazyResolveWithJava {
     private final LazyResolveToken lazyResolveToken;
     private final JavaLazyAnalyzerPostConstruct javaLazyAnalyzerPostConstruct;
     private final KotlinJvmCheckerProvider kotlinJvmCheckerProvider;
+    private final SymbolUsageValidator symbolUsageValidator;
     private final AnnotationResolver annotationResolver;
     private final CallResolver callResolver;
     private final ArgumentTypeResolver argumentTypeResolver;
@@ -186,6 +188,7 @@ public class InjectorForLazyResolveWithJava {
         this.lazyResolveToken = new LazyResolveToken();
         this.javaLazyAnalyzerPostConstruct = new JavaLazyAnalyzerPostConstruct();
         this.kotlinJvmCheckerProvider = KotlinJvmCheckerProvider.INSTANCE$;
+        this.symbolUsageValidator = kotlinJvmCheckerProvider.getSymbolUsageValidator();
         this.annotationResolver = new AnnotationResolver();
         this.callResolver = new CallResolver();
         this.argumentTypeResolver = new ArgumentTypeResolver();
@@ -202,7 +205,7 @@ public class InjectorForLazyResolveWithJava {
         this.fakeCallResolver = new FakeCallResolver(project, callResolver);
         this.functionDescriptorResolver = new FunctionDescriptorResolver(typeResolver, descriptorResolver, annotationResolver, storageManager, expressionTypingServices, kotlinBuiltIns);
         this.localClassifierAnalyzer = new LocalClassifierAnalyzer(descriptorResolver, functionDescriptorResolver, typeResolver, annotationResolver);
-        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver);
+        this.multiDeclarationResolver = new MultiDeclarationResolver(fakeCallResolver, descriptorResolver, typeResolver, symbolUsageValidator);
         this.valueParameterResolver = new ValueParameterResolver(kotlinJvmCheckerProvider, expressionTypingServices);
         this.statementFilter = new StatementFilter();
         this.candidateResolver = new CandidateResolver();
@@ -283,6 +286,7 @@ public class InjectorForLazyResolveWithJava {
         expressionTypingComponents.setMultiDeclarationResolver(multiDeclarationResolver);
         expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
         expressionTypingComponents.setReflectionTypes(reflectionTypes);
+        expressionTypingComponents.setSymbolUsageValidator(symbolUsageValidator);
         expressionTypingComponents.setTypeResolver(typeResolver);
         expressionTypingComponents.setValueParameterResolver(valueParameterResolver);
 
@@ -300,8 +304,11 @@ public class InjectorForLazyResolveWithJava {
         delegatedPropertyResolver.setCallResolver(callResolver);
         delegatedPropertyResolver.setExpressionTypingServices(expressionTypingServices);
 
+        qualifiedExpressionResolver.setSymbolUsageValidator(symbolUsageValidator);
+
         forLoopConventionsChecker.setBuiltIns(kotlinBuiltIns);
         forLoopConventionsChecker.setFakeCallResolver(fakeCallResolver);
+        forLoopConventionsChecker.setSymbolUsageValidator(symbolUsageValidator);
 
         candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
 

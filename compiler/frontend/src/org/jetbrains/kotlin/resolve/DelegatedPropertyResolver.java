@@ -55,13 +55,13 @@ import static org.jetbrains.kotlin.types.TypeUtils.noExpectedType;
 import static org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils.createFakeExpressionOfType;
 
 public class DelegatedPropertyResolver {
-   
+
+    public static final Name PROPERTY_DELEGATED_FUNCTION_NAME = Name.identifier("propertyDelegated");
+
     private ExpressionTypingServices expressionTypingServices;
     private CallResolver callResolver;
     private KotlinBuiltIns builtIns;
     private AdditionalCheckerProvider additionalCheckerProvider;
-
-    public static final Name PROPERTY_DELEGATED_FUNCTION_NAME = Name.identifier("propertyDelegated");
 
     @Inject
     public void setExpressionTypingServices(@NotNull ExpressionTypingServices expressionTypingServices) {
@@ -222,7 +222,7 @@ public class DelegatedPropertyResolver {
             JetPropertyDelegate delegate = property.getDelegate();
             if (delegate != null) {
                 PsiElement byKeyword = delegate.getByKeywordNode().getPsi();
-                expressionTypingServices.getSymbolUsageValidator().validateCall(resultingCall.getResultingDescriptor(), trace, byKeyword);
+                additionalCheckerProvider.getSymbolUsageValidator().validateCall(resultingCall.getResultingDescriptor(), trace, byKeyword);
             }
         }
         trace.record(DELEGATED_PROPERTY_RESOLVED_CALL, accessor, resultingCall);

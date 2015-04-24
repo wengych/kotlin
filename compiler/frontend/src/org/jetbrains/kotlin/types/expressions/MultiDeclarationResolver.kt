@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.types.expressions
 
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.psi.JetExpression
 import org.jetbrains.kotlin.psi.JetMultiDeclaration
@@ -24,10 +23,10 @@ import org.jetbrains.kotlin.psi.JetMultiDeclarationEntry
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorResolver
 import org.jetbrains.kotlin.resolve.TypeResolver
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.dataClassUtils.createComponentName
 import org.jetbrains.kotlin.resolve.scopes.WritableScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator
 import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.types.TypeUtils
@@ -36,7 +35,8 @@ import org.jetbrains.kotlin.types.checker.JetTypeChecker
 public class MultiDeclarationResolver(
         private val fakeCallResolver: FakeCallResolver,
         private val descriptorResolver: DescriptorResolver,
-        private val typeResolver: TypeResolver
+        private val typeResolver: TypeResolver,
+        private val symbolUsageValidator: SymbolUsageValidator
 ) {
     public fun defineLocalVariablesFromMultiDeclaration(
             writableScope: WritableScope,
@@ -54,7 +54,11 @@ public class MultiDeclarationResolver(
             var componentType: JetType? = null
             if (results.isSuccess()) {
                 context.trace.record(BindingContext.COMPONENT_RESOLVED_CALL, entry, results.getResultingCall())
-                componentType = results.getResultingDescriptor().getReturnType()
+
+                val functionDescriptor = results.getResultingDescriptor()
+                symbolUsageValidator.validateCall(functionDescriptor, context.trace, entry)
+
+                componentType = functionDescriptor.getReturnType()
                 if (componentType != null && !TypeUtils.noExpectedType(expectedType) && !JetTypeChecker.DEFAULT.isSubtypeOf(componentType, expectedType)) {
                     context.trace.report(Errors.COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH.on(reportErrorsOn, componentName, componentType, expectedType))
                 }

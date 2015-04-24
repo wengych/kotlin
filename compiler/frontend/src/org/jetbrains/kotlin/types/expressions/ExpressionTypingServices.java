@@ -82,8 +82,9 @@ public class ExpressionTypingServices {
             @NotNull DataFlowInfo dataFlowInfo,
             @NotNull BindingTrace trace
     ) {
-        ExpressionTypingContext context = ExpressionTypingContext.newContext(expressionTypingComponents.additionalCheckerProvider,
-                                                                             trace, scope, dataFlowInfo, expectedType);
+        ExpressionTypingContext context = ExpressionTypingContext.newContext(
+                expressionTypingComponents.additionalCheckerProvider, trace, scope, dataFlowInfo, expectedType
+        );
         return expressionTypingFacade.getTypeInfo(expression, context);
     }
 

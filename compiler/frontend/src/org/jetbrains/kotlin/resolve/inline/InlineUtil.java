@@ -105,10 +105,8 @@ public class InlineUtil {
 
         BindingContext bindingContext = trace.getBindingContext();
 
-        while (containingFunction instanceof JetFunctionLiteral && fromFunction != containingFunctionDescriptor) {
-            //JetFunctionLiteralExpression
-            containingFunction = containingFunction.getParent();
-            if (!isInlineLambda((JetFunctionLiteralExpression) containingFunction, bindingContext, true)) {
+        while (isFunctionalExpression(containingFunction) && fromFunction != containingFunctionDescriptor) {
+            if (!isInlineLambda((JetFunction) containingFunction, bindingContext, true)) {
                 return false;
             }
 
@@ -123,15 +121,17 @@ public class InlineUtil {
     }
 
     public static boolean isInlineLambda(
-            @NotNull JetFunctionLiteralExpression lambdaExpression,
+            @NotNull JetFunction functionalExpression,
             @NotNull BindingContext bindingContext,
             boolean checkNonLocalReturn
     ) {
-        JetExpression call = JetPsiUtil.getParentCallIfPresent(lambdaExpression);
+        if (!isFunctionalExpression(functionalExpression)) return false;
+
+        JetExpression call = JetPsiUtil.getParentCallIfPresent(functionalExpression);
         if (call != null) {
             ResolvedCall<?> resolvedCall = CallUtilPackage.getResolvedCall(call, bindingContext);
             if (resolvedCall != null && isInline(resolvedCall.getResultingDescriptor())) {
-                ValueArgument argument = CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(), lambdaExpression);
+                ValueArgument argument = CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(), functionalExpression);
                 if (argument != null) {
                     ArgumentMapping mapping = resolvedCall.getArgumentMapping(argument);
                     if (mapping instanceof ArgumentMatch) {
@@ -144,6 +144,10 @@ public class InlineUtil {
             }
         }
         return false;
+    }
+
+    public static boolean isFunctionalExpression(@Nullable PsiElement functionalExpression) {
+        return functionalExpression instanceof JetFunctionLiteral || functionalExpression instanceof JetNamedFunction;
     }
 
     @Nullable

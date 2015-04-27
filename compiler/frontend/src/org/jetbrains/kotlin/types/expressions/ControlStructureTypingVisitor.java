@@ -54,7 +54,7 @@ import static org.jetbrains.kotlin.diagnostics.Errors.*;
 import static org.jetbrains.kotlin.psi.PsiPackage.JetPsiFactory;
 import static org.jetbrains.kotlin.resolve.BindingContext.*;
 import static org.jetbrains.kotlin.resolve.calls.context.ContextDependency.INDEPENDENT;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.types.TypeUtils.*;
 import static org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils.createCallForSpecialConstruction;
 import static org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils.createDataFlowInfoForArgumentsForIfCall;
@@ -609,7 +609,7 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
     ) {
         JetType expectedType;
         if (function instanceof JetSecondaryConstructor) {
-            expectedType = getBuiltins(descriptor).getUnitType();
+            expectedType = getBuiltIns(descriptor).getUnitType();
         }
         else if (function instanceof JetFunction) {
             JetFunction jetFunction = (JetFunction) function;

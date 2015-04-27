@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.types.*;
 
 import java.util.*;
 
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.types.Variance.INVARIANT;
 
 public class SingleAbstractMethodUtils {
@@ -122,8 +122,7 @@ public class SingleAbstractMethodUtils {
         for (ValueParameterDescriptor parameter : valueParameters) {
             parameterTypes.add(parameter.getType());
         }
-        return getBuiltins(function).getFunctionType(
-                Annotations.EMPTY, null, parameterTypes, returnType);
+        return getBuiltIns(function).getFunctionType(Annotations.EMPTY, null, parameterTypes, returnType);
     }
 
     private static boolean isSamInterface(@NotNull ClassDescriptor klass) {

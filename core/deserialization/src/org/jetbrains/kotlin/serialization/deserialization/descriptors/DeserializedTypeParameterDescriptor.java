@@ -17,10 +17,8 @@
 package org.jetbrains.kotlin.serialization.deserialization.descriptors;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.descriptors.SourceElement;
 import org.jetbrains.kotlin.descriptors.impl.AbstractLazyTypeParameterDescriptor;
-import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage;
 import org.jetbrains.kotlin.serialization.ProtoBuf;
 import org.jetbrains.kotlin.serialization.deserialization.DeserializationContext;
 import org.jetbrains.kotlin.serialization.deserialization.DeserializationPackage;
@@ -31,7 +29,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 
 public class DeserializedTypeParameterDescriptor extends AbstractLazyTypeParameterDescriptor {
     private final ProtoBuf.TypeParameter proto;
@@ -53,7 +51,7 @@ public class DeserializedTypeParameterDescriptor extends AbstractLazyTypeParamet
     @Override
     protected Set<JetType> resolveUpperBounds() {
         if (proto.getUpperBoundCount() == 0) {
-            return Collections.singleton(getBuiltins(this).getDefaultBound());
+            return Collections.singleton(getBuiltIns(this).getDefaultBound());
         }
         Set<JetType> result = new LinkedHashSet<JetType>(proto.getUpperBoundCount());
         for (ProtoBuf.Type upperBound : proto.getUpperBoundList()) {

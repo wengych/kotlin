@@ -98,7 +98,7 @@ import static org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumEntry;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.isObject;
 import static org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage.getResolvedCall;
 import static org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage.getResolvedCallWithAssert;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.resolve.jvm.AsmTypes.*;
 import static org.jetbrains.kotlin.resolve.jvm.diagnostics.DiagnosticsPackage.OtherOrigin;
 import static org.jetbrains.kotlin.resolve.jvm.diagnostics.DiagnosticsPackage.TraitImpl;
@@ -793,7 +793,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
 
             FunctionDescriptor hasNext = hasNextCall.getResultingDescriptor();
             JetType type = hasNext.getReturnType();
-            assert type != null && JetTypeChecker.DEFAULT.isSubtypeOf(type, getBuiltins(hasNext).getBooleanType());
+            assert type != null && JetTypeChecker.DEFAULT.isSubtypeOf(type, getBuiltIns(hasNext).getBooleanType());
 
             Type asmType = asmType(type);
             StackValue.coerce(asmType, Type.BOOLEAN_TYPE, v);
@@ -4044,7 +4044,7 @@ The "returned" value of try expression with no finally is either the last expres
                 JetType jetType = bindingContext.getType(rangeExpression);
                 assert jetType != null;
                 DeclarationDescriptor descriptor = jetType.getConstructor().getDeclarationDescriptor();
-                return getBuiltins(descriptor).getIntegralRanges().contains(descriptor);
+                return getBuiltIns(descriptor).getIntegralRanges().contains(descriptor);
             }
         }
         return false;

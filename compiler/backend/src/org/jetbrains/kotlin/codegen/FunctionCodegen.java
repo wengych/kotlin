@@ -523,8 +523,7 @@ public class FunctionCodegen {
             return name.equals("hashCode") || name.equals("toString");
         }
         else if (parameters.size() == 1 && name.equals("equals")) {
-            ValueParameterDescriptor parameter = parameters.get(0);
-            return isNullableAny(parameter.getType());
+            return isNullableAny(parameters.get(0).getType());
         }
         return false;
     }

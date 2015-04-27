@@ -30,7 +30,7 @@ import java.util.Collections;
 
 import static org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor.NO_RECEIVER_PARAMETER;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.getDefaultConstructorVisibility;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 
 public class DescriptorFactory {
     private static class DefaultConstructorDescriptor extends ConstructorDescriptorImpl {
@@ -90,7 +90,7 @@ public class DescriptorFactory {
                                                     CallableMemberDescriptor.Kind.SYNTHESIZED, enumClass.getSource());
         return values.initialize(null, NO_RECEIVER_PARAMETER, Collections.<TypeParameterDescriptor>emptyList(),
                                  Collections.<ValueParameterDescriptor>emptyList(),
-                                 getBuiltins(enumClass).getArrayType(Variance.INVARIANT, enumClass.getDefaultType()), Modality.FINAL,
+                                 getBuiltIns(enumClass).getArrayType(Variance.INVARIANT, enumClass.getDefaultType()), Modality.FINAL,
                                  Visibilities.PUBLIC);
     }
 
@@ -100,7 +100,7 @@ public class DescriptorFactory {
                 SimpleFunctionDescriptorImpl.create(enumClass, Annotations.EMPTY, DescriptorUtils.ENUM_VALUE_OF,
                                                     CallableMemberDescriptor.Kind.SYNTHESIZED, enumClass.getSource());
         ValueParameterDescriptor parameterDescriptor = new ValueParameterDescriptorImpl(
-                valueOf, null, 0, Annotations.EMPTY, Name.identifier("value"), getBuiltins(enumClass).getStringType(), false, null,
+                valueOf, null, 0, Annotations.EMPTY, Name.identifier("value"), getBuiltIns(enumClass).getStringType(), false, null,
                 enumClass.getSource()
         );
         return valueOf.initialize(null, NO_RECEIVER_PARAMETER, Collections.<TypeParameterDescriptor>emptyList(),

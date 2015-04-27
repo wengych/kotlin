@@ -102,12 +102,12 @@ public fun ClassDescriptor.getSuperClassNotAny(): ClassDescriptor? {
     return null
 }
 
-public fun ClassDescriptor.getSuperClassOrAny(): ClassDescriptor = getSuperClassNotAny() ?: builtins.getAny()
+public fun ClassDescriptor.getSuperClassOrAny(): ClassDescriptor = getSuperClassNotAny() ?: builtIns.getAny()
 
 public val ClassDescriptor.secondaryConstructors: List<ConstructorDescriptor>
     get() = getConstructors().filterNot { it.isPrimary() }
 
-public val DeclarationDescriptor.builtins: KotlinBuiltIns
+public val DeclarationDescriptor.builtIns: KotlinBuiltIns
     get() = module.builtIns
 
 /**

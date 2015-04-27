@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.psi.JetBinaryExpression
 import org.jetbrains.kotlin.lexer.JetTokens
 import org.jetbrains.kotlin.psi.JetOperationExpression
 import org.jetbrains.kotlin.js.translate.utils.PsiUtils
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtins
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
 public fun addReceiverToArgs(receiver: JsExpression, arguments: List<JsExpression>): List<JsExpression> {
     if (arguments.isEmpty())
@@ -187,10 +187,10 @@ object InvokeIntrinsic : FunctionCallCase {
 
         val reflectionTypes = callInfo.context.getReflectionTypes()
         return if (callableDescriptor.getExtensionReceiverParameter() == null)
-            funDeclaration == callableDescriptor.builtins.getFunction(parameterCount) ||
+            funDeclaration == callableDescriptor.builtIns.getFunction(parameterCount) ||
             funDeclaration == reflectionTypes.getKFunction(parameterCount)
         else
-            funDeclaration == callableDescriptor.builtins.getExtensionFunction(parameterCount) ||
+            funDeclaration == callableDescriptor.builtIns.getExtensionFunction(parameterCount) ||
             funDeclaration == reflectionTypes.getKExtensionFunction(parameterCount) ||
             funDeclaration == reflectionTypes.getKMemberFunction(parameterCount)
     }

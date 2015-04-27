@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.types.checker.JetTypeChecker;
 
 import java.util.*;
 
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 
 /**
  * Backend-independent utility class.
@@ -74,28 +74,23 @@ public class CodegenUtil {
 
     public static FunctionDescriptor getAnyEqualsMethod(@NotNull KotlinBuiltIns builtIns) {
         ClassDescriptor anyClass = builtIns.getAny();
-        FunctionDescriptor function =
-                getDeclaredFunctionByRawSignature(anyClass, Name.identifier(EQUALS_METHOD_NAME),
-                                                  builtIns.getBoolean(),
-                                                  anyClass);
+        FunctionDescriptor function = getDeclaredFunctionByRawSignature(
+                anyClass, Name.identifier(EQUALS_METHOD_NAME), builtIns.getBoolean(), anyClass
+        );
         assert function != null;
         return function;
     }
 
     public static FunctionDescriptor getAnyToStringMethod(@NotNull KotlinBuiltIns builtIns) {
         ClassDescriptor anyClass = builtIns.getAny();
-        FunctionDescriptor function =
-                getDeclaredFunctionByRawSignature(anyClass, Name.identifier(TO_STRING_METHOD_NAME),
-                                                  builtIns.getString());
+        FunctionDescriptor function = getDeclaredFunctionByRawSignature(anyClass, Name.identifier(TO_STRING_METHOD_NAME), builtIns.getString());
         assert function != null;
         return function;
     }
 
     public static FunctionDescriptor getAnyHashCodeMethod(@NotNull KotlinBuiltIns builtIns) {
         ClassDescriptor anyClass = builtIns.getAny();
-        FunctionDescriptor function =
-                getDeclaredFunctionByRawSignature(anyClass, Name.identifier(HASH_CODE_METHOD_NAME),
-                                                  builtIns.getInt());
+        FunctionDescriptor function = getDeclaredFunctionByRawSignature(anyClass, Name.identifier(HASH_CODE_METHOD_NAME), builtIns.getInt());
         assert function != null;
         return function;
     }
@@ -208,7 +203,7 @@ public class CodegenUtil {
 
     public static boolean isEnumValueOfMethod(@NotNull FunctionDescriptor functionDescriptor) {
         List<ValueParameterDescriptor> methodTypeParameters = functionDescriptor.getValueParameters();
-        JetType nullableString = TypeUtils.makeNullable(getBuiltins(functionDescriptor).getStringType());
+        JetType nullableString = TypeUtils.makeNullable(getBuiltIns(functionDescriptor).getStringType());
         return DescriptorUtils.ENUM_VALUE_OF.equals(functionDescriptor.getName())
                && methodTypeParameters.size() == 1
                && JetTypeChecker.DEFAULT.isSubtypeOf(methodTypeParameters.get(0).getType(), nullableString);

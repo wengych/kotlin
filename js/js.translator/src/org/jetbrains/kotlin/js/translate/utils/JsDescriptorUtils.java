@@ -42,7 +42,7 @@ import static org.jetbrains.kotlin.js.config.LibrarySourcesConfig.BUILTINS_JS_MO
 import static org.jetbrains.kotlin.js.translate.utils.AnnotationsUtils.isNativeObject;
 import static org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.descriptorToDeclaration;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 
 public final class JsDescriptorUtils {
     // TODO: maybe we should use external annotations or something else.
@@ -157,7 +157,7 @@ public final class JsDescriptorUtils {
 
     public static boolean isBuiltin(@NotNull DeclarationDescriptor descriptor) {
         PackageFragmentDescriptor containingPackageFragment = DescriptorUtils.getParentOfType(descriptor, PackageFragmentDescriptor.class);
-        return containingPackageFragment == getBuiltins(descriptor).getBuiltInsPackageFragment();
+        return containingPackageFragment == getBuiltIns(descriptor).getBuiltInsPackageFragment();
     }
 
     @Nullable

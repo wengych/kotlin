@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.*;
 import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.types.TypeUtils;
 
+import static org.jetbrains.kotlin.builtins.KotlinBuiltIns.isNullableNothing;
 import static org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
 
 /**
  * This class is intended to create data flow values for different kind of expressions.
@@ -66,7 +66,7 @@ public class DataFlowValueFactory {
             if (constantExpression.getNode().getElementType() == JetNodeTypes.NULL) return DataFlowValue.NULL;
         }
         if (type.isError()) return DataFlowValue.ERROR;
-        if (getBuiltins(containingDeclarationOrModule).getNullableNothingType().equals(type)) {
+        if (isNullableNothing(type)) {
             return DataFlowValue.NULL; // 'null' is the only inhabitant of 'Nothing?'
         }
         IdentifierInfo result = getIdForStableIdentifier(expression, bindingContext, containingDeclarationOrModule);

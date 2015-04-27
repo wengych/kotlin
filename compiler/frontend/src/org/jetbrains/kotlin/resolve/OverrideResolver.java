@@ -49,7 +49,7 @@ import static org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*;
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.classCanHaveAbstractMembers;
 import static org.jetbrains.kotlin.resolve.OverridingUtil.OverrideCompatibilityInfo.Result.OVERRIDABLE;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 
 public class OverrideResolver {
 
@@ -722,7 +722,7 @@ public class OverrideResolver {
 
     @NotNull
     private JetAnnotationEntry findDataAnnotationForDataClass(@NotNull DeclarationDescriptor dataClass) {
-        ClassDescriptor stdDataClassAnnotation = getBuiltins(dataClass).getDataClassAnnotation();
+        ClassDescriptor stdDataClassAnnotation = getBuiltIns(dataClass).getDataClassAnnotation();
         AnnotationDescriptor annotation = dataClass.getAnnotations().findAnnotation(DescriptorUtils.getFqNameSafe(stdDataClassAnnotation));
         if (annotation == null) {
             throw new IllegalStateException("No data annotation is found for data class " + dataClass);

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static kotlin.KotlinPackage.first;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 
 class JsDataClassGenerator extends DataClassMethodGenerator {
     private final TranslationContext context;
@@ -93,7 +93,7 @@ class JsDataClassGenerator extends DataClassMethodGenerator {
     public void generateToStringMethod(@NotNull List<PropertyDescriptor> classProperties) {
         // TODO: relax this limitation, with the data generation logic fixed.
         assert !classProperties.isEmpty();
-        FunctionDescriptor prototypeFun = CodegenUtil.getAnyToStringMethod(getBuiltins(first(classProperties)));
+        FunctionDescriptor prototypeFun = CodegenUtil.getAnyToStringMethod(getBuiltIns(first(classProperties)));
         JsFunction functionObj = generateJsMethod(prototypeFun);
 
         JsProgram jsProgram = context.program();
@@ -118,7 +118,7 @@ class JsDataClassGenerator extends DataClassMethodGenerator {
 
     @Override
     public void generateHashCodeMethod(@NotNull List<PropertyDescriptor> classProperties) {
-        FunctionDescriptor prototypeFun = CodegenUtil.getAnyHashCodeMethod(getBuiltins(first(classProperties)));
+        FunctionDescriptor prototypeFun = CodegenUtil.getAnyHashCodeMethod(getBuiltIns(first(classProperties)));
         JsFunction functionObj = generateJsMethod(prototypeFun);
 
         JsProgram jsProgram = context.program();
@@ -145,7 +145,7 @@ class JsDataClassGenerator extends DataClassMethodGenerator {
     @Override
     public void generateEqualsMethod(@NotNull List<PropertyDescriptor> classProperties) {
         assert !classProperties.isEmpty();
-        FunctionDescriptor prototypeFun = CodegenUtil.getAnyEqualsMethod(getBuiltins(first(classProperties)));
+        FunctionDescriptor prototypeFun = CodegenUtil.getAnyEqualsMethod(getBuiltIns(first(classProperties)));
         JsFunction functionObj = generateJsMethod(prototypeFun);
         JsFunctionScope funScope = functionObj.getScope();
 

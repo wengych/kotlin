@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.resolve.jvm.TopDownAnalyzerFacadeForJVM.createJavaModule;
 
 public class JvmRuntimeTypes {
@@ -110,7 +110,7 @@ public class JvmRuntimeTypes {
                 classDescriptor.getMemberScope(typeArguments)
         );
 
-        JetType functionType = getBuiltins(descriptor).getFunctionType(
+        JetType functionType = getBuiltIns(descriptor).getFunctionType(
                 Annotations.EMPTY,
                 receiverParameter == null ? null : receiverParameter.getType(),
                 ExpressionTypingUtils.getValueParametersTypes(descriptor.getValueParameters()),

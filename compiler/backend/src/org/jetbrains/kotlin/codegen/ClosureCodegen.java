@@ -50,7 +50,7 @@ import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.isConst;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.CLOSURE;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.asmTypeForAnonymousClass;
 import static org.jetbrains.kotlin.load.java.JvmAnnotationNames.KotlinSyntheticClass;
-import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltins;
+import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.resolve.jvm.diagnostics.DiagnosticsPackage.OtherOrigin;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
@@ -107,7 +107,7 @@ public class ClosureCodegen extends MemberCodegen<JetElement> {
         }
         else {
             this.superInterfaceTypes = Collections.singletonList(samType.getType());
-            this.superClassType = getBuiltins(funDescriptor).getAnyType();
+            this.superClassType = getBuiltIns(funDescriptor).getAnyType();
         }
 
         this.closure = bindingContext.get(CLOSURE, classDescriptor);
@@ -364,8 +364,8 @@ public class ClosureCodegen extends MemberCodegen<JetElement> {
     public static FunctionDescriptor getErasedInvokeFunction(@NotNull FunctionDescriptor elementDescriptor) {
         int arity = elementDescriptor.getValueParameters().size();
         ClassDescriptor elementClass = elementDescriptor.getExtensionReceiverParameter() == null
-                                   ? getBuiltins(elementDescriptor).getFunction(arity)
-                                   : getBuiltins(elementDescriptor).getExtensionFunction(arity);
+                                   ? getBuiltIns(elementDescriptor).getFunction(arity)
+                                   : getBuiltIns(elementDescriptor).getExtensionFunction(arity);
         return elementClass.getDefaultType().getMemberScope().getFunctions(Name.identifier("invoke")).iterator().next();
     }
 }

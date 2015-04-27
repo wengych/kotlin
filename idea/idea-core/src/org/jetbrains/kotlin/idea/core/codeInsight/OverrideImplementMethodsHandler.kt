@@ -268,8 +268,6 @@ public abstract class OverrideImplementMethodsHandler : LanguageCodeInsightActio
             newDescriptor.addOverriddenDescriptor(descriptor)
 
             val returnType = descriptor.getReturnType()
-            val builtIns = KotlinBuiltIns.getInstance()
-
             val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
             val isAbstract = descriptor.getModality() == Modality.ABSTRACT
 

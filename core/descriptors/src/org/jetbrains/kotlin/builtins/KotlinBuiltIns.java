@@ -934,11 +934,6 @@ public class KotlinBuiltIns {
         return containsAnnotation(descriptor, FQ_NAMES.noinline);
     }
 
-    @NotNull
-    public static FqName getInlineOptionsFqName() {
-        return FQ_NAMES.inlineOptions;
-    }
-
     public static boolean isSuppressAnnotation(@NotNull AnnotationDescriptor annotationDescriptor) {
         return isConstructedFromGivenClass(annotationDescriptor.getType(), FQ_NAMES.suppress);
     }

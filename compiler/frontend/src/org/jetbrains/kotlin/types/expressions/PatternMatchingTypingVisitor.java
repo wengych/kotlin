@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.types.expressions.typeInfoFactory.TypeInfoFactoryPac
 import java.util.Collections;
 import java.util.Set;
 
+import static org.jetbrains.kotlin.builtins.KotlinBuiltIns.isBoolean;
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
 import static org.jetbrains.kotlin.resolve.calls.context.ContextDependency.INDEPENDENT;
 import static org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE;
@@ -189,7 +190,8 @@ public class PatternMatchingTypingVisitor extends ExpressionTypingVisitor {
                                                                 argumentForSubject, rangeExpression, context);
                 DataFlowInfo dataFlowInfo = typeInfo.getDataFlowInfo();
                 newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo, dataFlowInfo));
-                if (!components.builtIns.getBooleanType().equals(typeInfo.getType())) {
+                JetType type = typeInfo.getType();
+                if (type == null || !isBoolean(type)) {
                     context.trace.report(TYPE_MISMATCH_IN_RANGE.on(condition));
                 }
             }

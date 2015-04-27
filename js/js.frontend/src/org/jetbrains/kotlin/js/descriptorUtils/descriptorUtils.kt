@@ -25,13 +25,13 @@ import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.types.TypeProjection
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtins
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
 public val JetType.nameIfStandardType: Name?
     get() {
         val descriptor = getConstructor().getDeclarationDescriptor()
 
-        if (descriptor?.getContainingDeclaration() == descriptor?.builtins?.getBuiltInsPackageFragment()) {
+        if (descriptor?.getContainingDeclaration() == descriptor?.builtIns?.getBuiltInsPackageFragment()) {
             return descriptor?.getName()
         }
 

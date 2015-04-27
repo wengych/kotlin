@@ -191,8 +191,7 @@ public class CodeInsightUtils {
         if (type.isMarkedNullable()) {
             return "null";
         }
-        else if (isInt(type) || isLong(type) ||
-                 isShort(type) || isByte(type)) {
+        else if (isInt(type) || isLong(type) || isShort(type) || isByte(type)) {
             return "0";
         }
         else if (isFloat(type)) {

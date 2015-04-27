@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.psi.JetPsiFactory
 import org.jetbrains.kotlin.psi.JetPsiUtil
 import org.jetbrains.kotlin.psi.JetFunctionLiteralExpression
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtins
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
 public open class ReplaceContainsIntention : AttributeCallReplacementIntention("replace.contains.with.in") {
 
@@ -37,7 +37,7 @@ public open class ReplaceContainsIntention : AttributeCallReplacementIntention("
         val ret = resultingDescriptor.getReturnType()
             ?: return intentionFailed(editor, "undefined.returntype")
 
-        if (!resultingDescriptor.builtins.isBooleanOrSubtype(ret)) {
+        if (!resultingDescriptor.builtIns.isBooleanOrSubtype(ret)) {
             return intentionFailed(editor, "contains.returns.boolean")
         }
 

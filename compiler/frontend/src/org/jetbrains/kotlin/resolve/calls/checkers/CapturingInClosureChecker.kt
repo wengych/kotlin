@@ -69,7 +69,7 @@ class CapturingInClosureChecker : CallChecker {
             context: BindingContext, scopeContainer: DeclarationDescriptor, variableParent: DeclarationDescriptor
     ): Boolean {
         val scopeDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(scopeContainer)
-        if (scopeDeclaration !is JetFunctionLiteral && scopeDeclaration !is JetNamedFunction) return false
+        if (!InlineUtil.isFunctionalExpression(scopeDeclaration)) return false
 
         if (InlineUtil.isInlineLambda(scopeDeclaration as JetFunction, context, false)) {
             val scopeContainerParent = scopeContainer.getContainingDeclaration()

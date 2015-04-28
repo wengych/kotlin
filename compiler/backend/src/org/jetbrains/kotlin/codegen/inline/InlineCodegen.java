@@ -521,7 +521,8 @@ public class InlineCodegen extends CallGenerator {
     }
 
     protected static boolean isInlinableParameterExpression(JetExpression deparenthesized) {
-        return InlineUtil.isFunctionalExpression(deparenthesized) ||
+        return deparenthesized instanceof JetFunctionLiteralExpression ||
+               deparenthesized instanceof JetNamedFunction ||
                deparenthesized instanceof JetCallableReferenceExpression;
     }
 

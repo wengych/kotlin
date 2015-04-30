@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsImpl;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsUtil;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue;
+import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.Nullability;
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind;
 import org.jetbrains.kotlin.resolve.calls.tasks.ResolutionCandidate;
@@ -924,8 +925,19 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
                     JetExpression stubExpression = ExpressionTypingUtils.createFakeExpressionOfType(baseExpression.getProject(), context.trace, "$e", type);
                     checkLValue(context.trace, context, baseExpression, stubExpression);
                 }
-                // TODO : Maybe returnType?
-                result = receiverType;
+                // x++ type is x type, but ++x type is x.inc() type
+                DataFlowValue receiverValue = DataFlowValueFactory.createDataFlowValue(call.getExplicitReceiver(), context);
+                if (expression instanceof JetPrefixExpression) {
+                    result = returnType;
+                }
+                else if (context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
+                    result = receiverType;
+                }
+                else {
+                    // Special case: var i: Int? = 10; val j: Int = i++; i++ should be Int
+                    // TODO: smart cast would be better at this point
+                    result = TypeUtils.makeNotNullable(receiverType);
+                }
             }
         }
         else {

@@ -1,0 +1,5 @@
+package
+
+public fun box(): kotlin.Int?
+internal fun init(): kotlin.Int?
+internal fun kotlin.Int?.inc(): kotlin.Int?

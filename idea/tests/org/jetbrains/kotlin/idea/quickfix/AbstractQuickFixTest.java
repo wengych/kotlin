@@ -38,6 +38,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinLightQuickFixTestCase;
+import org.jetbrains.kotlin.idea.js.KotlinJavascriptLibraryManager;
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils;
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
@@ -152,9 +153,10 @@ public abstract class AbstractQuickFixTest extends KotlinLightQuickFixTestCase {
     }
     //endregion
 
-    private static void configureRuntimeIfNeeded(@NotNull String beforeFileName) {
+    private void configureRuntimeIfNeeded(@NotNull String beforeFileName) {
         if (beforeFileName.endsWith("JsRuntime.kt")) {
             ConfigLibraryUtil.configureKotlinJsRuntimeAndSdk(getModule(), getFullJavaJDK());
+            KotlinJavascriptLibraryManager.getInstance(getProject()).updateProjectLibrary(true);
         }
         else if (beforeFileName.endsWith("Runtime.kt")) {
             ConfigLibraryUtil.configureKotlinRuntimeAndSdk(getModule(), getFullJavaJDK());

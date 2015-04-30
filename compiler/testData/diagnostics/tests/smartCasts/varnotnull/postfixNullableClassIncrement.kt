@@ -8,6 +8,5 @@ public fun box() : MyClass? {
     i = MyClass()
     var j = i++
     j.hashCode()
-    // i can be null here (to be more precise it IS null)
-    return i ?: j
+    return i
 }

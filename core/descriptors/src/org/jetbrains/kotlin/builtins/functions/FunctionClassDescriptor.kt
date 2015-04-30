@@ -16,8 +16,10 @@
 
 package org.jetbrains.kotlin.builtins.functions
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationsImpl
 import org.jetbrains.kotlin.descriptors.impl.AbstractClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
 import org.jetbrains.kotlin.name.Name
@@ -93,7 +95,15 @@ class FunctionClassDescriptor(
             val typeConstructor = superClass.getTypeConstructor()
             val superParameters = typeConstructor.getParameters()
             val arguments = getParameters().takeLast(superParameters.size()).map { TypeProjectionImpl(it.getDefaultType()) }
-            JetTypeImpl(Annotations.EMPTY, typeConstructor, false, arguments, superClass.getMemberScope(arguments))
+
+            // TODO: do this in a proper way
+            val annotations =
+                    if ((className.asString().startsWith("KMember") || className.asString().startsWith("KExtension")) &&
+                        superClass.getName().asString().startsWith("Function"))
+                        AnnotationsImpl(listOf(KotlinBuiltIns.getInstance().createExtensionAnnotation()))
+                    else Annotations.EMPTY
+
+            JetTypeImpl(annotations, typeConstructor, false, arguments, superClass.getMemberScope(arguments))
         }
 
         override fun getDeclarationDescriptor() = this@FunctionClassDescriptor

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.PrimitiveType;
+import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor;
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor;
 import org.jetbrains.kotlin.codegen.*;
 import org.jetbrains.kotlin.codegen.binding.CodegenBinding;
@@ -74,6 +75,7 @@ import static org.jetbrains.kotlin.codegen.AsmUtil.*;
 import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.*;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.*;
 import static org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.FAKE_OVERRIDE;
+import static org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED;
 import static org.jetbrains.kotlin.resolve.BindingContextUtils.isVarCapturedInClosure;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
 import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
@@ -599,7 +601,8 @@ public class JetTypeMapper {
 
                 ClassDescriptor receiver =
                         (currentIsInterface && !originalIsInterface) ||
-                        (descriptor instanceof FunctionInvokeDescriptor && descriptor.getKind() == FAKE_OVERRIDE) // TODO comment
+                        (descriptor instanceof FunctionInvokeDescriptor && descriptor.getKind() == FAKE_OVERRIDE) || // TODO: comment
+                        (currentOwner instanceof FunctionClassDescriptor && declarationFunctionDescriptor.getKind() == SYNTHESIZED) // TODO: also comment
                         ? declarationOwner
                         : currentOwner;
                 owner = mapClass(receiver);

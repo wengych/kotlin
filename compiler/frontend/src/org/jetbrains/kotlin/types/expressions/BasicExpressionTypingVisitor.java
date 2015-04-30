@@ -925,14 +925,17 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
                     JetExpression stubExpression = ExpressionTypingUtils.createFakeExpressionOfType(baseExpression.getProject(), context.trace, "$e", type);
                     checkLValue(context.trace, context, baseExpression, stubExpression);
                 }
-                // x++ type is x type, so we use receiver type, not return type here (see also KT-7561)
-                // TODO: postfix vs prefix: should they differ somehow? ++x type is x.inc() type (return type)
+                // x++ type is x type, but ++x type is x.inc() type
                 DataFlowValue receiverValue = DataFlowValueFactory.createDataFlowValue(call.getExplicitReceiver(), context);
-                if (context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
+                if (expression instanceof JetPrefixExpression) {
+                    result = returnType;
+                }
+                else if (context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
                     result = receiverType;
                 }
                 else {
-                    // Example: var i: Int? = 10; val j: Int = i++; i++ should be Int
+                    // Special case: var i: Int? = 10; val j: Int = i++; i++ should be Int
+                    // TODO: smart cast would be better at this point
                     result = TypeUtils.makeNotNullable(receiverType);
                 }
             }

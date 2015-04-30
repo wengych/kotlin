@@ -3342,6 +3342,7 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
                 Type type = expressionType(expression.getBaseExpression());
                 value.put(type, v); // old value
 
+                // It's a place of bug! This may not work
                 value.dup(v, true);
 
                 Type storeType;

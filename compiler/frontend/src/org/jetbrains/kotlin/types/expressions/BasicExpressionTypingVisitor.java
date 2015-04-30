@@ -926,17 +926,15 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
                     checkLValue(context.trace, context, baseExpression, stubExpression);
                 }
                 // x++ type is x type, but ++x type is x.inc() type
-                DataFlowValue receiverValue = DataFlowValueFactory.createDataFlowValue(call.getExplicitReceiver(), context);
+                DataFlowValue receiverValue = DataFlowValueFactory.createDataFlowValue(call.getExplicitReceiver(), contextWithExpectedType);
                 if (expression instanceof JetPrefixExpression) {
                     result = returnType;
                 }
-                else if (context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
-                    result = receiverType;
-                }
                 else {
-                    // Special case: var i: Int? = 10; val j: Int = i++; i++ should be Int
-                    // TODO: smart cast would be better at this point
-                    result = TypeUtils.makeNotNullable(receiverType);
+                    result = receiverType;
+                    // Also record data flow information for x++ value (= x)
+                    DataFlowValue returnValue = DataFlowValueFactory.createDataFlowValue(expression, receiverType, contextWithExpectedType);
+                    typeInfo = typeInfo.replaceDataFlowInfo(typeInfo.getDataFlowInfo().assign(returnValue, receiverValue));
                 }
             }
         }

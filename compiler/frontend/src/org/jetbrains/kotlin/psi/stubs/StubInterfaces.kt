@@ -77,6 +77,10 @@ public trait KotlinNameReferenceExpressionStub : StubElement<JetNameReferenceExp
     public fun getReferencedName(): String
 }
 
+public trait KotlinEnumReferenceExpressionStub : StubElement<JetEnumReferenceExpression> {
+    public fun getReferencedName(): String
+}
+
 public trait KotlinParameterStub : KotlinStubWithFqName<JetParameter> {
     public fun isMutable(): Boolean
     public fun hasValOrVarNode(): Boolean

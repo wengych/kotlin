@@ -205,9 +205,33 @@ public class JetParsingTestGenerated extends AbstractJetParsingTest {
             doParsingTest(fileName);
         }
 
+        @TestMetadata("EnumCommas.kt")
+        public void testEnumCommas() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/EnumCommas.kt");
+            doParsingTest(fileName);
+        }
+
         @TestMetadata("EnumOpenFun.kt")
         public void testEnumOpenFun() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/EnumOpenFun.kt");
+            doParsingTest(fileName);
+        }
+
+        @TestMetadata("EnumShortCommas.kt")
+        public void testEnumShortCommas() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/EnumShortCommas.kt");
+            doParsingTest(fileName);
+        }
+
+        @TestMetadata("EnumShortNoCommas.kt")
+        public void testEnumShortNoCommas() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/EnumShortNoCommas.kt");
+            doParsingTest(fileName);
+        }
+
+        @TestMetadata("EnumShortWithOverload.kt")
+        public void testEnumShortWithOverload() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/psi/EnumShortWithOverload.kt");
             doParsingTest(fileName);
         }
 

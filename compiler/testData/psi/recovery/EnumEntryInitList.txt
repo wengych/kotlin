@@ -178,7 +178,7 @@ JetFile: EnumEntryInitList.kt
           PsiElement(COMMA)(',')
           PsiErrorElement:Expecting constructor call (<class-name>(...))
             <empty list>
-        PsiElement(SEMICOLON)(';')
+      PsiElement(SEMICOLON)(';')
       PsiWhiteSpace('\n\n    ')
       CLASS
         PsiElement(class)('class')

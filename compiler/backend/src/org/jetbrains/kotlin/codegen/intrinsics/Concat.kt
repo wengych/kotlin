@@ -81,3 +81,11 @@ public class Concat : IntrinsicMethod() {
                 }
             }
 }
+
+
+fun main(args: Array<String>) {
+    fun local() {}
+    val local = {(): Unit -> }
+    local()
+    local.invoke()
+}

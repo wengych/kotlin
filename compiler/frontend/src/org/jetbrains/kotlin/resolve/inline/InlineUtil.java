@@ -102,10 +102,8 @@ public class InlineUtil {
 
         BindingContext bindingContext = trace.getBindingContext();
 
-        while (containingFunction instanceof JetFunctionLiteral && fromFunction != containingFunctionDescriptor) {
-            //JetFunctionLiteralExpression
-            containingFunction = containingFunction.getParent();
-            if (!isInlineLambda((JetFunctionLiteralExpression) containingFunction, bindingContext, true)) {
+        while (canBeInlineArgument(containingFunction) && fromFunction != containingFunctionDescriptor) {
+            if (!isInlinedArgument((JetFunction) containingFunction, bindingContext, true)) {
                 return false;
             }
 
@@ -119,18 +117,20 @@ public class InlineUtil {
         return fromFunction == containingFunctionDescriptor;
     }
 
-    public static boolean isInlineLambda(
-            @NotNull JetFunctionLiteralExpression lambdaExpression,
+    public static boolean isInlinedArgument(
+            @NotNull JetFunction argument,
             @NotNull BindingContext bindingContext,
             boolean checkNonLocalReturn
     ) {
-        JetExpression call = JetPsiUtil.getParentCallIfPresent(lambdaExpression);
+        if (!canBeInlineArgument(argument)) return false;
+
+        JetExpression call = JetPsiUtil.getParentCallIfPresent(argument);
         if (call != null) {
             ResolvedCall<?> resolvedCall = CallUtilPackage.getResolvedCall(call, bindingContext);
             if (resolvedCall != null && isInline(resolvedCall.getResultingDescriptor())) {
-                ValueArgument argument = CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(), lambdaExpression);
-                if (argument != null) {
-                    ArgumentMapping mapping = resolvedCall.getArgumentMapping(argument);
+                ValueArgument valueArgument = CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(), argument);
+                if (valueArgument != null) {
+                    ArgumentMapping mapping = resolvedCall.getArgumentMapping(valueArgument);
                     if (mapping instanceof ArgumentMatch) {
                         ValueParameterDescriptor parameter = ((ArgumentMatch) mapping).getValueParameter();
                         if (isInlineLambdaParameter(parameter)) {
@@ -141,6 +141,10 @@ public class InlineUtil {
             }
         }
         return false;
+    }
+
+    public static boolean canBeInlineArgument(@Nullable PsiElement functionalExpression) {
+        return functionalExpression instanceof JetFunctionLiteral || functionalExpression instanceof JetNamedFunction;
     }
 
     @Nullable

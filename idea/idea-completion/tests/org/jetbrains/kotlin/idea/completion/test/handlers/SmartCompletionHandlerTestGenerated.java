@@ -461,6 +461,12 @@ public class SmartCompletionHandlerTestGenerated extends AbstractSmartCompletion
         doTest(fileName);
     }
 
+    @TestMetadata("LastNonOptionalParamIsFunction.kt")
+    public void testLastNonOptionalParamIsFunction() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/smart/LastNonOptionalParamIsFunction.kt");
+        doTest(fileName);
+    }
+
     @TestMetadata("MergeTail1.kt")
     public void testMergeTail1() throws Exception {
         String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/smart/MergeTail1.kt");

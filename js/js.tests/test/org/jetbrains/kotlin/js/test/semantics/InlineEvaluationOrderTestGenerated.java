@@ -119,6 +119,12 @@ public class InlineEvaluationOrderTestGenerated extends AbstractInlineEvaluation
         doTest(fileName);
     }
 
+    @TestMetadata("callQualifierComplex.kt")
+    public void testCallQualifierComplex() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/inlineEvaluationOrder/cases/callQualifierComplex.kt");
+        doTest(fileName);
+    }
+
     @TestMetadata("conditional.kt")
     public void testConditional() throws Exception {
         String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/inlineEvaluationOrder/cases/conditional.kt");
@@ -194,6 +200,18 @@ public class InlineEvaluationOrderTestGenerated extends AbstractInlineEvaluation
     @TestMetadata("logicalOr.kt")
     public void testLogicalOr() throws Exception {
         String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/inlineEvaluationOrder/cases/logicalOr.kt");
+        doTest(fileName);
+    }
+
+    @TestMetadata("methodCallQualifierWithSideEffect.kt")
+    public void testMethodCallQualifierWithSideEffect() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/inlineEvaluationOrder/cases/methodCallQualifierWithSideEffect.kt");
+        doTest(fileName);
+    }
+
+    @TestMetadata("methodInlineCallQualifierWithSideEffect.kt")
+    public void testMethodInlineCallQualifierWithSideEffect() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/inlineEvaluationOrder/cases/methodInlineCallQualifierWithSideEffect.kt");
         doTest(fileName);
     }
 

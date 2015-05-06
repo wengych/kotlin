@@ -54,4 +54,17 @@ public final class IDEVirtualFileFinder extends VirtualFileKotlinClassFinder imp
         }
         return files.iterator().next();
     }
+
+    @Nullable
+    @Override
+    public VirtualFile findKotlinJavascriptVirtualFileWithHeader(@NotNull ClassId classId) {
+        Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(KotlinJavascriptMetaFileIndex.KEY, classId.asSingleFqName(), scope);
+        if (files.isEmpty()) {
+            return null;
+        }
+        if (files.size() > 1) {
+            LOG.warn("There are " + files.size() + " classes with same fqName: " + classId + " found.");
+        }
+        return files.iterator().next();
+    }
 }

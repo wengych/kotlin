@@ -3,10 +3,21 @@
 
 package test
 
-public final enum class Enum private () : kotlin.Enum<test.Enum>, dependency.Tr {
-    ONE
+internal final enum class Enum private () : kotlin.Enum<test.Enum> {
+    A
 
-    TWO
+    B
 
-    THREE
+    C
+
+    D
+
+    E
+
+    F
+
+    internal open fun f(): kotlin.Int { /* compiled code */ }
+    internal companion object {
+        internal final val c: kotlin.Int /* compiled code */
+    }
 }

@@ -41,14 +41,6 @@ PsiJetFileStubImpl[package=]
                 REFERENCE_EXPRESSION:[referencedName=kotlin]
               REFERENCE_EXPRESSION:[referencedName=Int]
     CLASS_BODY:
-      OBJECT_DECLARATION:[fqName=Annotations.Companion, isCompanion=true, isLocal=false, isObjectLiteral=false, isTopLevel=false, name=Companion, superNames=[]]
-        MODIFIER_LIST:[private companion]
-          ANNOTATION_ENTRY:[hasValueArguments=false, shortName=b]
-            CONSTRUCTOR_CALLEE:
-              TYPE_REFERENCE:
-                USER_TYPE:[isAbsoluteInRootPackage=false]
-                  REFERENCE_EXPRESSION:[referencedName=b]
-        CLASS_BODY:
       PROPERTY:[fqName=Annotations.c, hasDelegate=false, hasDelegateExpression=false, hasInitializer=false, hasReturnTypeRef=true, isExtension=false, isTopLevel=false, isVar=false, name=c]
         MODIFIER_LIST:[private final]
           ANNOTATION_ENTRY:[hasValueArguments=false, shortName=b]
@@ -210,4 +202,12 @@ PsiJetFileStubImpl[package=]
                     USER_TYPE:[isAbsoluteInRootPackage=false]
                       REFERENCE_EXPRESSION:[referencedName=b]
           VALUE_PARAMETER_LIST:
+        CLASS_BODY:
+      OBJECT_DECLARATION:[fqName=Annotations.Companion, isCompanion=true, isLocal=false, isObjectLiteral=false, isTopLevel=false, name=Companion, superNames=[]]
+        MODIFIER_LIST:[private companion]
+          ANNOTATION_ENTRY:[hasValueArguments=false, shortName=b]
+            CONSTRUCTOR_CALLEE:
+              TYPE_REFERENCE:
+                USER_TYPE:[isAbsoluteInRootPackage=false]
+                  REFERENCE_EXPRESSION:[referencedName=b]
         CLASS_BODY:

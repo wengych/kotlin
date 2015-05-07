@@ -28,11 +28,11 @@ import org.jetbrains.kotlin.android.tests.run.PermissionManager;
 import org.junit.Assert;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("CallToPrintStackTrace")
 public class CodegenTestsOnAndroidRunner {
     private static final Pattern ERROR_IN_TEST_OUTPUT_PATTERN =
             Pattern.compile("([\\s]+at .*| Caused .*| java.lang.RuntimeException: File: .*|[\\s]+\\.\\.\\. .* more| Error in .*)");
@@ -41,7 +41,7 @@ public class CodegenTestsOnAndroidRunner {
 
     private final PathManager pathManager;
 
-    public static TestSuite getTestSuite(PathManager pathManager) {
+    public static List<TestCase> getTests(PathManager pathManager) {
         return new CodegenTestsOnAndroidRunner(pathManager).generateTestSuite();
     }
 
@@ -49,11 +49,11 @@ public class CodegenTestsOnAndroidRunner {
         this.pathManager = pathManager;
     }
 
-    private TestSuite generateTestSuite() {
-        TestSuite suite = new TestSuite("MySuite");
+    private List<TestCase> generateTestSuite() {
+        List<TestCase> suite = new ArrayList<TestCase>();
 
         String resultOutput = runTests();
-        if (resultOutput == null) return suite;
+        if (resultOutput == null) return Collections.emptyList();
 
         // Test name -> stackTrace
         Map<String, String> resultMap = parseOutputForFailedTests(resultOutput);
@@ -68,7 +68,7 @@ public class CodegenTestsOnAndroidRunner {
 
             for (final Map.Entry<String, String> entry : resultMap.entrySet()) {
 
-                suite.addTest(new TestCase("run") {
+                suite.add(new TestCase("run") {
                     @Override
                     public String getName() {
                         return entry.getKey();
@@ -86,7 +86,7 @@ public class CodegenTestsOnAndroidRunner {
         Assert.assertEquals("Number of stackTraces != failed tests on the final line", resultMap.size(),
                             statistics.failed + statistics.errors);
 
-        suite.addTest(new TestCase("run") {
+        suite.add(new TestCase("run") {
             @Override
             public String getName() {
                 return "testAll: Total: " + statistics.total + ", Failures: " + statistics.failed + ", Errors: " + statistics.errors;

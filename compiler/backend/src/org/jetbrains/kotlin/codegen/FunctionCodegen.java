@@ -166,9 +166,7 @@ public class FunctionCodegen {
             v.getSerializationBindings().put(METHOD_FOR_FUNCTION, functionDescriptor, asmMethod);
         }
 
-        AnnotationCodegen.forMethod(mv, typeMapper).genAnnotations(functionDescriptor, asmMethod.getReturnType());
-
-        generateParameterAnnotations(functionDescriptor, mv, jvmSignature);
+        generateAnnotationsForMethod(functionDescriptor, jvmSignature, asmMethod, mv);
 
         if (state.getClassBuilderMode() != ClassBuilderMode.LIGHT_CLASSES) {
             generateJetValueParameterAnnotations(mv, functionDescriptor, jvmSignature);
@@ -215,6 +213,24 @@ public class FunctionCodegen {
         methodContext.recordSyntheticAccessorIfNeeded(functionDescriptor, bindingContext);
     }
 
+    private void generateAnnotationsForMethod(
+            @NotNull FunctionDescriptor functionDescriptor,
+            Method asmMethod,
+            MethodVisitor mv
+    ) {
+        generateAnnotationsForMethod(functionDescriptor, typeMapper.mapSignature(functionDescriptor), asmMethod, mv);
+    }
+
+    private void generateAnnotationsForMethod(
+            @NotNull FunctionDescriptor functionDescriptor,
+            JvmMethodSignature jvmSignature,
+            Method asmMethod,
+            MethodVisitor mv
+    ) {
+        AnnotationCodegen.forMethod(mv, typeMapper).genAnnotations(functionDescriptor, asmMethod.getReturnType());
+        generateParameterAnnotations(functionDescriptor, mv, jvmSignature);
+    }
+
     private void generateParameterAnnotations(
             @NotNull FunctionDescriptor functionDescriptor,
             @NotNull MethodVisitor mv,
@@ -233,7 +249,9 @@ public class FunctionCodegen {
 
             if (kind == JvmMethodParameterKind.VALUE) {
                 ValueParameterDescriptor parameter = iterator.next();
-                v.getSerializationBindings().put(INDEX_FOR_VALUE_PARAMETER, parameter, i);
+                if (v.getSerializationBindings().get(INDEX_FOR_VALUE_PARAMETER, parameter) == null) {
+                    v.getSerializationBindings().put(INDEX_FOR_VALUE_PARAMETER, parameter, i);
+                }
                 AnnotationCodegen.forParameter(i, mv, typeMapper).genAnnotations(parameter, parameterSignature.getAsmType());
             }
         }
@@ -594,6 +612,8 @@ public class FunctionCodegen {
                 defaultMethod.getDescriptor(), null,
                 getThrownExceptions(functionDescriptor, typeMapper)
         );
+
+        generateAnnotationsForMethod(functionDescriptor, defaultMethod, mv);
 
         if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
             if (this.owner instanceof PackageFacadeContext) {

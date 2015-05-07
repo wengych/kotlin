@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.util.slicedMap;
+package org.jetbrains.kotlin.util.slicedMap
 
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.util.userDataHolder.UserDataHolderBase
+import org.jetbrains.kotlin.util.userDataHolder.keyFMap.KeyFMap
+import java.util.BitSet
 
-public interface ReadOnlySlice<K, V> {
-    @NotNull
-    Key<V> getKey();
-
-    V computeValue(SlicedMap map, K key, V value, boolean valueNotFound);
-
-    /**
-     * @return a slice that only retrieves the value from the storage and skips any computeValue() calls
-     */
-    ReadOnlySlice<K, V> makeRawValueVersion();
+class UserDataHolderImpl : UserDataHolderBase() {
+    val keys: Array<Key<*>>
+        get() = getUserMap().getKeys()
 }

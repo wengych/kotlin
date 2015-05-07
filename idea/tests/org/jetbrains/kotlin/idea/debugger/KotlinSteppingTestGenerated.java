@@ -333,5 +333,11 @@ public class KotlinSteppingTestGenerated extends AbstractKotlinSteppingTest {
             String fileName = JetTestUtils.navigationMetadata("idea/testData/debugger/tinyApp/src/filters/stepIntoStdlib.kt");
             doStepIntoTest(fileName);
         }
+
+        @TestMetadata("stepIntoStdlibSyntetic.kt")
+        public void testStepIntoStdlibSyntetic() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/debugger/tinyApp/src/filters/stepIntoStdlibSyntetic.kt");
+            doStepIntoTest(fileName);
+        }
     }
 }

@@ -35,15 +35,15 @@ import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ExceptionUtil
-import com.sun.jdi.*
+import com.sun.jdi.InvocationException
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.VMDisconnectedException
+import com.sun.jdi.VirtualMachine
 import com.sun.jdi.request.EventRequest
 import org.jetbrains.eval4j.*
-import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
-import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
-import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.binding.CodegenBinding
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -56,8 +56,6 @@ import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.JetLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.JavaResolveExtension
 import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeFullyAndGetResult
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluateExpressionCache.CompiledDataDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluateExpressionCache.ParametersDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClasses
@@ -75,15 +73,13 @@ import org.jetbrains.kotlin.psi.codeFragmentUtil.debugTypeInfo
 import org.jetbrains.kotlin.psi.codeFragmentUtil.suppressDiagnosticsInDebugMode
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.types.Flexibility
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.Opcodes.ASM5
-import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
-import java.util.*
+import java.util.Collections
 
 private val RECEIVER_NAME = "\$receiver"
 private val THIS_NAME = "this"
@@ -100,15 +96,15 @@ object KotlinEvaluationBuilder: EvaluatorBuilder {
         }
 
         if (codeFragment.getContext() !is JetElement) {
-            val attachments = array(attachmentByPsiFile(position.getFile()),
-                                    attachmentByPsiFile(codeFragment),
-                                    Attachment("breakpoint.info", "line: ${position.getLine()}"))
+            val attachments = arrayOf(attachmentByPsiFile(position.getFile()),
+                                      attachmentByPsiFile(codeFragment),
+                                      Attachment("breakpoint.info", "line: ${position.getLine()}"))
 
             logger.error("Trying to evaluate ${codeFragment.javaClass} with context ${codeFragment.getContext()?.javaClass}", mergeAttachments(*attachments))
             throw EvaluateExceptionUtil.createEvaluateException("Couldn't evaluate kotlin expression in this context")
         }
 
-        return ExpressionEvaluatorImpl(KotlinEvaluator(codeFragment as JetCodeFragment, position))
+        return ExpressionEvaluatorImpl(KotlinEvaluator(codeFragment, position))
     }
 }
 
@@ -150,9 +146,9 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
             exception(DebuggerBundle.message("error.vm.disconnected"))
         }
         catch (e: Exception) {
-            val attachments = array(attachmentByPsiFile(sourcePosition.getFile()),
-                                    attachmentByPsiFile(codeFragment),
-                                    Attachment("breakpoint.info", "line: ${sourcePosition.getLine()}"))
+            val attachments = arrayOf(attachmentByPsiFile(sourcePosition.getFile()),
+                                      attachmentByPsiFile(codeFragment),
+                                      Attachment("breakpoint.info", "line: ${sourcePosition.getLine()}"))
             logger.error("Couldn't evaluate expression:\n" + ExceptionUtil.getThrowableText(e), mergeAttachments(*attachments))
 
             val cause = if (e.getMessage() != null) ": ${e.getMessage()}" else ""
@@ -172,12 +168,12 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
             if (extractionResult == null) {
                 throw IllegalStateException("Code fragment cannot be extracted to function")
             }
+            val parametersDescriptor = extractionResult.getParametersForDebugger()
             val extractedFunction = extractionResult.declaration as JetNamedFunction
 
-            val classFileFactory = createClassFileFactory(codeFragment, extractedFunction, context)
+            val classFileFactory = createClassFileFactory(codeFragment, extractedFunction, context, parametersDescriptor)
 
-            // KT-4509
-            val outputFiles = (classFileFactory : OutputFileCollection).asList()
+            val outputFiles = classFileFactory.asList()
                                     .filter { it.relativePath != "$packageInternalName.class" }
                                     .sortBy { it.relativePath.length() }
 
@@ -194,7 +190,7 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
                     additionalFiles,
                     sourcePosition,
                     funName,
-                    extractionResult.getParametersForDebugger())
+                    parametersDescriptor)
         }
 
         private fun getClassName(fileName: String): String {
@@ -292,11 +288,10 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
                 }
 
                 for (param in config.descriptor.parameters) {
-                    val paramName = if (param.argumentText.contains("@")) {
-                        param.argumentText.substringBefore("@")
-                    }
-                    else {
-                       param.argumentText
+                    val paramName = when {
+                        param.argumentText.contains("@") -> param.argumentText.substringBefore("@")
+                        param.argumentText.startsWith("::") -> param.argumentText.substring(2)
+                        else -> param.argumentText
                     }
                     parameters.add(paramName, param.getParameterType(true))
                 }
@@ -305,13 +300,15 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
         }
 
         private fun EvaluationContextImpl.getArgumentsForEval4j(parameterNames: List<String>, parameterTypes: Array<Type>): List<Value> {
-            return parameterNames.zip(parameterTypes).map { this.findLocalVariable(it.first, it.second, checkType = false, failIfNotFound = true)!! }
+            val frameVisitor = FrameVisitor(this)
+            return parameterNames.zip(parameterTypes).map { frameVisitor.findValue(it.first, it.second, checkType = false, failIfNotFound = true)!! }
         }
 
         private fun createClassFileFactory(
                 codeFragment: JetCodeFragment,
                 extractedFunction: JetNamedFunction,
-                context: EvaluationContextImpl
+                context: EvaluationContextImpl,
+                parameters: ParametersDescriptor
         ): ClassFileFactory {
             return runReadAction {
                 val jetFile = createFileForDebugger(codeFragment, extractedFunction)
@@ -339,22 +336,31 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
                         DiagnosticSink.DO_NOTHING,
                         null)
 
+                val frameVisitor = FrameVisitor(context)
+
                 extractedFunction.getReceiverTypeReference()?.let {
-                    state.recordAnonymousType(it, THIS_NAME, context)
+                    state.getBindingTrace().recordAnonymousType(it, THIS_NAME, frameVisitor)
                 }
 
-                for (param in extractedFunction.getValueParameters()) {
-                    val paramRef = param.getTypeReference()
-                    val paramName = param.getName()
-                    if (paramRef == null || paramName == null) {
-                        logger.error("Each parameter for extracted function should have a name and a type reference",
+                val valueParameters = extractedFunction.getValueParameters()
+                var paramIndex = 0
+                for (param in parameters) {
+                    val (callText, type) = param
+
+                    if (callText.contains(THIS_NAME)) continue
+
+                    val valueParameter = valueParameters[paramIndex++]
+
+                    val paramRef = valueParameter.getTypeReference()
+                    if (paramRef == null) {
+                        logger.error("Each parameter for extracted function should have a type reference",
                                      Attachment("codeFragment.txt", codeFragment.getText()),
                                      Attachment("extractedFunction.txt", extractedFunction.getText()))
 
                         exception("An exception occurs during Evaluate Expression Action")
                     }
 
-                    state.recordAnonymousType(paramRef, paramName, context)
+                    state.getBindingTrace().recordAnonymousType(paramRef, callText, frameVisitor)
                 }
 
                 KotlinCodegenFacade.compileCorrectFiles(state, CompilationErrorHandler.THROW_EXCEPTION)
@@ -363,16 +369,16 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
             }
         }
 
-        private fun GenerationState.recordAnonymousType(typeReference: JetTypeReference, localVariableName: String, context: EvaluationContextImpl) {
+        private fun BindingTrace.recordAnonymousType(typeReference: JetTypeReference, localVariableName: String, visitor: FrameVisitor) {
             val paramAnonymousType = typeReference.debugTypeInfo
             if (paramAnonymousType != null) {
                 val declarationDescriptor = paramAnonymousType.getConstructor().getDeclarationDescriptor()
                 if (declarationDescriptor is ClassDescriptor) {
-                    val localVariable = context.findLocalVariable(localVariableName, asmType = null, checkType = false, failIfNotFound = false)
+                    val localVariable = visitor.findValue(localVariableName, asmType = null, checkType = false, failIfNotFound = false)
                     if (localVariable == null) {
                         exception("Couldn't find local variable this in current frame to get classType for anonymous type ${paramAnonymousType}}")
                     }
-                    getBindingTrace().record(CodegenBinding.ASM_TYPE, declarationDescriptor, localVariable.asmType)
+                    record(CodegenBinding.ASM_TYPE, declarationDescriptor, localVariable.asmType)
                 }
             }
         }
@@ -484,149 +490,13 @@ private fun SuspendContext.getInvokePolicy(): Int {
     return if (getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) ObjectReference.INVOKE_SINGLE_THREADED else 0
 }
 
-private fun com.sun.jdi.Type?.isSubclass(superClassName: String): Boolean {
-    if (this !is ClassType) return false
-    if (allInterfaces().any { it.name() == superClassName }) {
-        return true
-    }
-
-    var superClass = this.superclass()
-    while (superClass != null) {
-        if (superClass.name() == superClassName) {
-            return true
-        }
-        superClass = superClass.superclass()
-    }
-    return false
-}
-
-fun EvaluationContextImpl.findLocalVariable(name: String, asmType: Type?, checkType: Boolean, failIfNotFound: Boolean): Value? {
-    val project = getDebugProcess().getProject()
-    val frame = getFrameProxy()?.getStackFrame()
-    if (frame == null) return null
-
-    fun isValueOfCorrectType(value: Value, asmType: Type?, shouldCheckType: Boolean): Boolean {
-        if (!shouldCheckType || asmType == null || value.asmType == asmType) return true
-        if (project == null) return false
-
-        if ((value.obj() as? com.sun.jdi.ObjectReference)?.referenceType().isSubclass(asmType.getClassName())) {
-            return true
-        }
-
-        val thisDesc = value.asmType.getClassDescriptor(project)
-        val expDesc = asmType.getClassDescriptor(project)
-        return thisDesc != null && expDesc != null && runReadAction { DescriptorUtils.isSubclass(thisDesc, expDesc) }
-    }
-
-
-    try {
-        when (name) {
-            THIS_NAME -> {
-                val thisObject = frame.thisObject()
-                if (thisObject != null) {
-                    val eval4jValue = thisObject.asValue()
-                    if (isValueOfCorrectType(eval4jValue, asmType, true)) return eval4jValue
-                }
-
-                val receiver = findLocalVariable(RECEIVER_NAME, asmType, checkType = true, failIfNotFound = false)
-                if (receiver != null) return receiver
-
-                val this0 = findLocalVariable(AsmUtil.CAPTURED_THIS_FIELD, asmType, checkType = true, failIfNotFound = false)
-                if (this0 != null) return this0
-
-                val `$this` = findLocalVariable("\$this", asmType, checkType = false, failIfNotFound = false)
-                if (`$this` != null) return `$this`
-            }
-            else -> {
-
-                fun getField(owner: Value, name: String, asmType: Type?, checkType: Boolean): Value? {
-                    try {
-                        val obj = owner.asJdiValue(frame.virtualMachine(), owner.asmType)
-                        if (obj !is ObjectReference) return null
-
-                        val _class = obj.referenceType()
-                        val field = _class.fieldByName(name)
-                        if (field == null) return null
-
-                        val fieldValue = obj.getValue(field).asValue()
-                        if (isValueOfCorrectType(fieldValue, asmType, checkType)) return fieldValue
-                        return null
-                    }
-                    catch (e: Exception) {
-                        return null
-                    }
-                }
-
-                fun Value.isSharedVar(): Boolean {
-                    return this.asmType.getSort() == Type.OBJECT && this.asmType.getInternalName().startsWith(AsmTypes.REF_TYPE_PREFIX)
-                }
-
-                fun getValueForSharedVar(value: Value, expectedType: Type?, checkType: Boolean): Value? {
-                    val sharedVarValue = getField(value, "element", expectedType, checkType)
-                    if (sharedVarValue != null && isValueOfCorrectType(sharedVarValue, expectedType, checkType)) {
-                        return sharedVarValue
-                    }
-                    return null
-                }
-
-                val localVariable = frame.visibleVariableByName(name)
-                if (localVariable != null) {
-                    val eval4jValue = frame.getValue(localVariable).asValue()
-                    if (eval4jValue.isSharedVar()) {
-                        val sharedVarValue = getValueForSharedVar(eval4jValue, asmType, checkType)
-                        if (sharedVarValue != null) {
-                            return sharedVarValue
-                        }
-                    }
-
-                    if (isValueOfCorrectType(eval4jValue, asmType, checkType)) return eval4jValue
-                }
-
-                fun findCapturedVal(name: String): Value? {
-                    var result: Value? = null
-                    val thisObject = frame.thisObject() ?: return null
-                    var thisObj: Value? = thisObject.asValue()
-
-                    while (result == null && thisObj != null) {
-                        result = getField(thisObj!!, name, asmType, checkType)
-                        if (result == null) {
-                            thisObj = getField(thisObj!!, AsmUtil.CAPTURED_THIS_FIELD, null, false)
-                        }
-                    }
-                    return result
-                }
-
-                val capturedValName = getCapturedFieldName(name)
-                val capturedVal = findCapturedVal(capturedValName)
-                if (capturedVal != null) {
-                    if (capturedVal.isSharedVar()) {
-                        val sharedVarValue = getValueForSharedVar(capturedVal, asmType, checkType)
-                        if (sharedVarValue != null) {
-                            return sharedVarValue
-                        }
-                    }
-                    return capturedVal
-                }
-            }
-        }
-
-        return if (!failIfNotFound)
-            null
-        else
-            throw EvaluateExceptionUtil.createEvaluateException("Cannot find local variable: name = $name${if (checkType) ", type = " + asmType.toString() else ""}")
-    }
-    catch(e: InvalidStackFrameException) {
-        throw EvaluateExceptionUtil.createEvaluateException("Local variable $name is unavailable in current frame")
-    }
-}
-
 fun Type.getClassDescriptor(project: Project): ClassDescriptor? {
     if (AsmUtil.isPrimitive(this)) return null
 
     val jvmName = JvmClassName.byInternalName(getInternalName()).getFqNameForClassNameWithoutDollars()
 
     val platformClasses = JavaToKotlinClassMap.INSTANCE.mapPlatformClass(jvmName)
-    if (platformClasses.notEmpty) return platformClasses.first()
+    if (platformClasses.isNotEmpty()) return platformClasses.first()
 
     return runReadAction {
         val classes = JavaPsiFacade.getInstance(project).findClasses(jvmName.asString(), GlobalSearchScope.allScope(project))
@@ -637,12 +507,3 @@ fun Type.getClassDescriptor(project: Project): ClassDescriptor? {
         }
     }
 }
-
-private fun getCapturedFieldName(name: String) = when (name) {
-    RECEIVER_NAME -> AsmUtil.CAPTURED_RECEIVER_FIELD
-    THIS_NAME -> AsmUtil.CAPTURED_THIS_FIELD
-    AsmUtil.CAPTURED_RECEIVER_FIELD -> name
-    AsmUtil.CAPTURED_THIS_FIELD -> name
-    else -> "$$name"
-}
-

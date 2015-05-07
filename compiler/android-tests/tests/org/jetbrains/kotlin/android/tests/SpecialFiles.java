@@ -53,6 +53,8 @@ public class SpecialFiles {
         excludedFiles.add("innerAnonymousObject.kt"); // Cannot change package name
         excludedFiles.add("nestedReifiedSignature.kt"); // Cannot change package name
         excludedFiles.add("recursiveInnerAnonymousObject.kt"); // Cannot change package name
+        excludedFiles.add("extensionMethod.kt"); // Cannot change package name
+        excludedFiles.add("platformTypeAssertionStackTrace.kt"); // Cannot change package name
 
         excludedFiles.add("kt684.kt"); // StackOverflow with StringBuilder (escape())
 

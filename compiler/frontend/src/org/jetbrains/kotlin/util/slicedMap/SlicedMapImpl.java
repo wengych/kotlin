@@ -111,7 +111,9 @@ public class SlicedMapImpl implements MutableSlicedMap {
 
         holder.putUserData(sliceKey, null);
 
-        //TODO should we remove holder if it is empty?
+        if (holder.isEmpty()) {
+            map.remove(key);
+        }
 
         return value;
     }

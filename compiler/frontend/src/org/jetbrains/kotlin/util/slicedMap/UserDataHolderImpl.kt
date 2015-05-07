@@ -24,4 +24,6 @@ import java.util.BitSet
 class UserDataHolderImpl : UserDataHolderBase() {
     val keys: Array<Key<*>>
         get() = getUserMap().getKeys()
+
+    fun isEmpty() = getUserMap() == KeyFMap.EMPTY_MAP
 }

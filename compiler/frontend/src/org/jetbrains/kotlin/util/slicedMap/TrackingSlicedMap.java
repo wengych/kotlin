@@ -142,7 +142,7 @@ public class TrackingSlicedMap extends SlicedMapImpl {
         private final ReadOnlySlice<K, V> delegate;
 
         private SliceWithStackTrace(@NotNull ReadOnlySlice<K, V> delegate) {
-            super("<SliceWithStackTrace>");
+            super(delegate.toString());
             this.delegate = delegate;
         }
 

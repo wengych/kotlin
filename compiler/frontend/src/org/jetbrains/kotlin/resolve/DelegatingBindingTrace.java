@@ -167,7 +167,6 @@ public class DelegatingBindingTrace implements BindingTrace {
             @Override
             public Void invoke(WritableSlice slice, Object key, Object value) {
                 if (filter == null || filter.accept(slice, key)) {
-                    //noinspection unchecked
                     trace.record(slice, key, value);
                 }
 

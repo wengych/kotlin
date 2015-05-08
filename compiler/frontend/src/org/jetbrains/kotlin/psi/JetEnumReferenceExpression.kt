@@ -22,6 +22,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.lexer.JetTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.stubs.KotlinEnumReferenceExpressionStub
 import org.jetbrains.kotlin.psi.stubs.elements.JetStubElementTypes
 
@@ -33,10 +35,7 @@ public class JetEnumReferenceExpression : JetExpressionImplStub<KotlinEnumRefere
     private val referencedElement: JetClass
 
     private fun calcReferencedElement(): JetClass? {
-        var owner: PsiElement? = this
-        do {
-            owner = owner?.getParent()
-        } while (owner != null && owner !is JetEnumEntry)
+        var owner: PsiElement? = this.getStrictParentOfType<JetEnumEntry>()
         return ((owner as? JetEnumEntry)?.getParent()?.getParent() as? JetClass)
     }
 

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.JetNodeTypes;
 import org.jetbrains.kotlin.lexer.JetTokens;
 import org.jetbrains.kotlin.name.FqName;
+import org.jetbrains.kotlin.psi.psiUtil.PsiUtilPackage;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.elements.JetStubElementTypes;
 
@@ -239,13 +240,6 @@ public class JetClass extends JetTypeParameterListOwnerStub<KotlinClassStub> imp
         return body != null ? body.getSecondaryConstructors() : Collections.<JetSecondaryConstructor>emptyList();
     }
 
-    private static PsiElement getNextSiblingIgnoringWhitespace(PsiElement current) {
-        do {
-            current = current.getNextSibling();
-        } while (current.getNode().getElementType() == JetTokens.WHITE_SPACE);
-        return current;
-    }
-
     // Returns true if it's an enum without comma between entries
     // and/or without semicolon after entries
     public boolean usesDeprecatedEnumDelimiter() {
@@ -256,7 +250,7 @@ public class JetClass extends JetTypeParameterListOwnerStub<KotlinClassStub> imp
         List<JetClass> enumEntries = body.getStubOrPsiChildrenAsList(JetStubElementTypes.ENUM_ENTRY);
         for (JetClass entry: enumEntries) {
             entryIndex++;
-            PsiElement next = getNextSiblingIgnoringWhitespace(entry);
+            PsiElement next = PsiUtilPackage.getNextSiblingIgnoringWhitespace(entry);
             IElementType nextType = next.getNode().getElementType();
             if (entryIndex < enumEntries.size()) {
                 if (nextType != JetTokens.COMMA) {
@@ -266,7 +260,7 @@ public class JetClass extends JetTypeParameterListOwnerStub<KotlinClassStub> imp
             else {
                 // After the last entry, we can have semicolon, just closing brace, or comma followed by semicolon / closing brace
                 if (nextType == JetTokens.COMMA) {
-                    next = getNextSiblingIgnoringWhitespace(next);
+                    next = PsiUtilPackage.getNextSiblingIgnoringWhitespace(next);
                     nextType = next.getNode().getElementType();
                 }
                 if (nextType != JetTokens.SEMICOLON && nextType != JetTokens.RBRACE) {

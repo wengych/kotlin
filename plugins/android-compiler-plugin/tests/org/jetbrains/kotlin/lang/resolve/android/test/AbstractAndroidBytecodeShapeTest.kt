@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.JetTestUtils
+import java.io.File
 
 public abstract class AbstractAndroidBytecodeShapeTest : AbstractBytecodeTextTest() {
 
@@ -29,9 +30,10 @@ public abstract class AbstractAndroidBytecodeShapeTest : AbstractBytecodeTextTes
     }
 
     private fun createEnvironmentForConfiguration(configuration: CompilerConfiguration, path: String) {
-        val resPath = path + "res/layout/"
+        val layoutPaths = getResPaths(path)
         val manifestPath = path + "../AndroidManifest.xml"
-        myEnvironment = createAndroidTestEnvironment(configuration, resPath, manifestPath)
+        val supportV4 = File(path).name.startsWith("support")
+        myEnvironment = createAndroidTestEnvironment(configuration, layoutPaths, manifestPath, supportV4)
     }
 
     public override fun doTest(path: String) {

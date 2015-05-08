@@ -19,6 +19,8 @@ package org.jetbrains.kotlin.plugin.android
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
@@ -46,16 +48,23 @@ public class AndroidPsiTreeChangePreprocessor : PsiTreeChangePreprocessor, Simpl
                 val module = projectFileIndex.getModuleForFile(file.getVirtualFile())
                 if (module != null) {
                     val resourceManager = AndroidResourceManager.getInstance(module)
-                    val mainResDirectory = resourceManager.getMainResDirectory()
+                    val resDirectories = resourceManager.getModuleResDirectories()
                     val baseDirectory = file.getParent()?.getParent()?.getVirtualFile()
 
-                    //File from res/ directory was modified
-                    if (mainResDirectory == baseDirectory && file.isLayoutXmlFile()) {
+                    // File from the res/ directory was modified
+                    if (baseDirectory in resDirectories && file.isLayoutXmlFile()) {
                         incModificationCount()
                     }
                 }
             }
         }
+    }
+
+    private fun AndroidResourceManager.getModuleResDirectories(): List<VirtualFile> {
+        val info = androidModuleInfo
+        if (info == null) return listOf()
+        val fileManager = VirtualFileManager.getInstance()
+        return info.resDirectories.map { fileManager.findFileByUrl("file://" + it) }
     }
 
     private fun PsiFile.isLayoutXmlFile(): Boolean {

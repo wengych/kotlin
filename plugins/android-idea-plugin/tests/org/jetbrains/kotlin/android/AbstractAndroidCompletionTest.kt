@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.idea.project.TargetPlatform
 import java.io.File
 
 public abstract class AbstractAndroidCompletionTest : KotlinAndroidTestCase() {
-    private var kotlinInternalModeOriginalValue: Boolean = false
-
     private var codeCompletionOldValue: Boolean = false
     private var smartTypeCompletionOldValue: Boolean = false
 
@@ -44,11 +42,11 @@ public abstract class AbstractAndroidCompletionTest : KotlinAndroidTestCase() {
 
     private fun completionType() = CompletionType.BASIC
 
-    fun doTest(testPath: String?) {
-        myFixture.copyDirectoryToProject(getResDir()!!, "res")
-        val virtualFile = myFixture.copyFileToProject(testPath + getTestName(true) + ".kt", "src/" + getTestName(true) + ".kt");
+    fun doTest(path: String?) {
+        getResourceDirs(path).forEach { myFixture.copyDirectoryToProject(it.name, it.name) }
+        val virtualFile = myFixture.copyFileToProject(path + getTestName(true) + ".kt", "src/" + getTestName(true) + ".kt");
         myFixture.configureFromExistingVirtualFile(virtualFile)
-        val fileText = FileUtil.loadFile(File(testPath + getTestName(true) + ".kt"), true)
+        val fileText = FileUtil.loadFile(File(path + getTestName(true) + ".kt"), true)
         testCompletion(fileText, TargetPlatform.JVM, {
             count -> myFixture.complete(completionType())
         })

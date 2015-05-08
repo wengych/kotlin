@@ -34,11 +34,9 @@ class AndroidXmlHandler(private val elementCallback: (String, String) -> Unit) :
         if (isWidgetTypeIgnored(localName)) return
         val attributesMap = attributes.toMap()
         val idAttribute = attributesMap[AndroidConst.ID_ATTRIBUTE_NO_NAMESPACE]
-        val widgetType = getRealWidgetType(attributesMap[AndroidConst.CLASS_ATTRIBUTE_NO_NAMESPACE] ?: localName)
-        if (isResourceDeclarationOrUsage(idAttribute)) {
-            val name = idToName(idAttribute)
-            if (name != null) elementCallback(name, widgetType)
-        }
+        val widgetType = attributesMap[AndroidConst.CLASS_ATTRIBUTE_NO_NAMESPACE] ?: localName
+        val name = idAttribute?.let { idToName(idAttribute) }
+        if (name != null) elementCallback(name, widgetType)
     }
 
     override fun endElement(uri: String?, localName: String, qName: String) {

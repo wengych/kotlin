@@ -55,8 +55,8 @@ public abstract class AndroidResourceManager(val project: Project) {
             return allChildren
         }
 
-        val resDirectory = fileManager.findFileByUrl("file://" + info.mainResDirectory)
-        val allChildren = resDirectory?.getAllChildren() ?: listOf()
+        val resDirectories = info.resDirectories.map { fileManager.findFileByUrl("file://$it") }
+        val allChildren = resDirectories.flatMap { it?.getAllChildren() ?: listOf() }
 
         return allChildren
                 .filter { it.getParent().getName().startsWith("layout") && it.getName().toLowerCase().endsWith(".xml") }
@@ -64,12 +64,6 @@ public abstract class AndroidResourceManager(val project: Project) {
                 .filterNotNull()
                 .groupBy { it.getName().substringBeforeLast('.') }
                 .mapValues { it.getValue().sortBy { it.getParent().getName().length() } }
-    }
-
-    fun getMainResDirectory(): VirtualFile? {
-        val info = androidModuleInfo
-        if (info == null) return null
-        return VirtualFileManager.getInstance().findFileByUrl("file://" + info.mainResDirectory)
     }
 
     companion object {

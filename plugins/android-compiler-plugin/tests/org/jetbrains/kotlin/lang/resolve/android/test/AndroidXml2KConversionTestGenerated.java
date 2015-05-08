@@ -79,6 +79,12 @@ public class AndroidXml2KConversionTestGenerated extends AbstractAndroidXml2KCon
             doTest(fileName);
         }
 
+        @TestMetadata("severalResDirs")
+        public void testSeveralResDirs() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("plugins/android-compiler-plugin/testData/android/converter/simple/severalResDirs/");
+            doTest(fileName);
+        }
+
         @TestMetadata("singleFile")
         public void testSingleFile() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("plugins/android-compiler-plugin/testData/android/converter/simple/singleFile/");
@@ -88,6 +94,18 @@ public class AndroidXml2KConversionTestGenerated extends AbstractAndroidXml2KCon
         @TestMetadata("specialTags")
         public void testSpecialTags() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("plugins/android-compiler-plugin/testData/android/converter/simple/specialTags/");
+            doTest(fileName);
+        }
+
+        @TestMetadata("supportSingleFile")
+        public void testSupportSingleFile() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("plugins/android-compiler-plugin/testData/android/converter/simple/supportSingleFile/");
+            doTest(fileName);
+        }
+
+        @TestMetadata("supportSpecialTags")
+        public void testSupportSpecialTags() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("plugins/android-compiler-plugin/testData/android/converter/simple/supportSpecialTags/");
             doTest(fileName);
         }
     }

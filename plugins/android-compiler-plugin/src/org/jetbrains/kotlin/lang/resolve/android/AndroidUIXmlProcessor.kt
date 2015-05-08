@@ -66,6 +66,9 @@ public abstract class AndroidUIXmlProcessor(protected val project: Project) {
 
     protected abstract val cachedSources: CachedValue<List<AndroidSyntheticFile>>
 
+    //MAKE CONSTANT (or abstract)
+    var supportV4 = false
+
     private val cachedJetFiles: CachedValue<List<JetFile>> by Delegates.lazy {
         cachedValue {
             val psiManager = PsiManager.getInstance(project)
@@ -90,8 +93,9 @@ public abstract class AndroidUIXmlProcessor(protected val project: Project) {
             val clearCacheFile = renderSyntheticFile("clearCache") {
                 writePackage(AndroidConst.SYNTHETIC_PACKAGE)
                 writeAndroidImports()
-                writeClearCacheFunction("android.app.Activity")
-                writeClearCacheFunction("android.app.Fragment")
+                writeClearCacheFunction(AndroidConst.ACTIVITY_FQNAME)
+                writeClearCacheFunction(AndroidConst.FRAGMENT_FQNAME)
+                if (supportV4) writeClearCacheFunction(AndroidConst.SUPPORT_FRAGMENT_FQNAME)
             }
 
             listOf(clearCacheFile,
@@ -103,19 +107,12 @@ public abstract class AndroidUIXmlProcessor(protected val project: Project) {
 
         return resourceManager.getLayoutXmlFiles().flatMap { entry ->
             val files = entry.getValue()
-            val widgets = parseLayout(files)
+            val resources = parseLayout(files)
 
             val layoutName = files[0].getName().substringBefore('.')
-            val packageName = AndroidConst.SYNTHETIC_PACKAGE + "." + files[0].getEscapedLayoutName()
 
-            val mainLayoutFile = renderLayoutFile(layoutName + AndroidConst.LAYOUT_POSTFIX, packageName, widgets) {
-                writeSyntheticProperty("android.app.Activity", it, "findViewById(0)")
-                writeSyntheticProperty("android.app.Fragment", it, "getView().findViewById(0)")
-            }
-
-            val viewLayoutFile = renderLayoutFile(layoutName + AndroidConst.VIEW_LAYOUT_POSTFIX, "$packageName.view", widgets) {
-                writeSyntheticProperty("android.view.View", it, "findViewById(0)")
-            }
+            val mainLayoutFile = renderMainLayoutFile(layoutName, resources)
+            val viewLayoutFile = renderViewLayoutFile(layoutName, resources)
 
             listOf(mainLayoutFile, viewLayoutFile)
         }.filterNotNull() + commonFiles
@@ -123,20 +120,37 @@ public abstract class AndroidUIXmlProcessor(protected val project: Project) {
 
     public fun parseToPsi(): List<JetFile>? = cachedJetFiles.getValue()
 
-    protected abstract fun parseLayout(files: List<PsiFile>): List<AndroidWidget>
+    protected abstract fun parseLayout(files: List<PsiFile>): List<AndroidResource>
+
+    private fun renderMainLayoutFile(layoutName: String, resources: List<AndroidResource>): AndroidSyntheticFile {
+        return renderLayoutFile(layoutName + AndroidConst.LAYOUT_POSTFIX,
+                                escapeAndroidIdentifier(layoutName), resources) {
+            val properties = it.mainProperties.toArrayList()
+            if (supportV4) properties.addAll(it.mainPropertiesForSupportV4)
+            properties
+        }
+    }
+
+    private fun renderViewLayoutFile(layoutName: String, resources: List<AndroidResource>): AndroidSyntheticFile {
+        return renderLayoutFile(layoutName + AndroidConst.VIEW_LAYOUT_POSTFIX,
+                                escapeAndroidIdentifier(layoutName) + ".view", resources) { it.viewProperties }
+    }
 
     private fun renderLayoutFile(
-            name: String,
-            packageName: String,
-            widgets: List<AndroidWidget> = listOf(),
-            widgetWriter: KotlinStringWriter.(AndroidWidget) -> Unit
-    ): AndroidSyntheticFile {
-        val stringWriter = KotlinStringWriter()
-        stringWriter.writePackage(packageName)
-        stringWriter.writeAndroidImports()
-        widgets.forEach { stringWriter.widgetWriter(it) }
+            filename: String,
+            packageSegment: String,
+            resources: List<AndroidResource>,
+            properties: (AndroidResource) -> List<Pair<String, String>>): AndroidSyntheticFile {
+        return renderSyntheticFile(filename) {
+            writePackage(AndroidConst.SYNTHETIC_PACKAGE + "." + packageSegment)
+            writeAndroidImports()
 
-        return AndroidSyntheticFile(name, stringWriter.toStringBuffer().toString())
+            for (res in resources) {
+                properties(res).forEach { property ->
+                    writeSyntheticProperty(property.first, res, property.second)
+                }
+            }
+        }
     }
 
     private fun renderSyntheticFile(filename: String, init: KotlinStringWriter.() -> Unit): AndroidSyntheticFile {
@@ -150,17 +164,14 @@ public abstract class AndroidUIXmlProcessor(protected val project: Project) {
         writeEmptyLine()
     }
 
-    private fun PsiFile.getEscapedLayoutName(): String {
-        return escapeAndroidIdentifier(getName().substringBefore('.'))
-    }
-
-    private fun KotlinStringWriter.writeSyntheticProperty(receiver: String, widget: AndroidWidget, stubCall: String) {
-        val cast = if (widget.className != "View") " as? ${widget.className}" else ""
+    private fun KotlinStringWriter.writeSyntheticProperty(receiver: String, widget: AndroidResource, stubCall: String) {
+        // extract startsWith() to fun
+        val className = if (isFromSupportV4Package(receiver)) widget.supportClassName else widget.className
+        val cast = if (widget.className != "View") " as? $className" else ""
         val body = arrayListOf("return $stubCall$cast")
-        val type = widget.className
         writeImmutableExtensionProperty(receiver,
                                         name = widget.id,
-                                        retType = "$EXPLICIT_FLEXIBLE_CLASS_NAME<$type, $type?>",
+                                        retType = "$EXPLICIT_FLEXIBLE_CLASS_NAME<$className, $className?>",
                                         getterBody = body)
     }
 
@@ -172,19 +183,29 @@ public abstract class AndroidUIXmlProcessor(protected val project: Project) {
         return CachedValuesManager.getManager(project).createCachedValue(result, false)
     }
 
-    protected fun removeDuplicates(widgets: List<AndroidWidget>): List<AndroidWidget> {
-        val widgetMap = linkedMapOf<String, AndroidWidget>()
-        for (widget in widgets) {
-            if (widgetMap.contains(widget.id)) {
-                val existingElement = widgetMap.get(widget.id)
-                if (existingElement.className != widget.className && existingElement.className != "View") {
+    private fun isFromSupportV4Package(fqName: String): Boolean {
+        return fqName.startsWith(AndroidConst.SUPPORT_V4_PACKAGE)
+    }
+
+    protected fun removeDuplicates(resources: List<AndroidResource>): List<AndroidResource> {
+        val resourceMap = linkedMapOf<String, AndroidResource>()
+        val resourcesToExclude = hashSetOf<String>()
+
+        for (res in resources) {
+            if (resourceMap.contains(res.id)) {
+                val existing = resourceMap[res.id]
+
+                if (!res.sameClass(existing)) {
+                    resourcesToExclude.add(res.id)
+                } else if (res is AndroidWidget && existing.className != res.className && existing.className != "View") {
                     // Widgets with the same id but different types exist.
-                    widgetMap.put(widget.id, widget.copy(className = "View"))
+                    resourceMap.put(res.id, AndroidWidget(res.id, "View"))
                 }
             }
-            else widgetMap.put(widget.id, widget)
+            else resourceMap.put(res.id, res)
         }
-        return widgetMap.values().toList()
+        resourcesToExclude.forEach { resourceMap.remove(it) }
+        return resourceMap.values().toList()
     }
 
     companion object {

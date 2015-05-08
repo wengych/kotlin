@@ -16,8 +16,56 @@
 
 package org.jetbrains.kotlin.lang.resolve.android
 
-public data class AndroidModuleInfo(val applicationPackage: String, val mainResDirectory: String?)
+public data class AndroidModuleInfo(val applicationPackage: String, resDirectories: List<String>) {
+    val resDirectories = resDirectories.sort()
+}
 
-trait AndroidResource
+public abstract class AndroidResource(val id: String) {
+    public abstract val className: String
+    public open val supportClassName: String
+        get() = className
 
-public data class AndroidWidget(val id: String, val className: String) : AndroidResource
+    public abstract val mainProperties: List<Pair<String, String>>
+    public open val mainPropertiesForSupportV4: List<Pair<String, String>> = listOf()
+    public open val viewProperties: List<Pair<String, String>> = listOf()
+
+    public open fun sameClass(other: AndroidResource): Boolean = false
+}
+
+public class AndroidWidget(id: String, override val className: String) : AndroidResource(id) {
+    private companion object {
+        val MAIN_PROPERTIES = listOf(
+                AndroidConst.ACTIVITY_FQNAME to "findViewById(0)",
+                AndroidConst.FRAGMENT_FQNAME to "getView().findViewById(0)")
+
+        val MAIN_PROPERTIES_SUPPORT_V4 = listOf(AndroidConst.SUPPORT_FRAGMENT_FQNAME to "getView().findViewById(0)")
+
+        val VIEW_PROPERTIES = listOf("android.view.View" to "findViewById(0)")
+    }
+
+    override val mainProperties = MAIN_PROPERTIES
+    override val mainPropertiesForSupportV4 = MAIN_PROPERTIES_SUPPORT_V4
+    override val viewProperties = VIEW_PROPERTIES
+
+    override fun sameClass(other: AndroidResource) = other is AndroidWidget
+}
+
+public class AndroidFragment(id: String) : AndroidResource(id) {
+    private companion object {
+        val MAIN_PROPERTIES = listOf(
+                AndroidConst.ACTIVITY_FQNAME to "getFragmentManager().findFragmentById(0)",
+                AndroidConst.FRAGMENT_FQNAME to "getFragmentManager().findFragmentById(0)")
+
+        val MAIN_PROPERTIES_SUPPORT_V4 = listOf(
+                AndroidConst.SUPPORT_FRAGMENT_FQNAME to "getFragmentManager().findFragmentById(0)",
+                AndroidConst.SUPPORT_FRAGMENT_ACTIVITY_FQNAME to "getSupportFragmentManager().findFragmentById(0)")
+    }
+
+    override val className = AndroidConst.FRAGMENT_FQNAME
+    override val supportClassName = AndroidConst.SUPPORT_FRAGMENT_FQNAME
+
+    override val mainProperties = MAIN_PROPERTIES
+    override val mainPropertiesForSupportV4 = MAIN_PROPERTIES_SUPPORT_V4
+
+    override fun sameClass(other: AndroidResource) = other is AndroidFragment
+}

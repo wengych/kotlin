@@ -33,8 +33,8 @@ import java.util.Set;
 
 import static org.jetbrains.kotlin.JetNodeTypes.*;
 import static org.jetbrains.kotlin.lexer.JetTokens.*;
-import static org.jetbrains.kotlin.parsing.JetParsing.AnnotationParsingMode.REGULAR_ANNOTATIONS_ALLOW_SHORTS;
-import static org.jetbrains.kotlin.parsing.JetParsing.AnnotationParsingMode.REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS;
+import static org.jetbrains.kotlin.parsing.JetParsing.AnnotationParsingMode.ALLOW_UNESCAPED_REGULAR_ANNOTATIONS;
+import static org.jetbrains.kotlin.parsing.JetParsing.AnnotationParsingMode.ONLY_ESCAPED_REGULAR_ANNOTATIONS;
 
 public class JetExpressionParsing extends AbstractJetParsing {
     private static final TokenSet WHEN_CONDITION_RECOVERY_SET = TokenSet.create(RBRACE, IN_KEYWORD, NOT_IN, IS_KEYWORD, NOT_IS, ELSE_KEYWORD);
@@ -342,10 +342,10 @@ public class JetExpressionParsing extends AbstractJetParsing {
     private void parsePrefixExpression() {
         //        System.out.println("pre at "  + myBuilder.getTokenText());
 
-        if (at(LBRACKET)) {
+        if (at(LBRACKET) || at(AT)) {
             if (!parseLocalDeclaration()) {
                 PsiBuilder.Marker expression = mark();
-                myJetParsing.parseAnnotations(REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
+                myJetParsing.parseAnnotations(ONLY_ESCAPED_REGULAR_ANNOTATIONS);
                 parsePrefixExpression();
                 expression.done(ANNOTATED_EXPRESSION);
             }
@@ -477,13 +477,13 @@ public class JetExpressionParsing extends AbstractJetParsing {
 
     /*
      * callSuffix
-     *   : typeArguments? valueArguments (getEntryPoint? functionLiteral*)
-     *   : typeArguments (getEntryPoint? functionLiteral*)
+     *   : typeArguments? valueArguments annotatedLambda
+     *   : typeArguments annotatedLambda
      *   ;
      */
     private boolean parseCallSuffix() {
         if (parseCallWithClosure()) {
-            parseCallWithClosure();
+            // do nothing
         }
         else if (at(LPAR)) {
             parseValueArgumentList();
@@ -529,24 +529,65 @@ public class JetExpressionParsing extends AbstractJetParsing {
     }
 
     /*
-     * element (getEntryPoint? functionLiteral)?
+     * annotatedLambda*
      */
     protected boolean parseCallWithClosure() {
         boolean success = false;
 
-        while (at(LBRACE) || isAtLabelDefinitionBeforeLBrace()) {
+        while (true) {
             PsiBuilder.Marker argument = mark();
-            if (!at(LBRACE)) {
-                parseLabeledExpression();
+
+            if (!parseAnnotatedLambda(/* preferBlock = */false)) {
+                argument.drop();
+                break;
             }
-            else {
-                parseFunctionLiteral();
-            }
+
             argument.done(FUNCTION_LITERAL_ARGUMENT);
             success = true;
         }
 
         return success;
+    }
+
+    /*
+     * annotatedLambda
+     *  : ("@" annotationEntry)* labelDefinition? functionLiteral
+     */
+    private boolean parseAnnotatedLambda(boolean preferBlock) {
+        PsiBuilder.Marker annotated = mark();
+
+        boolean wereAnnotations = myJetParsing.parseAnnotations(ONLY_ESCAPED_REGULAR_ANNOTATIONS);
+        PsiBuilder.Marker labeled = mark();
+
+        boolean wasLabel = isAtLabelDefinitionOrMissingIdentifier();
+        if (wasLabel) {
+            parseLabelDefinition();
+        }
+
+        if (!at(LBRACE)) {
+            annotated.rollbackTo();
+            return false;
+        }
+
+        parseFunctionLiteral(preferBlock);
+
+        doneOrDrop(labeled, LABELED_EXPRESSION, wasLabel);
+        doneOrDrop(annotated, ANNOTATED_EXPRESSION, wereAnnotations);
+
+        return true;
+    }
+
+    private static void doneOrDrop(
+            @NotNull PsiBuilder.Marker marker,
+            @NotNull IElementType type,
+            boolean condition
+    ) {
+        if (condition) {
+            marker.done(type);
+        }
+        else {
+            marker.drop();
+        }
     }
 
     private boolean isAtLabelDefinitionBeforeLBrace() {
@@ -806,7 +847,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
             int valPos = matchTokenStreamPredicate(new FirstBefore(new At(VAL_KEYWORD), new AtSet(RPAR, LBRACE, RBRACE, SEMICOLON, EQ)));
             if (valPos >= 0) {
                 PsiBuilder.Marker property = mark();
-                myJetParsing.parseModifierList(REGULAR_ANNOTATIONS_ALLOW_SHORTS);
+                myJetParsing.parseModifierList(ALLOW_UNESCAPED_REGULAR_ANNOTATIONS);
                 myJetParsing.parseProperty(true);
                 property.done(PROPERTY);
             }
@@ -990,7 +1031,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
     private boolean parseLocalDeclaration() {
         PsiBuilder.Marker decl = mark();
         JetParsing.ModifierDetector detector = new JetParsing.ModifierDetector();
-        myJetParsing.parseModifierList(detector, REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
+        myJetParsing.parseModifierList(detector, ONLY_ESCAPED_REGULAR_ANNOTATIONS);
 
         IElementType declType = parseLocalDeclarationRest(detector.isEnumDetected());
 
@@ -1014,7 +1055,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
      *   ;
      */
     private void parseFunctionLiteral() {
-        parseFunctionLiteral(false);
+        parseFunctionLiteral(/* preferBlock = */false);
     }
 
     private void parseFunctionLiteral(boolean preferBlock) {
@@ -1241,7 +1282,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
 
                 PsiBuilder.Marker parameter = mark();
                 int parameterNamePos = matchTokenStreamPredicate(new LastBefore(new At(IDENTIFIER), new AtSet(COMMA, RPAR, COLON, ARROW, RBRACE, LBRACE)));
-                createTruncatedBuilder(parameterNamePos).parseModifierList(REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
+                createTruncatedBuilder(parameterNamePos).parseModifierList(ONLY_ESCAPED_REGULAR_ANNOTATIONS);
 
                 expect(IDENTIFIER, "Expecting parameter declaration");
 
@@ -1424,7 +1465,15 @@ public class JetExpressionParsing extends AbstractJetParsing {
 
             if (!at(RPAR)) {
                 PsiBuilder.Marker parameter = mark();
+
+                if (!at(IN_KEYWORD)) {
+                    myJetParsing.parseModifierListWithUnescapedAnnotations(
+                            TokenSet.create(IDENTIFIER, LPAR), TokenSet.create(IN_KEYWORD, RPAR, COLON)
+                    );
+                }
+
                 if (at(VAL_KEYWORD) || at(VAR_KEYWORD)) advance(); // VAL_KEYWORD or VAR_KEYWORD
+
                 if (at(LPAR)) {
                     myJetParsing.parseMultiDeclarationName(TokenSet.create(IN_KEYWORD, LBRACE));
                     parameter.done(MULTI_VARIABLE_DECLARATION);
@@ -1462,19 +1511,7 @@ public class JetExpressionParsing extends AbstractJetParsing {
      * If it has no ->, it's a block, otherwise a function literal
      */
     private void parseExpressionPreferringBlocks() {
-        if (at(LBRACE)) {
-            parseFunctionLiteral(true);
-        }
-        else if (isAtLabelDefinitionBeforeLBrace()) {
-            PsiBuilder.Marker mark = mark();
-
-            parseLabelDefinition();
-
-            parseFunctionLiteral(true);
-
-            mark.done(LABELED_EXPRESSION);
-        }
-        else {
+        if (!parseAnnotatedLambda(/* preferBlock = */true)) {
             parseExpression();
         }
     }
@@ -1647,10 +1684,13 @@ public class JetExpressionParsing extends AbstractJetParsing {
     }
 
     /*
-     * label?
+     * labelReference?
      */
     private void parseLabelReferenceWithNoWhitespace() {
-        if (at(AT) && !WHITE_SPACE_OR_COMMENT_BIT_SET.contains(myBuilder.rawLookup(-1))) {
+        if (at(AT) && !myBuilder.newlineBeforeCurrentToken()) {
+            if (WHITE_SPACE_OR_COMMENT_BIT_SET.contains(myBuilder.rawLookup(-1))) {
+                error("There should be no space or comments before '@' in label reference");
+            }
             parseLabelReference();
         }
     }

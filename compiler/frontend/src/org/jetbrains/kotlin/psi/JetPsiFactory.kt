@@ -226,14 +226,9 @@ public class JetPsiFactory(private val project: Project) {
         return createProperty(text + " val x").getModifierList()!!
     }
 
-    public fun createAnnotation(text: String): JetAnnotation {
+    public fun createAnnotationEntry(text: String): JetAnnotationEntry {
         val modifierList = createProperty(text + " val x").getModifierList()
-        return modifierList!!.getAnnotations().first()
-    }
-
-    public fun createConstructorModifierList(modifier: JetKeywordToken): JetModifierList {
-        val aClass = createClass("class C ${modifier.getValue()} (){}")
-        return aClass.getPrimaryConstructorModifierList()!!
+        return modifierList!!.getAnnotationEntries().first()
     }
 
     public fun createEmptyBody(): JetBlockExpression {

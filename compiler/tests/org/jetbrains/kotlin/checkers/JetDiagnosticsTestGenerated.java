@@ -639,9 +639,27 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("annotationsOnLambdaAsCallArgument.kt")
+            public void testAnnotationsOnLambdaAsCallArgument() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/annotationsOnLambdaAsCallArgument.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("atAnnotationResolve.kt")
+            public void testAtAnnotationResolve() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/atAnnotationResolve.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("BasicAnnotations.kt")
             public void testBasicAnnotations() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/BasicAnnotations.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("bracketsDeprecation.kt")
+            public void testBracketsDeprecation() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/bracketsDeprecation.kt");
                 doTest(fileName);
             }
 
@@ -684,6 +702,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             @TestMetadata("deprecatedJavaLangClass.kt")
             public void testDeprecatedJavaLangClass() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/deprecatedJavaLangClass.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("forParameterAnnotationResolve.kt")
+            public void testForParameterAnnotationResolve() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/forParameterAnnotationResolve.kt");
                 doTest(fileName);
             }
 
@@ -780,6 +804,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             @TestMetadata("UnresolvedAnnotationOnObject.kt")
             public void testUnresolvedAnnotationOnObject() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/UnresolvedAnnotationOnObject.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("unresolvedReferenceRange.kt")
+            public void testUnresolvedReferenceRange() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/annotations/unresolvedReferenceRange.kt");
                 doTest(fileName);
             }
 
@@ -10023,6 +10053,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             @TestMetadata("objectLiteralAsArgument.kt")
             public void testObjectLiteralAsArgument() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/resolve/objectLiteralAsArgument.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("resolveAnnotatedLambdaArgument.kt")
+            public void testResolveAnnotatedLambdaArgument() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/resolve/resolveAnnotatedLambdaArgument.kt");
                 doTest(fileName);
             }
 

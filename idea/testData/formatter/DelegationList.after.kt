@@ -28,13 +28,12 @@ open class C2
 
 enum class Test : A1 {
     FIRST_ITEM : Test(), C1(),
-                 C2()
+    C2()
     SECOND_ITEM :
             Test()
 
     THIRD_ITEM : Test(),
-                 C1()
-    FORTH_ITEM : Test()
+    C1() FORTH_ITEM : Test()
 }
 
 // SET_TRUE: ALIGN_MULTILINE_EXTENDS_LIST

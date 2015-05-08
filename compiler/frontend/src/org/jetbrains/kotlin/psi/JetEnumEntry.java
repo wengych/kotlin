@@ -79,4 +79,17 @@ public class JetEnumEntry extends JetClass {
     public <R, D> R accept(@NotNull JetVisitor<R, D> visitor, D data) {
         return visitor.visitEnumEntry(this, data);
     }
+
+    // Returns true if deprecated constructor is in use, like
+    // ENTRY: Enum(arguments) instead of
+    // ENTRY(arguments)
+    public boolean usesDeprecatedConstructorSyntax() {
+        JetInitializerList initializerList = getInitializerList();
+        if (initializerList == null) return false;
+        JetTypeReference typeReference = initializerList.getInitializers().get(0).getTypeReference();
+        if (typeReference == null) return false;
+        JetUserType userType = (JetUserType)typeReference.getTypeElement();
+        if (userType == null || userType.getReferenceExpression() instanceof JetEnumReferenceExpression) return false;
+        return true;
+    }
 }

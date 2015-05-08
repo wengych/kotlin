@@ -3,5 +3,5 @@
 package bug
 
 public enum class Foo<!TYPE_PARAMETERS_IN_ENUM!><T><!> {
-    A : Foo<String>()
+    <!ENUM_USES_DEPRECATED_CONSTRUCTORS!>A<!> : Foo<String>()
 }

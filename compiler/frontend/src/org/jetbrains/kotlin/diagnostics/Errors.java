@@ -211,6 +211,8 @@ public interface Errors {
     DiagnosticFactory1<JetClass, ClassDescriptor> ENUM_ENTRY_SHOULD_BE_INITIALIZED = DiagnosticFactory1.create(ERROR, DECLARATION_NAME);
     DiagnosticFactory1<JetTypeReference, ClassDescriptor> ENUM_ENTRY_ILLEGAL_TYPE = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<JetClass, ClassDescriptor> LOCAL_ENUM_NOT_ALLOWED = DiagnosticFactory1.create(ERROR, DECLARATION_NAME);
+    DiagnosticFactory1<JetClass, ClassDescriptor> ENUM_USES_DEPRECATED_DELIMITERS = DiagnosticFactory1.create(WARNING, DECLARATION_NAME);
+    DiagnosticFactory1<JetClass, ClassDescriptor> ENUM_USES_DEPRECATED_CONSTRUCTORS = DiagnosticFactory1.create(WARNING, DECLARATION_NAME);
 
     // Companion objects
 

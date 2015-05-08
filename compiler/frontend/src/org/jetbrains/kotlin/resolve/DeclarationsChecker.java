@@ -255,6 +255,9 @@ public class DeclarationsChecker {
             if (aClass.isLocal()) {
                 trace.report(LOCAL_ENUM_NOT_ALLOWED.on(aClass, classDescriptor));
             }
+            if (aClass.usesDeprecatedEnumDelimiter()) {
+                trace.report(Errors.ENUM_USES_DEPRECATED_DELIMITERS.on(aClass, classDescriptor));
+            }
         }
         else if (aClass instanceof JetEnumEntry) {
             checkEnumEntry((JetEnumEntry) aClass, classDescriptor);
@@ -539,6 +542,10 @@ public class DeclarationsChecker {
         DeclarationDescriptor declaration = classDescriptor.getContainingDeclaration();
         assert DescriptorUtils.isEnumClass(declaration) : "Enum entry should be declared in enum class: " + classDescriptor;
         ClassDescriptor enumClass = (ClassDescriptor) declaration;
+
+        if (enumEntry.usesDeprecatedConstructorSyntax()) {
+            trace.report(Errors.ENUM_USES_DEPRECATED_CONSTRUCTORS.on(enumEntry, classDescriptor));
+        }
 
         List<JetDelegationSpecifier> delegationSpecifiers = enumEntry.getDelegationSpecifiers();
         ConstructorDescriptor constructor = enumClass.getUnsubstitutedPrimaryConstructor();

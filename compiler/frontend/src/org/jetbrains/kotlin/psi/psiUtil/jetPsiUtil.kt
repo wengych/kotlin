@@ -582,3 +582,12 @@ public fun JetElement.getCalleeHighlightingRange(): TextRange {
 
     return TextRange(startOffset, annotationEntry.getCalleeExpression().getTextRange().getEndOffset())
 }
+
+public fun JetExpression.getAnnotationEntries(): List<JetAnnotationEntry> {
+    val parent = getParent()
+    return when (parent) {
+        is JetAnnotatedExpression -> parent.getAnnotationEntries()
+        is JetLabeledExpression -> parent.getAnnotationEntries()
+        else -> emptyList<JetAnnotationEntry>()
+    }
+}

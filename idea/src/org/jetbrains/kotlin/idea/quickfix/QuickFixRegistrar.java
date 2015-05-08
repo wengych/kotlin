@@ -324,5 +324,8 @@ public class QuickFixRegistrar {
 
         QuickFixes.factories.put(DEPRECATED_ANNOTATION_SYNTAX, DeprecatedAnnotationSyntaxFix.Companion);
         QuickFixes.factories.put(DEPRECATED_ANNOTATION_SYNTAX, DeprecatedAnnotationSyntaxFix.Companion.createWholeProjectFixFactory());
+
+        QuickFixes.factories.put(ENUM_USES_DEPRECATED_CONSTRUCTORS, DeprecatedEnumConstructorSyntaxFix.Companion);
+        QuickFixes.factories.put(ENUM_USES_DEPRECATED_CONSTRUCTORS, DeprecatedEnumConstructorSyntaxFix.Companion.createWholeProjectFixFactory());
     }
 }

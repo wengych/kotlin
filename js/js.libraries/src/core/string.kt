@@ -1,37 +1,30 @@
-package kotlin.js
+package kotlin
+
+import kotlin.text.js.RegExp
+
 
 native public fun String.toUpperCase() : String = noImpl
 
 native public fun String.toLowerCase() : String = noImpl
 
-// TODO: make internal
 native("indexOf")
-public fun String.nativeIndexOf(str : String, fromIndex : Int) : Int = noImpl
+internal fun String.nativeIndexOf(str : String, fromIndex : Int) : Int = noImpl
 
-// TODO: make internal
 native("lastIndexOf")
-public fun String.nativeLastIndexOf(str : String, fromIndex : Int) : Int = noImpl
+internal fun String.nativeLastIndexOf(str : String, fromIndex : Int) : Int = noImpl
 
-// TODO: make internal
 native("startsWith")
-public fun String.nativeStartsWith(s: String, position: Int): Boolean = noImpl
-// TODO: make internal
+internal fun String.nativeStartsWith(s: String, position: Int): Boolean = noImpl
 native("endsWith")
-public fun String.nativeEndsWith(s: String): Boolean = noImpl
+internal fun String.nativeEndsWith(s: String): Boolean = noImpl
 
+deprecated("Use split(Regex) instead.")
 library("splitString")
 public fun String.splitWithRegex(regex: String): Array<String> = noImpl
 
+deprecated("Use split(Regex) instead.")
 library("splitString")
 public fun String.splitWithRegex(regex: String, limit: Int): Array<String> = noImpl
-
-deprecated("Use splitWithRegex (temporary)")
-library("splitString")
-public fun String.split(regex: String): Array<String> = noImpl
-
-deprecated("Use splitWithRegex (temporary)")
-library("splitString")
-public fun String.split(regex: String, limit: Int): Array<String> = noImpl
 
 
 native public fun String.substring(beginIndex : Int) : String = noImpl
@@ -47,8 +40,12 @@ native public fun String.match(regex : String) : Array<String> = noImpl
 native("length")
 public val CharSequence.size: Int get() = noImpl
 
-library
-public fun CharSequence.isEmpty(): Boolean = noImpl
+
+
+
+native("replace")
+internal fun String.nativeReplace(pattern: RegExp, replacement: String): String = noImpl
+
 
 /*
 

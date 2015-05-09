@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.js.test.semantics;
+package kotlin.jvm
 
-import junit.framework.Test;
-
-@SuppressWarnings("JUnitTestCaseWithNoTests")
-public final class JsonTest extends JsUnitTestBase {
-    public static Test suite() throws Exception {
-        return createTestSuiteForFile("js/js.libraries/test/core/JsonTest.kt");
-    }
-}
+// is used in common generated code in stdlib
+internal annotation class overloads

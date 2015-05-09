@@ -1,6 +1,8 @@
 package kotlin
 
 import java.util.NoSuchElementException
+import kotlin.text.MatchResult
+import kotlin.text.Regex
 
 /** Returns the string with leading and trailing text matching the given string removed */
 deprecated("Use removeSurrounding(text, text) or removePrefix(text).removeSuffix(text)")
@@ -493,29 +495,52 @@ public fun String.replaceBeforeLast(delimiter: String, replacement: String, miss
     return if (index == -1) missingDelimiterValue else replaceRange(0, index, replacement)
 }
 
+
+// public fun String.replace(oldChar: Char, newChar: Char, ignoreCase: Boolean): String // JVM- and JS-specific
+// public fun String.replace(oldValue: String, newValue: String, ignoreCase: Boolean): String // JVM- and JS-specific
+
+/**
+ * Returns a new string obtained by replacing each substring of this string that matches the given regular expression
+ * with the given [replacement].
+ *
+ * The [replacement] can consist of any combination of literal text and $-substitutions. To treat the replacement string
+ * literally escape it with the [kotlin.text.Regex.Companion.escapeReplacement] method.
+ */
+public fun String.replace(regex: Regex, replacement: String): String = regex.replace(this, replacement)
+
+/**
+ * Returns a new string obtained by replacing each substring of this string that matches the given regular expression
+ * with the result of the given function [transform] that takes [MatchResult] and returns a string to be used as a
+ * replacement for that match.
+ */
+public fun String.replace(regex: Regex, transform: (MatchResult) -> String): String = regex.replace(this, transform)
+
+/**
+ * Replaces the first occurrence of the given regular expression [regex] in this string with specified [replacement] expression.
+ *
+ * @param replacement A replacement expression that can include substitutions. See [Regex.replaceFirst] for details.
+ */
+public fun String.replaceFirst(regex: Regex, replacement: String): String = regex.replaceFirst(this, replacement)
+
+
+/**
+ * Returns `true` if this string matches the given regular expression.
+ */
+public fun String.matches(regex: Regex): Boolean = regex.matches(this)
+
+
 /**
  * Returns `true` if this string starts with the specified character.
  */
-public fun String.startsWith(char: Char, ignoreCase: Boolean): Boolean =
+public fun String.startsWith(char: Char, ignoreCase: Boolean = false): Boolean =
         this.length() > 0 && this[0].equals(char, ignoreCase)
 
 /**
- * Returns `true` if this string starts with the specified character.
- */
-// TODO: temporary overload to keep binary compatibility, remove after fixing markdown parser
-public fun String.startsWith(char: Char): Boolean = startsWith(char, ignoreCase = false)
-
-/**
  * Returns `true` if this string ends with the specified character.
  */
-public fun String.endsWith(char: Char, ignoreCase: Boolean): Boolean =
+public fun String.endsWith(char: Char, ignoreCase: Boolean = false): Boolean =
         this.length() > 0 && this[lastIndex].equals(char, ignoreCase)
 
-/**
- * Returns `true` if this string ends with the specified character.
- */
-// TODO: temporary overload to keep binary compatibility, remove after fixing markdown parser
-public fun String.endsWith(char: Char): Boolean = endsWith(char, ignoreCase = false)
 
 
 // common prefix and suffix
@@ -615,7 +640,7 @@ private fun String.findAnyOf(strings: Collection<String>, startIndex: Int, ignor
         return if (index < 0) null else index to string
     }
 
-    val indices = if (!last) Math.max(startIndex, 0)..lastIndex else Math.min(startIndex, lastIndex) downTo 0
+    val indices = if (!last) Math.max(startIndex, 0)..length() else Math.min(startIndex, lastIndex) downTo 0
     for (index in indices) {
         val matchingString = strings.firstOrNull { it.regionMatches(0, this, index, it.length(), ignoreCase) }
         if (matchingString != null)
@@ -766,29 +791,31 @@ private class DelimitedRangesSequence(private val string: String, private val st
     override fun iterator(): Iterator<IntRange> = object : Iterator<IntRange> {
         var nextState: Int = -1 // -1 for unknown, 0 for done, 1 for continue
         var currentStartIndex: Int = Math.min(Math.max(startIndex, 0), string.length())
+        var nextSearchIndex: Int = currentStartIndex
         var nextItem: IntRange? = null
         var counter: Int = 0
 
         private fun calcNext() {
-            if (currentStartIndex < 0) {
+            if (nextSearchIndex < 0) {
                 nextState = 0
                 nextItem = null
             }
             else {
-                if (limit > 0 && ++counter >= limit) {
+                if (limit > 0 && ++counter >= limit || nextSearchIndex > string.length()) {
                     nextItem = currentStartIndex..string.lastIndex
-                    currentStartIndex = -1
+                    nextSearchIndex = -1
                 }
                 else {
-                    val match = string.getNextMatch(currentStartIndex)
+                    val match = string.getNextMatch(nextSearchIndex)
                     if (match == null) {
                         nextItem = currentStartIndex..string.lastIndex
-                        currentStartIndex = -1
+                        nextSearchIndex = -1
                     }
                     else {
                         val (index,length) = match
                         nextItem = currentStartIndex..index-1
                         currentStartIndex = index + length
+                        nextSearchIndex = currentStartIndex + if (length == 0) 1 else 0
                     }
                 }
                 nextState = 1
@@ -882,7 +909,10 @@ public fun String.splitToSequence(vararg delimiters: String, ignoreCase: Boolean
  * the beginning to the end of this string, and matches at each position the first element in [delimiters]
  * that is equal to a delimiter in this instance at that position.
  */
-deprecated("Temporary name 'splitBy' shall be replaced soon with 'split'.")
+public fun String.split(vararg delimiters: String, ignoreCase: Boolean = false, limit: Int = 0): List<String> =
+        splitToSequence(*delimiters, ignoreCase = ignoreCase, limit = limit).toList()
+
+deprecated("Use split(delimiters) instead.")
 public fun String.splitBy(vararg delimiters: String, ignoreCase: Boolean = false, limit: Int = 0): List<String> =
         splitToSequence(*delimiters, ignoreCase = ignoreCase, limit = limit).toList()
 
@@ -905,6 +935,11 @@ public fun String.splitToSequence(vararg delimiters: Char, ignoreCase: Boolean =
  */
 public fun String.split(vararg delimiters: Char, ignoreCase: Boolean = false, limit: Int = 0): List<String> =
         splitToSequence(*delimiters, ignoreCase = ignoreCase, limit = limit).toList()
+
+/**
+ * Splits this string around matches of the given regular expression.
+ */
+public fun String.split(pattern: Regex, limit: Int = 0): List<String> = pattern.split(this, limit)
 
 /**
  * Splits this string to a sequence of lines delimited by any of the following character sequences: CRLF, LF or CR.

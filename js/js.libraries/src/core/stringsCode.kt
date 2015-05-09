@@ -1,8 +1,10 @@
-package kotlin.js
+package kotlin
 
-// TODO: make internal
-public inline fun String.nativeIndexOf(ch : Char, fromIndex : Int) : Int = nativeIndexOf(ch.toString(), fromIndex)
-public inline fun String.nativeLastIndexOf(ch : Char, fromIndex : Int) : Int = nativeLastIndexOf(ch.toString(), fromIndex)
+import kotlin.text.Regex
+import kotlin.text.js.RegExp
+
+internal inline fun String.nativeIndexOf(ch : Char, fromIndex : Int) : Int = nativeIndexOf(ch.toString(), fromIndex)
+internal inline fun String.nativeLastIndexOf(ch : Char, fromIndex : Int) : Int = nativeLastIndexOf(ch.toString(), fromIndex)
 
 /**
  * Returns `true` if this string starts with the specified prefix.
@@ -41,6 +43,7 @@ public inline fun String.matches(regex : String) : Boolean {
     return result != null && result.size() > 0
 }
 
+public inline fun CharSequence.isEmpty(): Boolean = this.length() == 0
 
 public fun String.isBlank(): Boolean = length() == 0 || matches("^[\\s\\xA0]+$")
 
@@ -78,3 +81,20 @@ public inline fun String.capitalize(): String {
 public inline fun String.decapitalize(): String {
     return if (isNotEmpty()) substring(0, 1).toLowerCase() + substring(1) else this
 }
+
+
+public fun String.replace(oldValue: String, newValue: String, ignoreCase: Boolean = false): String =
+        nativeReplace(RegExp(Regex.escape(oldValue), if (ignoreCase) "gi" else "g"), Regex.escapeReplacement(newValue))
+
+public fun String.replace(oldChar: Char, newChar: Char, ignoreCase: Boolean = false): String =
+        nativeReplace(RegExp(Regex.escape(oldChar.toString()), if (ignoreCase) "gi" else "g"), newChar.toString())
+
+deprecated("Use replaceFirst(String, String) instead.")
+public fun String.replaceFirstLiteral(oldValue: String, newValue: String, ignoreCase: Boolean = false): String =
+        nativeReplace(RegExp(Regex.escape(oldValue), if (ignoreCase) "i" else ""), Regex.escapeReplacement(newValue))
+
+public fun String.replaceFirst(oldValue: String, newValue: String, ignoreCase: Boolean = false): String =
+        nativeReplace(RegExp(Regex.escape(oldValue), if (ignoreCase) "i" else ""), Regex.escapeReplacement(newValue))
+
+public fun String.replaceFirst(oldChar: Char, newChar: Char, ignoreCase: Boolean = false): String =
+        nativeReplace(RegExp(Regex.escape(oldChar.toString()), if (ignoreCase) "i" else ""), newChar.toString())

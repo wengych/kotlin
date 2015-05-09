@@ -59,6 +59,17 @@ class StringJVMTest {
         assertEquals(s, list[0])
     }
 
+    test fun testSplitByPattern() {
+        val s = "ab1cd2def3"
+        val isDigit = "\\d".toRegex()
+        assertEquals(listOf("ab", "cd", "def", ""), s.split(isDigit))
+        assertEquals(listOf("ab", "cd", "def3"), s.split(isDigit, 3))
+
+        fails {
+            s.split(isDigit, -1)
+        }
+    }
+
     test fun repeat() {
         fails{ "foo".repeat(-1) }
         assertEquals("", "foo".repeat(0))
@@ -229,6 +240,10 @@ class StringJVMTest {
         val data2 = "verylongstring".toList()
         val result2 = data2.joinToString("-", "[", "]", 11, "oops")
         assertEquals("[v-e-r-y-l-o-n-g-s-t-r-oops]", result2)
+
+        val data3 = "a1/b".toList()
+        val result3 = data3.joinToString() { it.toUpperCase().toString() }
+        assertEquals("A, 1, /, B", result3)
     }
 
     test fun join() {
@@ -339,5 +354,12 @@ class StringJVMTest {
         fails {
             builder.slice(listOf(10))
         }
+    }
+
+
+    test fun orderIgnoringCase() {
+        val list = listOf("Beast", "Ast", "asterisk")
+        assertEquals(listOf("Ast", "Beast", "asterisk"), list.sort())
+        assertEquals(listOf("Ast", "asterisk", "Beast"), list.sortBy(String.CASE_INSENSITIVE_ORDER))
     }
 }

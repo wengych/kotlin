@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.codegen.inline;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
+import kotlin.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.codegen.AsmUtil;
 import org.jetbrains.kotlin.codegen.ClassBuilder;
@@ -62,6 +63,8 @@ public class AnonymousObjectTransformer {
 
     private final Map<String, List<String>> fieldNames = new HashMap<String, List<String>>();
 
+    private final TypeRemapper typeRemapper;
+
     public AnonymousObjectTransformer(
             @NotNull String objectInternalName,
             @NotNull InliningContext inliningContext,
@@ -76,6 +79,7 @@ public class AnonymousObjectTransformer {
         this.newLambdaType = newLambdaType;
 
         reader = InlineCodegenUtil.buildClassReaderByInternalName(state, objectInternalName);
+        typeRemapper = new TypeRemapper(inliningContext.typeMapping);
     }
 
     private void buildInvokeParamsFor(@NotNull ParametersBuilder builder, @NotNull MethodNode node) {
@@ -181,13 +185,30 @@ public class AnonymousObjectTransformer {
         ParametersBuilder allCapturedParamBuilder = ParametersBuilder.newBuilder();
         ParametersBuilder constructorParamBuilder = ParametersBuilder.newBuilder();
         List<CapturedParamInfo> additionalFakeParams =
-                extractParametersMappingAndPatchConstructor(constructor, allCapturedParamBuilder, constructorParamBuilder, anonymousObjectGen);
+                extractParametersMappingAndPatchConstructor(constructor, allCapturedParamBuilder, constructorParamBuilder,
+                                                            anonymousObjectGen);
+        List<MethodVisitor> resultMethods = new ArrayList();
 
         for (MethodNode next : methodsToTransform) {
             MethodVisitor visitor = newMethod(classBuilder, next);
             InlineResult funResult = inlineMethod(anonymousObjectGen, parentRemapper, visitor, next, allCapturedParamBuilder);
             result.addAllClassesToRemove(funResult);
             result.getReifiedTypeParametersUsages().mergeAll(funResult.getReifiedTypeParametersUsages());
+
+            Type returnType = Type.getReturnType(next.desc);
+            if (returnType.getSort() == Type.OBJECT || returnType.getSort() == Type.ARRAY) {
+                String oldFunReturnType = returnType.getInternalName();
+                String newFunReturnType = funResult.getChangedTypes().get(oldFunReturnType);
+                if (newFunReturnType != null) {
+                    //result.addChangedType(oldFunReturnType, newFunReturnType);
+                    typeRemapper.addAdditionalMappings(oldFunReturnType, newFunReturnType);
+                }
+            }
+            resultMethods.add(visitor);
+        }
+
+        for (MethodVisitor method : resultMethods) {
+            method.visitEnd();
         }
 
         InlineResult constructorResult =
@@ -226,7 +247,7 @@ public class AnonymousObjectTransformer {
         InlineResult result = inliner.doInline(resultVisitor, new LocalVarRemapper(parameters, 0), false, LabelOwner.NOT_APPLICABLE);
         result.getReifiedTypeParametersUsages().mergeAll(typeParametersToReify);
         resultVisitor.visitMaxs(-1, -1);
-        resultVisitor.visitEnd();
+        //resultVisitor.visitEnd();
         return result;
     }
 
@@ -338,19 +359,30 @@ public class AnonymousObjectTransformer {
     @NotNull
     private ClassBuilder createClassBuilder() {
         ClassBuilder classBuilder = state.getFactory().newVisitor(NO_ORIGIN, newLambdaType, inliningContext.getRoot().callElement.getContainingFile());
-        return new RemappingClassBuilder(classBuilder, new TypeRemapper(inliningContext.typeMapping));
+        return new RemappingClassBuilder(classBuilder, typeRemapper);
     }
 
     @NotNull
-    private static MethodVisitor newMethod(@NotNull ClassBuilder builder, @NotNull MethodNode original) {
-        return builder.newMethod(
-                NO_ORIGIN,
-                original.access,
-                original.name,
-                original.desc,
-                original.signature,
-                ArrayUtil.toStringArray(original.exceptions)
-        );
+    private static MethodVisitor newMethod(@NotNull final ClassBuilder builder, @NotNull final MethodNode original) {
+        return new DeferredMethodVisitor(
+                new MethodNode(original.access,
+                               original.name,
+                               original.desc,
+                               original.signature,
+                               ArrayUtil.toStringArray(original.exceptions)),
+
+                new Function0<MethodVisitor>() {
+                    @Override
+                    public MethodVisitor invoke() {
+                        return builder.newMethod(
+                                NO_ORIGIN,
+                                original.access,
+                                original.name,
+                                original.desc,
+                                original.signature,
+                                ArrayUtil.toStringArray(original.exceptions));
+                    }
+                });
     }
 
     private List<CapturedParamInfo> extractParametersMappingAndPatchConstructor(

@@ -28,8 +28,16 @@ private object FloatCompanionObject : FloatingPointConstants<Float> {
     override val NaN : Float = js("Number.NaN")
 }
 
-private object IntCompanionObject {}
-private object LongCompanionObject {}
+private object IntCompanionObject : IntegralNumericConstants<Int> {
+    override val MIN_VALUE: Int = -0x80000000
+    override val MAX_VALUE: Int =  0x7FFFFFFF
+}
+
+private object LongCompanionObject : IntegralNumericConstants<Long> {
+    override val MIN_VALUE: Long = js("Kotlin.Long.MIN_VALUE")
+    override val MAX_VALUE: Long = js("Kotlin.Long.MAX_VALUE")
+}
+
 private object ShortCompanionObject {}
 private object ByteCompanionObject {}
 private object CharCompanionObject {}

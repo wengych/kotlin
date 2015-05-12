@@ -7161,6 +7161,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("implementInterfaceWithDefault.kt")
+            public void testImplementInterfaceWithDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/j+k/implementInterfaceWithDefault.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("inheritAbstractSamAdapter.kt")
             public void testInheritAbstractSamAdapter() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/j+k/inheritAbstractSamAdapter.kt");

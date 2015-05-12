@@ -22,14 +22,19 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiModifier;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.asJava.KotlinLightClassForExplicitDeclaration;
 import org.jetbrains.kotlin.idea.JetBundle;
 import org.jetbrains.kotlin.idea.findUsages.KotlinClassFindUsagesOptions;
 import org.jetbrains.kotlin.idea.refactoring.JetRefactoringUtil;
+import org.jetbrains.kotlin.psi.JetClass;
+import org.jetbrains.kotlin.psi.JetClassOrObject;
+import org.jetbrains.kotlin.psi.psiUtil.PsiUtilPackage;
 
 import javax.swing.*;
 
@@ -39,7 +44,7 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
     private StateRestoringCheckBox derivedTraits;
 
     public KotlinFindClassUsagesDialog(
-            PsiClass klass,
+            JetClassOrObject classOrObject,
             Project project,
             FindUsagesOptions findUsagesOptions,
             boolean toShowInNewTab,
@@ -47,7 +52,45 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
             boolean isSingleFile,
             FindUsagesHandler handler
     ) {
-        super(klass, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
+        super(getRepresentingPsiClass(classOrObject), project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
+    }
+
+    private static final Key<JetClassOrObject> ORIGINAL_CLASS = Key.create("ORIGINAL_CLASS");
+
+    // Note: Light classes can't be generated in some cases (such as builtins), but in fact we don't need a full light class here
+    // since only class kind and some modifiers are relevant. Thus we can reuse Find Dialog implementation provided for Java language
+    @NotNull
+    private static PsiClass getRepresentingPsiClass(@NotNull JetClassOrObject classOrObject) {
+        PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(classOrObject.getProject());
+
+        String name = classOrObject.getName();
+        if (name == null || name.isEmpty()) {
+            name = "Anonymous";
+        }
+
+        PsiClass javaClass;
+        if (classOrObject instanceof JetClass) {
+            JetClass klass = (JetClass) classOrObject;
+            javaClass = !klass.isInterface()
+                        ? factory.createClass(name)
+                        : klass.isAnnotation()
+                          ? factory.createAnnotationType(name)
+                          : factory.createInterface(name);
+
+        }
+        else {
+            javaClass = factory.createClass(name);
+        }
+
+        //noinspection ConstantConditions
+        javaClass.getModifierList().setModifierProperty(
+                PsiModifier.FINAL,
+                !(classOrObject instanceof JetClass && PsiUtilPackage.isInheritable((JetClass) classOrObject))
+        );
+
+        javaClass.putUserData(ORIGINAL_CLASS, classOrObject);
+
+        return javaClass;
     }
 
     @Override
@@ -98,10 +141,8 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
 
     @Override
     public void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent) {
-        PsiClass klass = (PsiClass) getPsiElement();
-        if (klass instanceof KotlinLightClassForExplicitDeclaration) {
-            coloredComponent.append(JetRefactoringUtil.formatClass(((KotlinLightClassForExplicitDeclaration) klass).getOrigin()));
-        }
+        //noinspection ConstantConditions
+        coloredComponent.append(JetRefactoringUtil.formatClass(getPsiElement().getUserData(ORIGINAL_CLASS)));
     }
 
     @Override

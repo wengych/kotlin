@@ -36,6 +36,10 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.refactoring.move.MoveHandler
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.jetbrains.kotlin.idea.refactoring.move.moveTopLevelDeclarations.ui.MoveKotlinDeclarationOrFileDialog
 import org.jetbrains.kotlin.psi.JetNamedFunction
 import org.jetbrains.kotlin.psi.JetProperty
 import org.jetbrains.kotlin.psi.JetNamedDeclaration
@@ -73,6 +77,20 @@ public class MoveKotlinTopLevelDeclarationsHandler : MoveHandlerDelegate() {
         if (sourceFile == null) {
             CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), "All declarations must belong to the same file", null, project)
             return false
+        }
+
+        (sourceFile.getDeclarations().singleOrNull() as? JetNamedDeclaration)?.let {
+            with (MoveKotlinDeclarationOrFileDialog(project, it)) {
+                if (!showAndGet()) return true
+                if (moveFileSelected) {
+                    MoveFilesOrDirectoriesUtil.doMove(project,
+                                                      arrayOf(sourceFile),
+                                                      arrayOf(targetContainer),
+                                                      null)
+
+                    return true
+                }
+            }
         }
 
         val targetPackageName = MoveClassesOrPackagesImpl.getInitialTargetPackageName(targetContainer, elements)

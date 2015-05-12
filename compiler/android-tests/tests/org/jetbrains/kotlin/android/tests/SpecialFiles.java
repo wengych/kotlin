@@ -70,6 +70,7 @@ public class SpecialFiles {
         excludedFiles.add("classpath.kt"); // Some classes are not visible on android
 
         excludedFiles.add("manyNumbers.kt"); // Out of memory
+        excludedFiles.add("realIteratorFoldl.kt"); // Out of memory
 
         excludedFiles.add("smap"); // Line numbers
     }

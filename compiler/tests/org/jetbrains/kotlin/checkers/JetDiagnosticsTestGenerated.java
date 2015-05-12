@@ -12834,6 +12834,18 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("ExhaustiveBoolean.kt")
+            public void testExhaustiveBoolean() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/when/ExhaustiveBoolean.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("ExhaustiveBooleanNullable.kt")
+            public void testExhaustiveBooleanNullable() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/when/ExhaustiveBooleanNullable.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("kt4434.kt")
             public void testKt4434() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/when/kt4434.kt");

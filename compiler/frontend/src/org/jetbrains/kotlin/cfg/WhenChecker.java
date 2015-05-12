@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.types.TypeUtils;
 
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumEntry;
+import static org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass;
 
 public final class WhenChecker {
     private WhenChecker() {
@@ -65,23 +66,56 @@ public final class WhenChecker {
         return subjectExpression == null ? null : context.getType(subjectExpression);
     }
 
-    private static boolean isWhenExhaustive(@NotNull JetWhenExpression expression, @NotNull BindingTrace trace) {
-        JetType type = whenSubjectType(expression, trace.getBindingContext());
-        ClassDescriptor classDescriptor = getClassDescriptorOfTypeIfEnum(type);
-
-        if (type == null || classDescriptor == null) return false;
-
-        boolean isExhaust = true;
-        boolean notEmpty = false;
-        for (DeclarationDescriptor descriptor : classDescriptor.getUnsubstitutedInnerClassesScope().getAllDescriptors()) {
-            if (isEnumEntry(descriptor)) {
-                notEmpty = true;
-                if (!containsEnumEntryCase(expression, (ClassDescriptor) descriptor, trace)) {
-                    isExhaust = false;
+    private static boolean isWhenOnBooleanExhaustive(@NotNull JetWhenExpression expression, @NotNull BindingTrace trace) {
+        // It's assumed (and not checked) that expression is of the boolean type
+        boolean containsFalse = false;
+        boolean containsTrue = false;
+        for (JetWhenEntry whenEntry: expression.getEntries()) {
+            for (JetWhenCondition whenCondition : whenEntry.getConditions()) {
+                if (whenCondition instanceof JetWhenConditionWithExpression) {
+                    JetExpression whenExpression = ((JetWhenConditionWithExpression) whenCondition).getExpression();
+                    if (JetPsiUtil.isTrueConstant(whenExpression)) containsTrue = true;
+                    if (JetPsiUtil.isFalseConstant(whenExpression)) containsFalse = true;
                 }
             }
         }
-        boolean exhaustive = isExhaust && notEmpty && (!TypeUtils.isNullableType(type) || containsNullCase(expression, trace));
+        return containsFalse && containsTrue;
+    }
+
+    private static boolean isWhenOnEnumExhaustive(
+            @NotNull JetWhenExpression expression, @NotNull BindingTrace trace, @NotNull ClassDescriptor enumClassDescriptor) {
+        assert isEnumClass(enumClassDescriptor);
+        boolean notEmpty = false;
+        for (DeclarationDescriptor descriptor : enumClassDescriptor.getUnsubstitutedInnerClassesScope().getAllDescriptors()) {
+            if (isEnumEntry(descriptor)) {
+                notEmpty = true;
+                if (!containsEnumEntryCase(expression, (ClassDescriptor) descriptor, trace)) {
+                    return false;
+                }
+            }
+        }
+        return notEmpty;
+    }
+
+    private static boolean isWhenExhaustive(@NotNull JetWhenExpression expression, @NotNull BindingTrace trace) {
+        JetType type = whenSubjectType(expression, trace.getBindingContext());
+        if (type == null) return false;
+        ClassDescriptor classDescriptor = getClassDescriptorOfTypeIfEnum(type);
+
+        boolean exhaustive;
+        if (classDescriptor == null) {
+            if (KotlinBuiltIns.isBoolean(TypeUtils.makeNotNullable(type))) {
+                exhaustive = isWhenOnBooleanExhaustive(expression, trace);
+            }
+            else {
+                // TODO: sealed hierarchies, etc.
+                exhaustive = false;
+            }
+        }
+        else {
+            exhaustive = isWhenOnEnumExhaustive(expression, trace, classDescriptor)
+                         && (!TypeUtils.isNullableType(type) || containsNullCase(expression, trace));
+        }
         if (exhaustive) {
             trace.record(BindingContext.EXHAUSTIVE_WHEN, expression);
         }

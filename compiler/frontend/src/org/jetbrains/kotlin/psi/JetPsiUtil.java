@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.JetNodeTypes;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement;
+import org.jetbrains.kotlin.lexer.JetKeywordToken;
 import org.jetbrains.kotlin.lexer.JetToken;
 import org.jetbrains.kotlin.lexer.JetTokens;
 import org.jetbrains.kotlin.name.FqName;
@@ -405,9 +406,17 @@ public class JetPsiUtil {
         return deparenthesized instanceof JetConstantExpression && deparenthesized.getNode().getElementType() == JetNodeTypes.NULL;
     }
 
-    public static boolean isTrueConstant(@Nullable JetExpression condition) {
+    private static boolean isBooleanConstant(@Nullable JetExpression condition, @NotNull JetKeywordToken constantToken) {
         return (condition != null && condition.getNode().getElementType() == JetNodeTypes.BOOLEAN_CONSTANT &&
-                condition.getNode().findChildByType(JetTokens.TRUE_KEYWORD) != null);
+                condition.getNode().findChildByType(constantToken) != null);
+    }
+
+    public static boolean isTrueConstant(@Nullable JetExpression condition) {
+        return isBooleanConstant(condition, JetTokens.TRUE_KEYWORD);
+    }
+
+    public static boolean isFalseConstant(@Nullable JetExpression condition) {
+        return isBooleanConstant(condition, JetTokens.FALSE_KEYWORD);
     }
 
     public static boolean isAbstract(@NotNull JetDeclarationWithBody declaration) {

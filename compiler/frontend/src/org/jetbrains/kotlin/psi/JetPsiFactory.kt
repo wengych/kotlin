@@ -259,9 +259,9 @@ public class JetPsiFactory(private val project: Project) {
         return createDeclaration<JetClass>("enum class E {$text}").getDeclarations()[0] as JetEnumEntry
     }
 
-    public fun createEnumReferenceExpression(): JetEnumReferenceExpression {
+    public fun createEnumEntrySuperclassReferenceExpression(): JetEnumEntrySuperclassReferenceExpression {
         val userType = createEnumEntry("Entry()").getInitializerList()!!.getInitializers()[0].getTypeReference()!!.getTypeElement() as JetUserType
-        return userType.getReferenceExpression() as JetEnumReferenceExpression
+        return userType.getReferenceExpression() as JetEnumEntrySuperclassReferenceExpression
     }
 
     public fun createWhenEntry(entryText: String): JetWhenEntry {

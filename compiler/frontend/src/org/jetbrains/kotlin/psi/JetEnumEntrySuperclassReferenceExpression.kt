@@ -24,27 +24,27 @@ import org.jetbrains.kotlin.lexer.JetTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.stubs.KotlinEnumReferenceExpressionStub
+import org.jetbrains.kotlin.psi.stubs.KotlinEnumEntrySuperclassReferenceExpressionStub
 import org.jetbrains.kotlin.psi.stubs.elements.JetStubElementTypes
 
 // This node represents "fake" reference expression for ENUM_ENTRY(arguments) constructor syntax
-// It uses the owner enum node to provide access to the real constructor name
-public class JetEnumReferenceExpression : JetExpressionImplStub<KotlinEnumReferenceExpressionStub>, JetSimpleNameExpression {
+// It uses the superclass enum node to provide access to the real constructor name
+public class JetEnumEntrySuperclassReferenceExpression
+        : JetExpressionImplStub<KotlinEnumEntrySuperclassReferenceExpressionStub>
+        , JetSimpleNameExpression {
+
+    public constructor(node: ASTNode) : super(node)
+
+    public constructor(stub: KotlinEnumEntrySuperclassReferenceExpressionStub) :
+    super(stub, JetStubElementTypes.ENUM_ENTRY_SUPERCLASS_REFERENCE_EXPRESSION)
 
     // It is the owner enum class (not an enum entry but the whole enum)
     private val referencedElement: JetClass
+            get() = calcReferencedElement()!!
 
     private fun calcReferencedElement(): JetClass? {
-        var owner: PsiElement? = this.getStrictParentOfType<JetEnumEntry>()
-        return ((owner as? JetEnumEntry)?.getParent()?.getParent() as? JetClass)
-    }
-
-    public constructor(node: ASTNode) : super(node) {
-        referencedElement = calcReferencedElement()!!
-    }
-
-    public constructor(stub: KotlinEnumReferenceExpressionStub) : super(stub, JetStubElementTypes.ENUM_REFERENCE_EXPRESSION) {
-        referencedElement = calcReferencedElement()!!
+        val owner = this.getStrictParentOfType<JetEnumEntry>() as? JetEnumEntry
+        return owner?.getParent()?.getParent() as? JetClass
     }
 
     override fun getReferencedName(): String {
@@ -52,12 +52,12 @@ public class JetEnumReferenceExpression : JetExpressionImplStub<KotlinEnumRefere
         if (stub != null) {
             return stub.getReferencedName()
         }
-        val text = this.getReferencedNameElement().getNode()!!.getText()
+        val text = getReferencedNameElement().getNode()!!.getText()
         return JetPsiUtil.unquoteIdentifierOrFieldReference(text)
     }
 
     override fun getReferencedNameAsName(): Name {
-        return Name.identifierNoValidate(referencedElement.getName() ?: "")
+        return Name.guess(referencedElement.getName() ?: "<missing class name>")
     }
 
     override fun getReferencedNameElement(): PsiElement {
@@ -69,7 +69,7 @@ public class JetEnumReferenceExpression : JetExpressionImplStub<KotlinEnumRefere
     }
 
     override fun getReferencedNameElementType(): IElementType {
-        return this.getReferencedNameElement().getNode()!!.getElementType()
+        return getReferencedNameElement().getNode()!!.getElementType()
     }
 
     override fun <R, D> accept(visitor: JetVisitor<R, D>, data: D): R {

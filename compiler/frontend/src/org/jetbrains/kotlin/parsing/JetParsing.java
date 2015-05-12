@@ -763,7 +763,7 @@ public class JetParsing extends AbstractJetParsing {
 
     /**
      * enumEntries
-     *   : (enumEntry ","? )*
+     *   : (enumEntry{","?})?
      *   ;
      */
     private void parseEnumEntries() {
@@ -799,7 +799,7 @@ public class JetParsing extends AbstractJetParsing {
 
     /*
      * enumEntry
-     *   : modifiers SimpleName ((":" initializer{","}) | ("(" arguments ")"))? classBody?
+     *   : modifiers SimpleName ((":" initializer) | ("(" arguments ")"))? classBody?
      *   ;
      */
     private boolean parseEnumEntry() {
@@ -826,7 +826,7 @@ public class JetParsing extends AbstractJetParsing {
                 PsiBuilder.Marker typeReference = mark();
                 PsiBuilder.Marker type = mark();
                 PsiBuilder.Marker referenceExpr = mark();
-                referenceExpr.done(ENUM_REFERENCE_EXPRESSION);
+                referenceExpr.done(ENUM_ENTRY_SUPERCLASS_REFERENCE_EXPRESSION);
                 type.done(USER_TYPE);
                 typeReference.done(TYPE_REFERENCE);
                 callee.done(CONSTRUCTOR_CALLEE);
@@ -848,7 +848,8 @@ public class JetParsing extends AbstractJetParsing {
             // Probably some helper function
             closeDeclarationWithCommentBinders(entry, ENUM_ENTRY, true);
             return true;
-        } else {
+        }
+        else {
             entry.rollbackTo();
             return false;
         }

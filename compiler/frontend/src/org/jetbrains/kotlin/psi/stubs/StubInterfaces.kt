@@ -77,7 +77,7 @@ public trait KotlinNameReferenceExpressionStub : StubElement<JetNameReferenceExp
     public fun getReferencedName(): String
 }
 
-public trait KotlinEnumReferenceExpressionStub : StubElement<JetEnumReferenceExpression> {
+public trait KotlinEnumEntrySuperclassReferenceExpressionStub : StubElement<JetEnumEntrySuperclassReferenceExpression> {
     public fun getReferencedName(): String
 }
 

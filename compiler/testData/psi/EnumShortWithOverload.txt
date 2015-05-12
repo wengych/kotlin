@@ -35,7 +35,7 @@ JetFile: EnumShortWithOverload.kt
             CONSTRUCTOR_CALLEE
               TYPE_REFERENCE
                 USER_TYPE
-                  ENUM_REFERENCE_EXPRESSION
+                  ENUM_ENTRY_SUPERCLASS_REFERENCE_EXPRESSION
                     <empty list>
             VALUE_ARGUMENT_LIST
               PsiElement(LPAR)('(')
@@ -86,7 +86,7 @@ JetFile: EnumShortWithOverload.kt
             CONSTRUCTOR_CALLEE
               TYPE_REFERENCE
                 USER_TYPE
-                  ENUM_REFERENCE_EXPRESSION
+                  ENUM_ENTRY_SUPERCLASS_REFERENCE_EXPRESSION
                     <empty list>
             VALUE_ARGUMENT_LIST
               PsiElement(LPAR)('(')
@@ -137,7 +137,7 @@ JetFile: EnumShortWithOverload.kt
             CONSTRUCTOR_CALLEE
               TYPE_REFERENCE
                 USER_TYPE
-                  ENUM_REFERENCE_EXPRESSION
+                  ENUM_ENTRY_SUPERCLASS_REFERENCE_EXPRESSION
                     <empty list>
             VALUE_ARGUMENT_LIST
               PsiElement(LPAR)('(')

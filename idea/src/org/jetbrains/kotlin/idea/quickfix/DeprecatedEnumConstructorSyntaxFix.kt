@@ -54,7 +54,7 @@ class DeprecatedEnumConstructorSyntaxFix(element: JetEnumEntry): JetIntentionAct
         private fun transformInitializerList(list: JetInitializerList) {
             val psiFactory = psi.JetPsiFactory(list)
             val userType = list.getInitializers()[0].getTypeReference()!!.getTypeElement() as JetUserType
-            userType.getReferenceExpression()!!.replace(psiFactory.createEnumReferenceExpression())
+            userType.getReferenceExpression()!!.replace(psiFactory.createEnumEntrySuperclassReferenceExpression())
         }
 
         private fun changeConstructorToShort(entry: JetEnumEntry) {

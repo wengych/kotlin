@@ -67,7 +67,12 @@ class UsageTracker(
     }
 
     private fun DeclarationDescriptor.getJsNameForCapturedDescriptor(): JsName {
-        val suggestedName = if (this is ReceiverParameterDescriptor) this.getNameForCapturedReceiver() else getSuggestedName(this)
+        val suggestedName = when (this) {
+            is ReceiverParameterDescriptor -> this.getNameForCapturedReceiver()
+            is TypeParameterDescriptor -> Namer.isInstanceSuggestedName(this)
+            else -> getSuggestedName(this)
+        }
+
         return scope.declareFreshName(suggestedName)
     }
 }

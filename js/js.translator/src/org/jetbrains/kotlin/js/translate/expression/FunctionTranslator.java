@@ -128,8 +128,8 @@ public final class FunctionTranslator extends AbstractTranslator {
 
         for (TypeParameterDescriptor type : descriptor.getTypeParameters()) {
             if (type.isReified()) {
-                JsName typeName = context().getNameForDescriptor(type);
-                JsName paramName = functionObject.getScope().declareName("is" + typeName.getIdent());
+                String suggestedName = Namer.isInstanceSuggestedName(type);
+                JsName paramName = functionObject.getScope().declareName(suggestedName);
                 jsParameters.add(new JsParameter(paramName));
                 aliases.put(type, paramName.makeRef());
             }

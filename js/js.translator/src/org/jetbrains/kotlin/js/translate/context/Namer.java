@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.descriptors.CallableDescriptor;
 import org.jetbrains.kotlin.descriptors.ClassDescriptor;
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor;
 import org.jetbrains.kotlin.idea.JetLanguage;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.FqNameUnsafe;
@@ -218,6 +219,11 @@ public final class Namer {
     @NotNull
     public static JsNameRef getCapturedVarAccessor(@NotNull JsExpression ref) {
         return new JsNameRef(CAPTURED_VAR_FIELD, ref);
+    }
+
+    @NotNull
+    public static String isInstanceSuggestedName(@NotNull TypeParameterDescriptor descriptor) {
+        return "is" + descriptor.getName().getIdentifier();
     }
 
     @NotNull

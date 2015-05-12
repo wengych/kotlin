@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
@@ -67,7 +68,7 @@ public class DoubleBangToIfThenIntention : JetSelfTargetingOffsetIndependentInte
                 }
 
         val project = element.getProject()
-        val manager = TemplateManagerImpl(project)
+        val manager = TemplateManager.getInstance(project)
         val builder = TemplateBuilderImpl(thrownExpression)
         builder.replaceElement(thrownExpression, exceptionLookupExpression);
 

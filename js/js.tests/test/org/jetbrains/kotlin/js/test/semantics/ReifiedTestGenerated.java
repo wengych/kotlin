@@ -101,6 +101,12 @@ public class ReifiedTestGenerated extends AbstractReifiedTest {
         doTest(fileName);
     }
 
+    @TestMetadata("lambdaNameClash.kt")
+    public void testLambdaNameClash() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/reified/cases/lambdaNameClash.kt");
+        doTest(fileName);
+    }
+
     @TestMetadata("method.kt")
     public void testMethod() throws Exception {
         String fileName = JetTestUtils.navigationMetadata("js/js.translator/testData/reified/cases/method.kt");

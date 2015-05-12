@@ -771,8 +771,29 @@ public class JetParsing extends AbstractJetParsing {
             if (!parseEnumEntry()) {
                 break;
             }
-            // TODO: syntax without COMMA is deprecated (only last entry is an exception), KT-7605
-            consumeIf(COMMA);
+            // TODO: syntax with SEMICOLON between enum entries is deprecated, KT-7605
+            if (at(SEMICOLON)) {
+                // Semicolon can be legally here only if member follows
+                PsiBuilder.Marker temp = mark();
+                advance(); // SEMICOLON
+                ModifierDetector detector = new ModifierDetector();
+                parseModifierList(detector, ONLY_ESCAPED_REGULAR_ANNOTATIONS);
+                if (!atSet(SOFT_KEYWORDS_AT_MEMBER_START) && at(IDENTIFIER)) {
+                    // Otherwise it's old syntax that's not supported
+                    temp.rollbackTo();
+                    // Despite of the error, try to restore and parse next enum entry
+                    error("Semicolon between enum entries is a kind of old syntax, use comma instead");
+                    advance(); // SEMICOLON
+                }
+                else {
+                    temp.rollbackTo();
+                }
+
+            }
+            else {
+                // TODO: syntax without COMMA is deprecated (only last entry is an exception), KT-7605
+                consumeIf(COMMA);
+            }
         }
     }
 

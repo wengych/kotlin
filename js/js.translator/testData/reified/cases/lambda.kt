@@ -6,6 +6,24 @@ data class A(val x: Int)
 
 data class B(val x: Int)
 
+// filter from stdlib is not used, because it's important,
+// that filter function is not inline. When lambda is
+// not inlined and captures some local variable,
+// the test crashes on runtime (it's expected behaviour).
+fun <T> Array<T>.filter(fn: (T)->Boolean): List<T> {
+    val filtered = arrayListOf<T>()
+
+    for (i in 0..lastIndex) {
+        val element = this[i]
+
+        if (fn(element)) {
+            filtered.add(element)
+        }
+    }
+
+    return filtered
+}
+
 inline fun<reified T> filterIsInstance(arrayOfAnys: Array<Any>): List<T> {
     return arrayOfAnys.filter { it is T }.map { it as T }
 }

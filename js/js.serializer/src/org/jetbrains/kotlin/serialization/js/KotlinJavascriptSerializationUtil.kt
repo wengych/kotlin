@@ -213,4 +213,11 @@ public object KotlinJavascriptSerializationUtil {
 
     private fun ModuleDescriptor.toBinaryMetadata(): ByteArray =
             KotlinJavascriptSerializationUtil.contentMapToByteArray(this.toContentMap())
+
+    public fun writeFiles(metadata: ByteArray, writeFun: (filePath: String, fileContent: ByteArray) -> Unit): Unit =
+            writeFiles(metadata.toContentMap(), writeFun)
+
+    private fun writeFiles(contentMap: Map<String, ByteArray>, writeFun: (filePath: String, fileContent: ByteArray) -> Unit) {
+        contentMap.keySet().forEach { writeFun(it, contentMap[it]!!) }
+    }
 }

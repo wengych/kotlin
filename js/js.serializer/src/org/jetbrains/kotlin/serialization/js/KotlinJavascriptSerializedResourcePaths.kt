@@ -35,6 +35,7 @@ public object KotlinJavascriptSerializedResourcePaths : SerializedResourcePaths(
 
     private val PACKAGE_CLASS_NAME_SUFFIX: String = "Package"
     private val DEFAULT_PACKAGE_CLASS_NAME: String = "_Default" + PACKAGE_CLASS_NAME_SUFFIX
+    private val DEFAULT_PACKAGE_METAFILE_NAME: String = DEFAULT_PACKAGE_CLASS_NAME + "." + KotlinJavascriptSerializationUtil.CLASS_METADATA_FILE_EXTENSION
 
     public fun getClassesInPackageFilePath(fqName: FqName): String =
             fqName.toPath().withSepIfNotEmpty() + shortName(fqName) + "." + CLASSES_FILE_EXTENSION
@@ -50,6 +51,11 @@ public object KotlinJavascriptSerializedResourcePaths : SerializedResourcePaths(
 
     public override fun getStringTableFilePath(fqName: FqName): String =
             fqName.toPath().withSepIfNotEmpty() + shortName(fqName) + "." + STRING_TABLE_FILE_EXTENSION
+
+
+    public fun isPackageClassFqName(fqName: FqName): Boolean = !fqName.isRoot() && getPackageClassFqName(fqName.parent()) == fqName
+
+    public fun isDefaultPackageMetafile(fileName: String): Boolean = fileName == DEFAULT_PACKAGE_METAFILE_NAME
 
     public fun isPackageMetadataFile(fileName: String): Boolean =
             KotlinJavascriptSerializedResourcePaths.getPackageFilePath(getPackageFqName(fileName)) == fileName

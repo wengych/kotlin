@@ -130,7 +130,6 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
                 findWhatPanel,
                 true
         );
-
         return findWhatPanel;
     }
 

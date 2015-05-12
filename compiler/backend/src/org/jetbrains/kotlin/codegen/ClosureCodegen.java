@@ -258,6 +258,8 @@ public class ClosureCodegen extends MemberCodegen<JetElement> {
 
         if (state.getClassBuilderMode() != ClassBuilderMode.FULL) return;
 
+        functionCodegen.generateAnnotationsForMethod(funDescriptor, bridge, mv);
+
         mv.visitCode();
 
         InstructionAdapter iv = new InstructionAdapter(mv);

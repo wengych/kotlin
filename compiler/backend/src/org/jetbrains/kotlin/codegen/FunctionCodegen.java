@@ -213,7 +213,7 @@ public class FunctionCodegen {
         methodContext.recordSyntheticAccessorIfNeeded(functionDescriptor, bindingContext);
     }
 
-    private void generateAnnotationsForMethod(
+    public void generateAnnotationsForMethod(
             @NotNull FunctionDescriptor functionDescriptor,
             Method asmMethod,
             MethodVisitor mv
@@ -771,6 +771,8 @@ public class FunctionCodegen {
 
         MethodVisitor mv = v.newMethod(DiagnosticsPackage.Bridge(descriptor, origin), flags, delegateTo.getName(), bridge.getDescriptor(), null, null);
         if (state.getClassBuilderMode() != ClassBuilderMode.FULL) return;
+
+        generateAnnotationsForMethod(descriptor, bridge, mv);
 
         mv.visitCode();
 

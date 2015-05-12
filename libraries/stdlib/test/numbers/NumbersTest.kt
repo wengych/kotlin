@@ -5,6 +5,21 @@ import kotlin.test.*
 
 class NumbersTest {
 
+
+    test fun intMinMaxValues() {
+        assertTrue(Int.MIN_VALUE < 0)
+        assertTrue(Int.MAX_VALUE > 0)
+
+        // doesn't hold for JS Number
+        // assertEquals(Int.MIN_VALUE, Int.MAX_VALUE + 1)
+    }
+
+    test fun longMinMaxValues() {
+        assertTrue(Long.MIN_VALUE < 0)
+        assertTrue(Long.MAX_VALUE > 0)
+        assertEquals(Long.MIN_VALUE, Long.MAX_VALUE + 1)
+    }
+
     test fun doubleProperties() {
         for (value in listOf(1.0, 0.0))
             doTestNumber(value)

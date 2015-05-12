@@ -120,7 +120,7 @@ public final class WhenChecker {
         return PsiUtilPackage.isAbstract(klass);
     }
 
-    private static boolean isWhenExhaustive(@NotNull JetWhenExpression expression, @NotNull BindingTrace trace) {
+    public static boolean isWhenExhaustive(@NotNull JetWhenExpression expression, @NotNull BindingTrace trace) {
         JetType type = whenSubjectType(expression, trace.getBindingContext());
         if (type == null) return false;
         ClassDescriptor classDescriptor = getClassDescriptor(type);

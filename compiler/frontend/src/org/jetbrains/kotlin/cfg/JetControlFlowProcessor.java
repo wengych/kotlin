@@ -1338,7 +1338,9 @@ public class JetControlFlowProcessor {
                     }
                 }
 
-                if (!isElse) {
+                // the last entry in exhaustive when becomes "else" from CFA view point
+                boolean nextLabelNeeded = !isElse && (iterator.hasNext() || !WhenChecker.isWhenExhaustive(expression, trace));
+                if (nextLabelNeeded) {
                     nextLabel = builder.createUnboundLabel("next 'when' entry");
                     JetWhenCondition lastCondition = KotlinPackage.lastOrNull(conditions);
                     builder.nondeterministicJump(nextLabel, expression, builder.getBoundValue(lastCondition));
@@ -1352,7 +1354,7 @@ public class JetControlFlowProcessor {
                 }
                 builder.jump(doneLabel, expression);
 
-                if (!isElse) {
+                if (nextLabelNeeded) {
                     builder.bindLabel(nextLabel);
                 }
             }

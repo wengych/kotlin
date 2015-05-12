@@ -1,0 +1,12 @@
+enum class Direction {
+    NORTH, SOUTH, WEST, EAST
+}
+
+fun foo(dir: Direction): Int {
+    when (dir) {
+        Direction.NORTH -> return 1
+        Direction.SOUTH -> return 2
+        Direction.WEST  -> return 3
+        Direction.EAST  -> return 4
+    }
+}

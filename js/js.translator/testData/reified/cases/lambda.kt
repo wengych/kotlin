@@ -1,5 +1,6 @@
 package foo
 
+// CHECK_CALLED: doFilter
 // CHECK_NOT_CALLED: filterIsInstance
 
 data class A(val x: Int)
@@ -10,7 +11,7 @@ data class B(val x: Int)
 // that filter function is not inline. When lambda is
 // not inlined and captures some local variable,
 // the test crashes on runtime (it's expected behaviour).
-fun <T> Array<T>.filter(fn: (T)->Boolean): List<T> {
+fun <T> Array<T>.doFilter(fn: (T)->Boolean): List<T> {
     val filtered = arrayListOf<T>()
 
     for (i in 0..lastIndex) {
@@ -25,7 +26,7 @@ fun <T> Array<T>.filter(fn: (T)->Boolean): List<T> {
 }
 
 inline fun<reified T> filterIsInstance(arrayOfAnys: Array<Any>): List<T> {
-    return arrayOfAnys.filter { it is T }.map { it as T }
+    return arrayOfAnys.doFilter { it is T }.map { it as T }
 }
 
 fun box(): String {

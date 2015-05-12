@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.quickfixUtil.createIntentionFactory
 import org.jetbrains.kotlin.idea.quickfix.quickfixUtil.createIntentionForFirstParentOfType
@@ -66,7 +67,17 @@ class DeprecatedEnumDelimiterSyntaxFix(element: JetEnumEntry): JetIntentionActio
                 var next = entry.getNextSiblingIgnoringWhitespace()
                 var nextType = next.getNode().getElementType()
                 if (entryIndex < entries.size()) {
-                    if (nextType != JetTokens.COMMA) {
+                    if (next is PsiErrorElement) {
+                        // Fix for syntax error like ENUM_ENTRY1; ENUM_ENTRY2; ENUM_ENTRY3
+                        val errorElem = next
+                        next = next.getNextSibling()
+                        if (next.getNode().getElementType() == JetTokens.SEMICOLON) {
+                            next.replace(psiFactory.createComma())
+                            errorElem.delete()
+                        }
+                    }
+                    else if (nextType != JetTokens.COMMA) {
+                        // Classic case like ENUM_ENTRY1 ENUM_ENTRY2
                         body.addAfter(psiFactory.createComma(), entry)
                     }
                 }

@@ -327,5 +327,8 @@ public class QuickFixRegistrar {
 
         QuickFixes.factories.put(ENUM_ENTRY_USES_DEPRECATED_SUPER_CONSTRUCTOR, DeprecatedEnumConstructorSyntaxFix.Companion);
         QuickFixes.factories.put(ENUM_ENTRY_USES_DEPRECATED_SUPER_CONSTRUCTOR, DeprecatedEnumConstructorSyntaxFix.Companion.createWholeProjectFixFactory());
+
+        QuickFixes.factories.put(ENUM_ENTRY_USES_DEPRECATED_OR_NO_DELIMITER, DeprecatedEnumDelimiterSyntaxFix.Companion);
+        QuickFixes.factories.put(ENUM_ENTRY_USES_DEPRECATED_OR_NO_DELIMITER, DeprecatedEnumDelimiterSyntaxFix.Companion.createWholeProjectFixFactory());
     }
 }

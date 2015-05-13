@@ -1,7 +1,7 @@
 // "Insert lacking comma(s) / semicolon(s)" "true"
 
-enum class MyEnum<caret> {
+enum class MyEnum {
     FIRST, 
-    SECOND,
+    SECOND<caret>,
     val zzz = 42
 }

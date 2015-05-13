@@ -1,9 +1,9 @@
 // "Insert lacking comma(s) / semicolon(s)" "true"
 
-enum class MyEnum<caret> {
+enum class MyEnum {
     FIRST SECOND,
     THIRD
-    FOURTH FIFTH SIXTH,
+    FOURTH<caret> FIFTH SIXTH,
     SEVENTH EIGHTH
 
 }

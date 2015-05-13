@@ -30,8 +30,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.stubs.elements.JetStubElementTypes
+import org.jetbrains.kotlin.resolve.DeclarationsChecker
 
-class DeprecatedEnumDelimiterSyntaxFix(element: JetClass): JetIntentionAction<JetClass>(element) {
+class DeprecatedEnumDelimiterSyntaxFix(element: JetEnumEntry): JetIntentionAction<JetEnumEntry>(element) {
 
     override fun getFamilyName(): String = "Insert lacking comma(s) / semicolon(s)"
 
@@ -44,8 +45,8 @@ class DeprecatedEnumDelimiterSyntaxFix(element: JetClass): JetIntentionAction<Je
                 diagnostic.createIntentionForFirstParentOfType(::DeprecatedEnumDelimiterSyntaxFix)
 
         public fun createWholeProjectFixFactory(): JetSingleIntentionActionFactory = createIntentionFactory {
-            JetWholeProjectForEachElementOfTypeFix.createByPredicate<JetClass>(
-                    predicate = { it.usesDeprecatedEnumDelimiter() },
+            JetWholeProjectForEachElementOfTypeFix.createByPredicate<JetEnumEntry>(
+                    predicate = { DeclarationsChecker.enumEntryUsesDeprecatedOrNoDelimiter(it) },
                     taskProcessor = { insertLackingCommaSemicolon(it) },
                     modalTitle = "Replacing deprecated enum delimiter syntax",
                     name = "Insert lacking comma(s) / semicolon(s)",
@@ -53,9 +54,10 @@ class DeprecatedEnumDelimiterSyntaxFix(element: JetClass): JetIntentionAction<Je
             )
         }
 
-        private fun insertLackingCommaSemicolon(element: JetClass) {
-            assert(element.isEnum(), "This quick fix is intended to work with enums only")
-            val body = element.getBody()!!
+        private fun insertLackingCommaSemicolon(enumEntry: JetEnumEntry) {
+            val klass = enumEntry.getParent().getParent() as JetClass
+            assert(klass.isEnum(), "This quick fix is intended to work with enums only")
+            val body = klass.getBody()!!
             val entries = body.getChildrenOfType<JetEnumEntry>()
             val psiFactory = psi.JetPsiFactory(body)
             var entryIndex = 0

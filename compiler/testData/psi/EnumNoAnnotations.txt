@@ -1,4 +1,4 @@
-JetFile: EnumOpenFun.kt
+JetFile: EnumNoAnnotations.kt
   PACKAGE_DIRECTIVE
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
@@ -33,6 +33,10 @@ JetFile: EnumOpenFun.kt
       PsiElement(LBRACE)('{')
       PsiWhiteSpace('\n    ')
       ENUM_ENTRY
+        PsiComment(EOL_COMMENT)('// We have six entries in the following line,')
+        PsiWhiteSpace('\n    ')
+        PsiComment(EOL_COMMENT)('// not one entry with five annotations')
+        PsiWhiteSpace('\n    ')
         OBJECT_DECLARATION_NAME
           PsiElement(IDENTIFIER)('A')
       PsiWhiteSpace(' ')
@@ -92,32 +96,5 @@ JetFile: EnumOpenFun.kt
         PsiWhiteSpace(' ')
         INTEGER_CONSTANT
           PsiElement(INTEGER_LITERAL)('3')
-      PsiWhiteSpace('\n\n    ')
-      OBJECT_DECLARATION
-        MODIFIER_LIST
-          PsiElement(companion)('companion')
-        PsiWhiteSpace(' ')
-        PsiElement(object)('object')
-        PsiWhiteSpace(' ')
-        CLASS_BODY
-          PsiElement(LBRACE)('{')
-          PsiWhiteSpace('\n        ')
-          PROPERTY
-            PsiElement(val)('val')
-            PsiWhiteSpace(' ')
-            PsiElement(IDENTIFIER)('c')
-            PsiElement(COLON)(':')
-            PsiWhiteSpace(' ')
-            TYPE_REFERENCE
-              USER_TYPE
-                REFERENCE_EXPRESSION
-                  PsiElement(IDENTIFIER)('Int')
-            PsiWhiteSpace(' ')
-            PsiElement(EQ)('=')
-            PsiWhiteSpace(' ')
-            INTEGER_CONSTANT
-              PsiElement(INTEGER_LITERAL)('1')
-          PsiWhiteSpace('\n    ')
-          PsiElement(RBRACE)('}')
       PsiWhiteSpace('\n')
       PsiElement(RBRACE)('}')

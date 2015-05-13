@@ -1,4 +1,4 @@
-enum class Color(val rgb : Int) {
+enum class Color {
     NORTH,
     SOUTH,
     WEST,

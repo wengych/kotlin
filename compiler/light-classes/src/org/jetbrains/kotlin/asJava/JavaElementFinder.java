@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -30,8 +31,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SLRUCache;
+import kotlin.KotlinPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ReadOnly;
 import org.jetbrains.kotlin.load.kotlin.PackageClassUtils;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.NamePackage;
@@ -41,6 +44,7 @@ import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.resolve.jvm.KotlinFinderMarker;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -121,7 +125,7 @@ public class JavaElementFinder extends PsiElementFinder implements KotlinFinderM
             answer.addAll(lightClassGenerationSupport.getPackageClasses(qualifiedName.parent(), scope));
         }
 
-        return answer.toArray(new PsiClass[answer.size()]);
+        return sortByScope(answer, scope).toArray(new PsiClass[answer.size()]);
     }
 
     // Finds explicitly declared classes and objects, not package classes
@@ -209,7 +213,7 @@ public class JavaElementFinder extends PsiElementFinder implements KotlinFinderM
             }
         }
 
-        return answer.toArray(new PsiClass[answer.size()]);
+        return sortByScope(answer, scope).toArray(new PsiClass[answer.size()]);
     }
 
     @Override
@@ -267,5 +271,30 @@ public class JavaElementFinder extends PsiElementFinder implements KotlinFinderM
         public String toString() {
             return fqName + " in " + scope;
         }
+    }
+
+    @NotNull
+    public static Comparator<PsiFile> byScopeComparator(@NotNull final GlobalSearchScope searchScope) {
+        return new Comparator<PsiFile>() {
+            @Override
+            public int compare(@NotNull PsiFile o1, @NotNull PsiFile o2) {
+                VirtualFile f1 = o1.getVirtualFile();
+                VirtualFile f2 = o2.getVirtualFile();
+                if (f1 == f2) return 0;
+                if (f1 == null) return -1;
+                if (f2 == null) return 1;
+                return searchScope.compare(f1, f2);
+            }
+        };
+    }
+
+    private static Collection<PsiClass> sortByScope(@NotNull @ReadOnly Collection<PsiClass> classes, @NotNull GlobalSearchScope searchScope) {
+        final Comparator<PsiFile> comparator = byScopeComparator(searchScope);
+        return KotlinPackage.sortBy(classes, new Comparator<PsiClass>() {
+            @Override
+            public int compare(@NotNull PsiClass c1, @NotNull PsiClass c2) {
+                return -comparator.compare(c1.getContainingFile(), c2.getContainingFile());
+            }
+        });
     }
 }

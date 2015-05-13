@@ -88,7 +88,7 @@ public class JetEnumEntry extends JetClass {
         if (initializerList == null) return false;
         JetTypeReference typeReference = initializerList.getInitializers().get(0).getTypeReference();
         if (typeReference == null) return false;
-        JetUserType userType = (JetUserType)typeReference.getTypeElement();
+        JetUserType userType = (JetUserType) typeReference.getTypeElement();
         if (userType == null || userType.getReferenceExpression() instanceof JetEnumEntrySuperclassReferenceExpression) return false;
         return true;
     }

@@ -54,7 +54,7 @@ public final class DecompiledNavigationUtils {
 
         if (virtualFile == null ||
             !DecompilerPackage.isKotlinCompiledFile(virtualFile) &&
-            virtualFile.getFileType() != KotlinJavascriptMetaFileType.INSTANCE) return null;
+            virtualFile.getFileType() != KotlinJavascriptMetaFileType.INSTANCE$) return null;
 
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (!(psiFile instanceof KotlinClsFileBase)) {

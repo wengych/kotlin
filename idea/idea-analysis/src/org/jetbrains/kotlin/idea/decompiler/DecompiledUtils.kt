@@ -66,7 +66,7 @@ public fun isKotlinInternalCompiledFile(file: VirtualFile): Boolean {
 }
 
 public fun isKotlinJavascriptInternalCompiledFile(file: VirtualFile): Boolean {
-    if (file.getExtension() != KotlinJavascriptMetaFileType.INSTANCE.getDefaultExtension()) {
+    if (file.getExtension() != KotlinJavascriptMetaFileType.getDefaultExtension()) {
         return false
     }
 

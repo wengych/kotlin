@@ -16,37 +16,23 @@
 
 package org.jetbrains.kotlin.idea.decompiler
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
-import javax.swing.Icon
-import kotlin.platform.platformStatic
 
-public class KotlinJavascriptMetaFileType : FileType {
-    companion object {
-        platformStatic
-        public val INSTANCE: KotlinJavascriptMetaFileType = KotlinJavascriptMetaFileType()
-    }
+public object KotlinJavascriptMetaFileType : FileType {
 
-    private val ICON = object : NotNullLazyValue<Icon>() {
-        override fun compute(): Icon {
-            return AllIcons.FileTypes.JavaClass
-        }
-    }
+    override fun getName() = "KJSM"
 
-    override fun getName(): String = "KJSM"
+    override fun getDescription() = "Kotlin JavaScript meta file"
 
-    override fun getDescription(): String = "Kotlin Javascript binary meta file"
+    override fun getDefaultExtension() = KotlinJavascriptSerializationUtil.CLASS_METADATA_FILE_EXTENSION
 
-    override fun getDefaultExtension(): String = KotlinJavascriptSerializationUtil.CLASS_METADATA_FILE_EXTENSION
+    override fun getIcon() = null
 
-    override fun getIcon(): Icon? = ICON.getValue()
+    override fun isBinary() = true
 
-    override fun isBinary(): Boolean = true
+    override fun isReadOnly() = true
 
-    override fun isReadOnly(): Boolean = true
-
-    override fun getCharset(file: VirtualFile, content: ByteArray): String? = null
+    override fun getCharset(file: VirtualFile, content: ByteArray) = null
 }

@@ -22,6 +22,6 @@ import org.jetbrains.kotlin.idea.decompiler.KotlinJavascriptMetaFileType
 
 public class KotlinJavascriptMetaFileTypeFactory : FileTypeFactory() {
     override fun createFileTypes(consumer: FileTypeConsumer) {
-        consumer.consume(KotlinJavascriptMetaFileType.INSTANCE, KotlinJavascriptMetaFileType.INSTANCE.getDefaultExtension())
+        consumer.consume(KotlinJavascriptMetaFileType, KotlinJavascriptMetaFileType.getDefaultExtension())
     }
 }

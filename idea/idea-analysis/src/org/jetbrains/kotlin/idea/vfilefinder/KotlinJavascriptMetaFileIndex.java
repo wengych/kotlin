@@ -62,7 +62,7 @@ public final class KotlinJavascriptMetaFileIndex extends ScalarIndexExtension<Fq
     private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
         @Override
         public boolean acceptInput(@NotNull VirtualFile file) {
-            return file.getFileType() == KotlinJavascriptMetaFileType.INSTANCE;
+            return file.getFileType() == KotlinJavascriptMetaFileType.INSTANCE$;
         }
     };
     public static final DataIndexer<FqName, Void, FileContent> INDEXER = new DataIndexer<FqName, Void, FileContent>() {
@@ -71,7 +71,7 @@ public final class KotlinJavascriptMetaFileIndex extends ScalarIndexExtension<Fq
         public Map<FqName, Void> map(@NotNull FileContent inputData) {
             try {
                 VirtualFile file = inputData.getFile();
-                if (file.getFileType() == KotlinJavascriptMetaFileType.INSTANCE) {
+                if (file.getFileType() == KotlinJavascriptMetaFileType.INSTANCE$) {
                     FqName fqName = JsMetaFileUtils.getClassFqName(file);
                     return Collections.singletonMap(fqName, null);
                 }

@@ -22,7 +22,6 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -237,43 +236,5 @@ public class JetClass extends JetTypeParameterListOwnerStub<KotlinClassStub> imp
     public List<JetSecondaryConstructor> getSecondaryConstructors() {
         JetClassBody body = getBody();
         return body != null ? body.getSecondaryConstructors() : Collections.<JetSecondaryConstructor>emptyList();
-    }
-
-    private static PsiElement getNextSiblingIgnoringWhitespace(PsiElement current) {
-        do {
-            current = current.getNextSibling();
-        } while (current.getNode().getElementType() == JetTokens.WHITE_SPACE);
-        return current;
-    }
-
-    // Returns true if it's an enum without comma between entries
-    // and/or without semicolon after entries
-    public boolean usesDeprecatedEnumDelimiter() {
-        if (!isEnum()) return false;
-        JetClassBody body = getBody();
-        if (body == null) return false;
-        int entryIndex = 0;
-        List<JetClass> enumEntries = body.getStubOrPsiChildrenAsList(JetStubElementTypes.ENUM_ENTRY);
-        for (JetClass entry: enumEntries) {
-            entryIndex++;
-            PsiElement next = getNextSiblingIgnoringWhitespace(entry);
-            IElementType nextType = next.getNode().getElementType();
-            if (entryIndex < enumEntries.size()) {
-                if (nextType != JetTokens.COMMA) {
-                    return true;
-                }
-            }
-            else {
-                // After the last entry, we can have semicolon, just closing brace, or comma followed by semicolon / closing brace
-                if (nextType == JetTokens.COMMA) {
-                    next = getNextSiblingIgnoringWhitespace(next);
-                    nextType = next.getNode().getElementType();
-                }
-                if (nextType != JetTokens.SEMICOLON && nextType != JetTokens.RBRACE) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

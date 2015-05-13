@@ -1,6 +1,6 @@
-<!ENUM_USES_DEPRECATED_DELIMITERS!>enum class MyEnum<!> {
+enum class MyEnum {
     A,
-    B,
+    <!ENUM_ENTRY_USES_DEPRECATED_OR_NO_DELIMITER!>B<!>,
  
     val z = 42
 }

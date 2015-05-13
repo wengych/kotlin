@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.serialization.ClassData
 import org.jetbrains.kotlin.serialization.deserialization.ClassDataFinder
 import org.jetbrains.kotlin.serialization.deserialization.LocalClassResolver
 import org.jetbrains.kotlin.serialization.deserialization.NameResolver
-import org.jetbrains.kotlin.serialization.js.JsProtoBufUtil
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
+import org.jetbrains.kotlin.serialization.js.toClassData
 import org.jetbrains.kotlin.serialization.jvm.JvmProtoBufUtil
 
 class DirectoryBasedClassFinder(
@@ -90,7 +90,7 @@ class DirectoryBasedKotlinJavascriptDataFinder(
         val file = classFinder.findKotlinJavascriptMetaFile(classId) ?: return null
 
         val content = file.contentsToByteArray(false)
-        return JsProtoBufUtil.getClassData(classFinder.nameResolver, content)
+        return content.toClassData(classFinder.nameResolver)
     }
 }
 

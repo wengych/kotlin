@@ -26,9 +26,9 @@ import org.jetbrains.kotlin.serialization.deserialization.DeserializationCompone
 import org.jetbrains.kotlin.serialization.deserialization.FlexibleTypeCapabilitiesDeserializer
 import org.jetbrains.kotlin.serialization.deserialization.NameResolver
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPackageMemberScope
-import org.jetbrains.kotlin.serialization.js.JsProtoBufUtil
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptAnnotationAndConstantLoader
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializedResourcePaths
+import org.jetbrains.kotlin.serialization.js.toPackageData
 import java.io.ByteArrayInputStream
 import java.util.Collections
 
@@ -45,7 +45,7 @@ public class KotlinJavascriptDeserializerForDecompiler(
         }
 
         val content = file.contentsToByteArray(false)
-        val packageData = JsProtoBufUtil.getPackageData(nameResolver, content)
+        val packageData = content.toPackageData(nameResolver)
 
         val membersScope = DeserializedPackageMemberScope(
                 createDummyPackageFragment(packageFqName),

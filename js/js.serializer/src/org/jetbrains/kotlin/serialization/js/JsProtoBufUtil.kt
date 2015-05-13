@@ -16,34 +16,21 @@
 
 package org.jetbrains.kotlin.serialization.js
 
-import com.google.protobuf.ExtensionRegistryLite
 import org.jetbrains.kotlin.serialization.ClassData
 import org.jetbrains.kotlin.serialization.PackageData
 import org.jetbrains.kotlin.serialization.ProtoBuf
 import org.jetbrains.kotlin.serialization.deserialization.NameResolver
 import java.io.ByteArrayInputStream
 
-public object JsProtoBufUtil {
-    kotlin.platform.platformStatic
-    public fun getPackageData(nameResolver: NameResolver, content: ByteArray): PackageData {
-        val registry = getExtensionRegistry()
-        val packageProto = ProtoBuf.Package.parseFrom(ByteArrayInputStream(content), registry)
-
-        return PackageData(nameResolver, packageProto)
-    }
-
-    kotlin.platform.platformStatic
-    public fun getClassData(nameResolver: NameResolver, content: ByteArray): ClassData {
-        val registry = getExtensionRegistry()
-        val classProto = ProtoBuf.Class.parseFrom(ByteArrayInputStream(content), registry)
-
-        return ClassData(nameResolver, classProto)
-    }
-
-    private fun getExtensionRegistry(): ExtensionRegistryLite {
-        val registry = ExtensionRegistryLite.newInstance()
-        JsProtoBuf.registerAllExtensions(registry)
-
-        return registry
-    }
+public fun ByteArray.toPackageData(nameResolver: NameResolver): PackageData {
+    val registry = KotlinJavascriptSerializedResourcePaths.EXTENSION_REGISTRY
+    val packageProto = ProtoBuf.Package.parseFrom(ByteArrayInputStream(this), registry)
+    return PackageData(nameResolver, packageProto)
 }
+
+public fun ByteArray.toClassData(nameResolver: NameResolver): ClassData {
+    val registry = KotlinJavascriptSerializedResourcePaths.EXTENSION_REGISTRY
+    val classProto = ProtoBuf.Class.parseFrom(ByteArrayInputStream(this), registry)
+    return ClassData(nameResolver, classProto)
+}
+

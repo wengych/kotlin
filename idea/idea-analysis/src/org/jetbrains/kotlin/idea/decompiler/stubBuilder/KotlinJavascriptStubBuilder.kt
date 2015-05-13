@@ -30,8 +30,9 @@ import org.jetbrains.kotlin.idea.decompiler.textBuilder.DirectoryBasedKotlinJava
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.JetFile
 import org.jetbrains.kotlin.serialization.deserialization.NameResolver
-import org.jetbrains.kotlin.serialization.js.JsProtoBufUtil
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializedResourcePaths
+import org.jetbrains.kotlin.serialization.js.toClassData
+import org.jetbrains.kotlin.serialization.js.toPackageData
 import java.io.ByteArrayInputStream
 
 public open class KotlinJavascriptStubBuilder : ClsStubBuilder() {
@@ -60,12 +61,12 @@ public open class KotlinJavascriptStubBuilder : ClsStubBuilder() {
         val components = createStubBuilderComponents(file, packageFqName, nameResolver)
 
         if (isPackageHeader) {
-            val packageData = JsProtoBufUtil.getPackageData(nameResolver, content);
+            val packageData = content.toPackageData(nameResolver)
             val context = components.createContext(packageData.getNameResolver(), packageFqName)
             return createPackageFacadeFileStub(packageData.getPackageProto(), packageFqName, context)
         }
         else {
-            val classData =  JsProtoBufUtil.getClassData(nameResolver, content)
+            val classData =  content.toClassData(nameResolver)
             val context = components.createContext(classData.getNameResolver(), packageFqName)
             val classId = JsMetaFileUtils.getClassId(file)
             return createTopLevelClassStub(classId, classData.getClassProto(), context)

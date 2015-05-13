@@ -87,8 +87,7 @@ class DirectoryBasedKotlinJavascriptDataFinder(
         val log: Logger
 ) : ClassDataFinder {
     override fun findClassData(classId: ClassId): ClassData? {
-        val file = classFinder.findKotlinJavascriptMetaFile(classId)
-        if (file == null) return null
+        val file = classFinder.findKotlinJavascriptMetaFile(classId) ?: return null
 
         val content = file.contentsToByteArray(false)
         return JsProtoBufUtil.getClassData(classFinder.nameResolver, content)

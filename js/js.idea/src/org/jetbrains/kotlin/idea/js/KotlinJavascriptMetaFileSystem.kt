@@ -20,26 +20,34 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 import kotlin.platform.platformStatic
 
-public class KotlinJavascriptMetaFileSystem : com.intellij.openapi.vfs.newvfs.ArchiveFileSystem() {
+public class KotlinJavascriptMetaFileSystem : ArchiveFileSystem() {
     companion object {
         platformStatic
-        public val PROTOCOL: String = "js-meta"
+        public val PROTOCOL: String = "kotlin-js-meta"
 
         platformStatic
-        fun getInstance(): KotlinJavascriptMetaFileSystem = VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as KotlinJavascriptMetaFileSystem
+        public fun getInstance(): KotlinJavascriptMetaFileSystem = VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as KotlinJavascriptMetaFileSystem
     }
 
-    private val ARCHIVE_SUFFIX = ".kjmsarchive"
+    private val ARCHIVE_SUFFIX = ".kjsm_archive"
 
     override fun getProtocol(): String = PROTOCOL
 
     override fun extractRootPath(path: String): String {
         val jarSeparatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR)
-        assert(jarSeparatorIndex >= 0) { "Path passed to JarFileSystem must have jar separator '!/': " + path }
+        assert(jarSeparatorIndex >= 0) { "Path passed to KotlinJavascriptMetaFileSystem must have separator '!/': " + path }
         return path.substring(0, jarSeparatorIndex + JarFileSystem.JAR_SEPARATOR.length())
+    }
+
+    override fun getHandler(entryFile: VirtualFile): KotlinJavascriptHandler {
+        val pathToRoot = extractLocalPath(this.extractRootPath(entryFile.getPath()))
+        return VfsImplUtil.getHandler<KotlinJavascriptHandler>(this, pathToRoot + ARCHIVE_SUFFIX) {
+            KotlinJavascriptHandler(it.substringBeforeLast(ARCHIVE_SUFFIX))
+        }
     }
 
     override fun extractLocalPath(rootPath: String): String = StringUtil.trimEnd(rootPath, JarFileSystem.JAR_SEPARATOR)
@@ -51,13 +59,6 @@ public class KotlinJavascriptMetaFileSystem : com.intellij.openapi.vfs.newvfs.Ar
     override fun findFileByPathIfCached(path: String): VirtualFile? = VfsImplUtil.findFileByPathIfCached(this, path)
 
     override fun refreshAndFindFileByPath(path: String): VirtualFile? = VfsImplUtil.refreshAndFindFileByPath(this, path)
-
-    override fun getHandler(entryFile: VirtualFile): org.jetbrains.kotlin.idea.js.KotlinJavascriptHandler {
-        val localPath = extractLocalPath(this.extractRootPath(entryFile.getPath()))
-        return VfsImplUtil.getHandler<KotlinJavascriptHandler>(this, localPath + ARCHIVE_SUFFIX) {
-            KotlinJavascriptHandler(it.substringBeforeLast(ARCHIVE_SUFFIX))
-        }
-    }
 
     override fun refresh(asynchronous: Boolean) = VfsImplUtil.refresh(this, asynchronous)
 }

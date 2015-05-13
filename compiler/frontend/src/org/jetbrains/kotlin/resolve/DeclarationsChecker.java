@@ -553,21 +553,23 @@ public class DeclarationsChecker {
     }
 
     // Temporary
-    // Returns true if it's an enum entry without following comma (entry is not last in enum)
-    // or without following semicolon, may be after comma (entry is last in enum)
-    static public boolean enumEntryUsesDeprecatedOrNoDelimiter(@NotNull JetEnumEntry enumEntry) {
+    // Returns comma if it's an enum entry without following comma (entry is not last in enum),
+    // or semicolon if it's an enum entry without following semicolon, may be after comma (entry is last in enum),
+    // or empty string if an enum entry has the necessary following delimiter
+    @NotNull
+    static public String enumEntryNeededDelimiter(@NotNull JetEnumEntry enumEntry) {
         JetClass enumClass = (JetClass) enumEntry.getParent().getParent();
         JetClassBody body = enumClass.getBody();
-        if (body == null) return false;
+        if (body == null) return "";
         List<JetDeclaration> declarations = body.getDeclarations();
         int entryIndex = declarations.indexOf(enumEntry);
-        if (entryIndex == -1) return false;
+        if (entryIndex == -1) return "";
         JetDeclaration nextDeclaration = entryIndex < declarations.size() - 1 ? declarations.get(entryIndex + 1) : null;
         PsiElement next = PsiUtilPackage.getNextSiblingIgnoringWhitespace(enumEntry);
         IElementType nextType = next.getNode().getElementType();
         if (nextDeclaration instanceof JetEnumEntry) {
             // Not last
-            return (nextType != JetTokens.COMMA);
+            return nextType != JetTokens.COMMA ? "," : "";
         }
         else {
             // Last: after it we can have semicolon, just closing brace, or comma followed by semicolon / closing brace
@@ -575,7 +577,7 @@ public class DeclarationsChecker {
                 next = PsiUtilPackage.getNextSiblingIgnoringWhitespace(next);
                 nextType = next.getNode().getElementType();
             }
-            return (nextType != JetTokens.SEMICOLON && nextType != JetTokens.RBRACE);
+            return nextType != JetTokens.SEMICOLON && nextType != JetTokens.RBRACE ? ";" : "";
         }
     }
 
@@ -587,8 +589,9 @@ public class DeclarationsChecker {
         if (enumEntryUsesDeprecatedSuperConstructor(enumEntry)) {
             trace.report(Errors.ENUM_ENTRY_USES_DEPRECATED_SUPER_CONSTRUCTOR.on(enumEntry, classDescriptor));
         }
-        if (enumEntryUsesDeprecatedOrNoDelimiter(enumEntry)) {
-            trace.report(Errors.ENUM_ENTRY_USES_DEPRECATED_OR_NO_DELIMITER.on(enumEntry, classDescriptor));
+        String neededDelimiter = enumEntryNeededDelimiter(enumEntry);
+        if (!neededDelimiter.isEmpty()) {
+            trace.report(Errors.ENUM_ENTRY_USES_DEPRECATED_OR_NO_DELIMITER.on(enumEntry, classDescriptor, neededDelimiter));
         }
 
         List<JetDelegationSpecifier> delegationSpecifiers = enumEntry.getDelegationSpecifiers();

@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor;
 import org.jetbrains.kotlin.idea.decompiler.DecompilerPackage;
 import org.jetbrains.kotlin.idea.decompiler.KotlinClsFileBase;
-import org.jetbrains.kotlin.idea.decompiler.KotlinJavascriptMetaFileType;
 import org.jetbrains.kotlin.idea.stubindex.JetSourceFilterScope;
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder;
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory;
@@ -53,8 +52,8 @@ public final class DecompiledNavigationUtils {
         VirtualFile virtualFile = findVirtualFileContainingDescriptor(project, referencedDescriptor);
 
         if (virtualFile == null ||
-            !DecompilerPackage.isKotlinCompiledFile(virtualFile) &&
-            virtualFile.getFileType() != KotlinJavascriptMetaFileType.INSTANCE$) return null;
+            !DecompilerPackage.isKotlinJvmCompiledFile(virtualFile) &&
+            !DecompilerPackage.isKotlinJsMetaFile(virtualFile)) return null;
 
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (!(psiFile instanceof KotlinClsFileBase)) {
@@ -79,7 +78,7 @@ public final class DecompiledNavigationUtils {
 
         GlobalSearchScope scopeToSearchIn = JetSourceFilterScope.kotlinSourceAndClassFiles(GlobalSearchScope.allScope(project), project);
         VirtualFileFinder fileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(scopeToSearchIn);
-        if (isFromKotlinJavascript(referencedDescriptor)) {
+        if (isFromKotlinJavasriptMetadata(referencedDescriptor)) {
             return fileFinder.findVirtualFileWithKotlinJsMetadata(containerClassId);
         }
         else {
@@ -87,7 +86,7 @@ public final class DecompiledNavigationUtils {
         }
     }
 
-    private static boolean isFromKotlinJavascript(@NotNull DeclarationDescriptor referencedDescriptor) {
+    private static boolean isFromKotlinJavasriptMetadata(@NotNull DeclarationDescriptor referencedDescriptor) {
         PackageFragmentDescriptor packageFragmentDescriptor =
                 DescriptorUtils.getParentOfType(referencedDescriptor, PackageFragmentDescriptor.class, false);
         return packageFragmentDescriptor instanceof KotlinJavascriptPackageFragment;

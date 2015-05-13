@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.impl.ArchiveHandler
 import com.intellij.openapi.vfs.impl.ArchiveHandler.EntryInfo
 import com.intellij.util.ArrayUtil
 import gnu.trove.THashMap
-import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
+import org.jetbrains.kotlin.serialization.js.forEachFileEntry
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
 
 public open class KotlinJavascriptHandler(path: String) : ArchiveHandler(path) {
@@ -31,7 +31,7 @@ public open class KotlinJavascriptHandler(path: String) : ArchiveHandler(path) {
 
         for(metadata in KotlinJavascriptMetadataUtils.loadMetadata(getFile())) {
             val moduleName = metadata.moduleName
-            KotlinJavascriptSerializationUtil.writeFiles(metadata.body) {
+            metadata.forEachFileEntry {
                 filePath, fileContent -> getOrCreate(moduleName + "/" + filePath, false, map, fileContent)
             }
         }
@@ -45,7 +45,7 @@ public open class KotlinJavascriptHandler(path: String) : ArchiveHandler(path) {
             map: MutableMap<String, EntryInfo>,
             content: ByteArray = ArrayUtil.EMPTY_BYTE_ARRAY
     ): EntryInfo {
-        val info: EntryInfo? = map[entryPath]
+        val info = map[entryPath]
         if (info != null) return info
 
         val path = splitPath(entryPath)
@@ -57,7 +57,7 @@ public open class KotlinJavascriptHandler(path: String) : ArchiveHandler(path) {
     }
 
     override fun contentsToByteArray(relativePath: String): ByteArray {
-        val entryInfo: EntryInfo? = getEntryInfo(relativePath)
+        val entryInfo = getEntryInfo(relativePath)
         return if (entryInfo is JsMetaEntryInfo) entryInfo.content else ArrayUtil.EMPTY_BYTE_ARRAY
     }
 

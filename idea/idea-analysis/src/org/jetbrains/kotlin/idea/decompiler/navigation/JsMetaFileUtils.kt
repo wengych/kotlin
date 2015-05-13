@@ -20,7 +20,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializedResourcePaths
+import org.jetbrains.kotlin.serialization.js.isDefaultPackageMetafile
+import org.jetbrains.kotlin.serialization.js.isPackageClassFqName
 import kotlin.platform.platformStatic
 
 public object JsMetaFileUtils {
@@ -59,7 +60,7 @@ public object JsMetaFileUtils {
 
     private fun getPackageFqName(relPath: String): FqName {
         val pathToFile = relPath.substringAfter(VfsUtilCore.VFS_SEPARATOR_CHAR)
-        if (KotlinJavascriptSerializedResourcePaths.isDefaultPackageMetafile(pathToFile)) return FqName.ROOT
+        if (isDefaultPackageMetafile(pathToFile)) return FqName.ROOT
 
         val name = pathToFile.substringBeforeLast(VfsUtilCore.VFS_SEPARATOR_CHAR)
         return FqName(name.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, '.'))
@@ -69,7 +70,7 @@ public object JsMetaFileUtils {
 
     private fun isPackageHeader(relPath: String): Boolean {
         val classFqName = JsMetaFileUtils.getClassFqName(relPath)
-        return KotlinJavascriptSerializedResourcePaths.isPackageClassFqName(classFqName)
+        return classFqName.isPackageClassFqName()
     }
 
     private fun getRoot(file: VirtualFile): VirtualFile = if (file.getParent() == null) file else getRoot(file.getParent())

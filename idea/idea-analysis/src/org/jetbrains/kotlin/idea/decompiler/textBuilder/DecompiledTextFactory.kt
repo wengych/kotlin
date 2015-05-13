@@ -171,6 +171,15 @@ private fun buildDecompiledText(packageFqName: FqName, descriptors: List<Declara
                 val subindent = indent + "    "
                 val allDescriptors = descriptor.secondaryConstructors + descriptor.getDefaultType().getMemberScope().getDescriptors()
                 val companionObject = descriptor.getCompanionObjectDescriptor()
+                var companionNeeded = (companionObject != null)
+                fun newlineExceptFirst() {
+                    if (firstPassed) {
+                        builder.append("\n")
+                    }
+                    else {
+                        firstPassed = true
+                    }
+                }
                 for (member in allDescriptors) {
                     if (member.getContainingDeclaration() != descriptor) {
                         continue
@@ -178,25 +187,21 @@ private fun buildDecompiledText(packageFqName: FqName, descriptors: List<Declara
                     if (member == companionObject) {
                         continue
                     }
+                    if (companionNeeded && !isEnumEntry(member)) {
+                        companionNeeded = false
+                        newlineExceptFirst()
+                        builder.append(subindent)
+                        appendDescriptor(companionObject, subindent)
+                    }
                     if (member is CallableMemberDescriptor
                         && member.getKind() != CallableMemberDescriptor.Kind.DECLARATION
                         //TODO: not synthesized and component like
                         && !isComponentLike(member.getName())) {
                         continue
                     }
-
-                    if (firstPassed) {
-                        builder.append("\n")
-                    }
-                    else {
-                        firstPassed = true
-                    }
+                    newlineExceptFirst()
                     builder.append(subindent)
                     appendDescriptor(member, subindent)
-                }
-                if (companionObject != null) {
-                    builder.append(subindent)
-                    appendDescriptor(companionObject, subindent)
                 }
                 builder.append(indent).append("}")
                 endOffset = builder.length()

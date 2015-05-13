@@ -162,9 +162,9 @@ private class ClassClsStubBuilder(
     private fun createClassBodyAndMemberStubs() {
         val classBody = KotlinPlaceHolderStubImpl<JetClassBody>(classOrObjectStub, JetStubElementTypes.CLASS_BODY)
         createEnumEntryStubs(classBody)
+        createCompanionObjectStub(classBody)
         createCallableMemberStubs(classBody)
         createInnerAndNestedClasses(classBody)
-        createCompanionObjectStub(classBody)
     }
 
     private fun createCompanionObjectStub(classBody: KotlinPlaceHolderStubImpl<JetClassBody>) {

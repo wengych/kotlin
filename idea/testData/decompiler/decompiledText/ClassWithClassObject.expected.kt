@@ -4,7 +4,6 @@
 package test
 
 internal final class ClassWithClassObject public () {
-    internal final fun f(): kotlin.Unit { /* compiled code */ }
     internal companion object {
         internal final val a: test.A /* compiled code */
 
@@ -20,4 +19,6 @@ internal final class ClassWithClassObject public () {
 
         internal final fun kotlin.Int.f(): kotlin.Unit { /* compiled code */ }
     }
+
+    internal final fun f(): kotlin.Unit { /* compiled code */ }
 }

@@ -427,4 +427,11 @@ public object PositioningStrategies {
                     return markElement(element.getCalleeExpression() ?: element)
                 }
             }
+
+    public val DELEGATOR_SUPER_CALL: PositioningStrategy<JetEnumEntry> = object: PositioningStrategy<JetEnumEntry>() {
+        override fun mark(element: JetEnumEntry): List<TextRange> {
+            val specifiers = element.getDelegationSpecifiers()
+            return markElement(if (specifiers.isEmpty()) element else specifiers[0])
+        }
+    }
 }

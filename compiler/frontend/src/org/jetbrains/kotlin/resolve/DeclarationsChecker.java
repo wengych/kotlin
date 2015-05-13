@@ -538,13 +538,27 @@ public class DeclarationsChecker {
         }
     }
 
+    // Temporary
+    // Returns true if deprecated constructor is in use, like
+    // ENTRY: Enum(arguments) instead of
+    // ENTRY(arguments)
+    static public boolean enumEntryUsesDeprecatedSuperConstructor(@NotNull JetEnumEntry enumEntry) {
+        JetInitializerList initializerList = enumEntry.getInitializerList();
+        if (initializerList == null) return false;
+        JetTypeReference typeReference = initializerList.getInitializers().get(0).getTypeReference();
+        if (typeReference == null) return false;
+        JetUserType userType = (JetUserType) typeReference.getTypeElement();
+        if (userType == null || userType.getReferenceExpression() instanceof JetEnumEntrySuperclassReferenceExpression) return false;
+        return true;
+    }
+
     private void checkEnumEntry(@NotNull JetEnumEntry enumEntry, @NotNull ClassDescriptor classDescriptor) {
         DeclarationDescriptor declaration = classDescriptor.getContainingDeclaration();
         assert DescriptorUtils.isEnumClass(declaration) : "Enum entry should be declared in enum class: " + classDescriptor;
         ClassDescriptor enumClass = (ClassDescriptor) declaration;
 
-        if (enumEntry.usesDeprecatedConstructorSyntax()) {
-            trace.report(Errors.ENUM_USES_DEPRECATED_CONSTRUCTORS.on(enumEntry, classDescriptor));
+        if (enumEntryUsesDeprecatedSuperConstructor(enumEntry)) {
+            trace.report(Errors.ENUM_ENTRY_USES_DEPRECATED_SUPER_CONSTRUCTOR.on(enumEntry, classDescriptor));
         }
 
         List<JetDelegationSpecifier> delegationSpecifiers = enumEntry.getDelegationSpecifiers();

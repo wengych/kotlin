@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.lexer.JetTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.stubs.KotlinEnumEntrySuperclassReferenceExpressionStub
@@ -56,7 +57,7 @@ public class JetEnumEntrySuperclassReferenceExpression:
     }
 
     override fun getReferencedNameAsName(): Name {
-        return Name.guess(referencedElement.getName() ?: "<missing class name>")
+        return referencedElement.getName()?.let { Name.guess(it) } ?: SpecialNames.NO_NAME_PROVIDED;
     }
 
     override fun getReferencedNameElement(): PsiElement {

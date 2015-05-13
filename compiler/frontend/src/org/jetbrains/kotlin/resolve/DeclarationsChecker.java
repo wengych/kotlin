@@ -557,7 +557,7 @@ public class DeclarationsChecker {
     // or semicolon if it's an enum entry without following semicolon, may be after comma (entry is last in enum),
     // or empty string if an enum entry has the necessary following delimiter
     @NotNull
-    static public String enumEntryNeededDelimiter(@NotNull JetEnumEntry enumEntry) {
+    static private String enumEntryNeededDelimiter(@NotNull JetEnumEntry enumEntry) {
         JetClass enumClass = (JetClass) enumEntry.getParent().getParent();
         JetClassBody body = enumClass.getBody();
         if (body == null) return "";
@@ -579,6 +579,10 @@ public class DeclarationsChecker {
             }
             return nextType != JetTokens.SEMICOLON && nextType != JetTokens.RBRACE ? ";" : "";
         }
+    }
+
+    static public boolean enumEntryUsesDeprecatedOrNoDelimiter(@NotNull JetEnumEntry enumEntry) {
+        return !enumEntryNeededDelimiter(enumEntry).isEmpty();
     }
 
     private void checkEnumEntry(@NotNull JetEnumEntry enumEntry, @NotNull ClassDescriptor classDescriptor) {

@@ -28,7 +28,7 @@ public class KotlinJavascriptLibraryContentsTreeStructureProvider : TreeStructur
         if (parent.getProject() == null || parent !is ExternalLibrariesNode) children else filterLibraryNodes(children)
 
     private fun filterLibraryNodes(children: Collection<AbstractTreeNode<*>>): Collection<AbstractTreeNode<*>> {
-        val filteredChildren = children.filter { it !is NamedLibraryElementNode || KotlinJavascriptLibraryManager.LIBRARY_NAME != it.getName() }
+        val filteredChildren = children.filterNot { it is NamedLibraryElementNode && KotlinJavascriptLibraryManager.LIBRARY_NAME == it.getName() }
         return if (filteredChildren.size() == children.size()) children else filteredChildren
     }
 

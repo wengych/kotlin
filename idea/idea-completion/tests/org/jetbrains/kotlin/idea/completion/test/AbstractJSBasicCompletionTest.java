@@ -39,7 +39,7 @@ public abstract class AbstractJSBasicCompletionTest extends JetFixtureCompletion
     @Override
     protected void setUpFixture(@NotNull String testPath) {
         super.setUpFixture(testPath);
-        KotlinJavascriptLibraryManager.getInstance(getProject()).updateProjectLibrary(true);
+        KotlinJavascriptLibraryManager.getInstance(getProject()).syncUpdateProjectLibrary();
     }
 
     @Override

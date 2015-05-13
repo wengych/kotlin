@@ -99,7 +99,7 @@ public abstract class AbstractQuickFixTest extends KotlinLightQuickFixTestCase {
     private static QuickFixTestCase myWrapper;
 
     private static void doTestFor(final String testName, final QuickFixTestCase quickFixTestCase) {
-        final String relativePath = notNull(quickFixTestCase.getBasePath(), "") + "/" + KotlinPackage.decapitalize(testName);
+        String relativePath = notNull(quickFixTestCase.getBasePath(), "") + "/" + KotlinPackage.decapitalize(testName);
         final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
         final File testFile = new File(testFullPath);
         CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(), new Runnable() {
@@ -110,9 +110,9 @@ public abstract class AbstractQuickFixTest extends KotlinLightQuickFixTestCase {
                     String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
                     quickFixTestCase.configureFromFileText(testFile.getName(), contents);
                     quickFixTestCase.bringRealEditorBack();
-                    final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
-                    final String text = pair.getFirst();
-                    final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
+                    Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
+                    String text = pair.getFirst();
+                    boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
                     quickFixTestCase.beforeActionStarted(testName, contents);
 
@@ -137,7 +137,7 @@ public abstract class AbstractQuickFixTest extends KotlinLightQuickFixTestCase {
     }
 
     @Override
-    protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+    protected void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName)
             throws Exception {
         doAction(text, actionShouldBeAvailable, testFullPath, testName, myWrapper);
     }
@@ -156,7 +156,7 @@ public abstract class AbstractQuickFixTest extends KotlinLightQuickFixTestCase {
     private void configureRuntimeIfNeeded(@NotNull String beforeFileName) {
         if (beforeFileName.endsWith("JsRuntime.kt")) {
             ConfigLibraryUtil.configureKotlinJsRuntimeAndSdk(getModule(), getFullJavaJDK());
-            KotlinJavascriptLibraryManager.getInstance(getProject()).updateProjectLibrary(true);
+            KotlinJavascriptLibraryManager.getInstance(getProject()).syncUpdateProjectLibrary();
         }
         else if (beforeFileName.endsWith("Runtime.kt")) {
             ConfigLibraryUtil.configureKotlinRuntimeAndSdk(getModule(), getFullJavaJDK());

@@ -52,7 +52,7 @@ public class KotlinJavascriptDecompiledTextConsistencyTest : JetLightCodeInsight
 
     private fun doTest(packageFqName: FqName) {
         val project = getProject()
-        KotlinJavascriptLibraryManager.getInstance(project).updateProjectLibrary(true)
+        KotlinJavascriptLibraryManager.getInstance(project).syncUpdateProjectLibrary()
 
         val virtualFileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(GlobalSearchScope.allScope(project))
         val packageFile = virtualFileFinder.findKotlinJavascriptVirtualFileWithHeader(PackageClassUtils.getPackageClassId(packageFqName))!!

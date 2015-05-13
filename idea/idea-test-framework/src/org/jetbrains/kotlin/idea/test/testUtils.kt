@@ -54,7 +54,7 @@ public fun Module.configureAs(kind: ModuleKind) {
             this.configureAs(ProjectDescriptorWithStdlibSources.INSTANCE)
         ModuleKind.KOTLIN_JAVASCRIPT -> {
             this.configureAs(KotlinStdJSProjectDescriptor.instance)
-            KotlinJavascriptLibraryManager.getInstance(this.getProject()).updateProjectLibrary(true)
+            KotlinJavascriptLibraryManager.getInstance(this.getProject()).syncUpdateProjectLibrary()
         }
 
         else -> throw IllegalArgumentException("Unknown kind=$kind")

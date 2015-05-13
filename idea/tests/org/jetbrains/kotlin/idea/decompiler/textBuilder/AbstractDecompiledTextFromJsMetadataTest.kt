@@ -52,7 +52,7 @@ public abstract class AbstractDecompiledTextFromJsMetadataTest : JetLightCodeIns
     override fun setUp() {
         super.setUp()
         myModule!!.configureAs(ModuleKind.KOTLIN_JAVASCRIPT)
-        KotlinJavascriptLibraryManager.getInstance(getProject()).updateProjectLibrary(true)
+        KotlinJavascriptLibraryManager.getInstance(getProject()).syncUpdateProjectLibrary()
     }
 
     override fun tearDown() {

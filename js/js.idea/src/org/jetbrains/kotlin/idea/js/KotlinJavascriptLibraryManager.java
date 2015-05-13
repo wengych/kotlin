@@ -37,6 +37,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.kotlin.idea.framework.KotlinJavascriptLibraryDetectionUtil;
 import org.jetbrains.kotlin.idea.project.ProjectStructureUtil;
 import org.jetbrains.kotlin.utils.LibraryUtils;
@@ -51,7 +52,7 @@ public class KotlinJavascriptLibraryManager implements ProjectComponent, ModuleR
         return project.getComponent(KotlinJavascriptLibraryManager.class);
     }
 
-    public static final String LIBRARY_NAME = "<Kotlin/Javascript binary descriptors>";
+    public static final String LIBRARY_NAME = "<Kotlin JavaScript library>";
     private final Object LIBRARY_COMMIT_LOCK = new Object();
 
     private Project myProject;
@@ -113,18 +114,22 @@ public class KotlinJavascriptLibraryManager implements ProjectComponent, ModuleR
         }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
 
+    @TestOnly
+    public void syncUpdateProjectLibrary() {
+        updateProjectLibrary(true);
+    }
+
     /**
      * @param synchronously may be true only in tests.
      */
-    public void updateProjectLibrary(boolean synchronously) {
+    private void updateProjectLibrary(boolean synchronously) {
         if (myProject == null || myProject.isDisposed()) return;
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
         boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
         for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-            if (!isModuleApplicable(module, testMode)) {
-                continue;
-            }
+            if (!isModuleApplicable(module, testMode)) continue;
+
             final Collection<VirtualFile> clsRootFiles = new ArrayList<VirtualFile>();
             final Collection<VirtualFile> srcRootFiles = new ArrayList<VirtualFile>();
 
@@ -313,7 +318,7 @@ public class KotlinJavascriptLibraryManager implements ProjectComponent, ModuleR
         return null;
     }
 
-    public static class ChangesToApply {
+    private static class ChangesToApply {
         private final List<String> clsUrlsToAdd = new ArrayList<String>();
         private final List<String> clsUrlsToRemove = new ArrayList<String>();
 

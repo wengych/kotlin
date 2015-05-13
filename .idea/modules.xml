@@ -32,6 +32,7 @@
       <module fileurl="file://$PROJECT_DIR$/idea/idea-completion/idea-completion.iml" filepath="$PROJECT_DIR$/idea/idea-completion/idea-completion.iml" group="ide" />
       <module fileurl="file://$PROJECT_DIR$/idea/idea-core/idea-core.iml" filepath="$PROJECT_DIR$/idea/idea-core/idea-core.iml" group="ide" />
       <module fileurl="file://$PROJECT_DIR$/idea/idea-jps-common/idea-jps-common.iml" filepath="$PROJECT_DIR$/idea/idea-jps-common/idea-jps-common.iml" group="ide" />
+      <module fileurl="file://$PROJECT_DIR$/idea/idea-js/idea-js.iml" filepath="$PROJECT_DIR$/idea/idea-js/idea-js.iml" group="ide" />
       <module fileurl="file://$PROJECT_DIR$/idea-runner/idea-runner.iml" filepath="$PROJECT_DIR$/idea-runner/idea-runner.iml" group="ide" />
       <module fileurl="file://$PROJECT_DIR$/idea/idea-test-framework/idea-test-framework.iml" filepath="$PROJECT_DIR$/idea/idea-test-framework/idea-test-framework.iml" group="ide" />
       <module fileurl="file://$PROJECT_DIR$/generators/injector-generator/injector-generator.iml" filepath="$PROJECT_DIR$/generators/injector-generator/injector-generator.iml" group="infrastructure" />
@@ -41,7 +42,6 @@
       <module fileurl="file://$PROJECT_DIR$/jps-plugin/jps-plugin.iml" filepath="$PROJECT_DIR$/jps-plugin/jps-plugin.iml" group="ide/jps" />
       <module fileurl="file://$PROJECT_DIR$/js/js.dart-ast/js.dart-ast.iml" filepath="$PROJECT_DIR$/js/js.dart-ast/js.dart-ast.iml" group="compiler/js" />
       <module fileurl="file://$PROJECT_DIR$/js/js.frontend/js.frontend.iml" filepath="$PROJECT_DIR$/js/js.frontend/js.frontend.iml" group="compiler/js" />
-      <module fileurl="file://$PROJECT_DIR$/idea/js.idea/js.idea.iml" filepath="$PROJECT_DIR$/idea/js.idea/js.idea.iml" group="ide" />
       <module fileurl="file://$PROJECT_DIR$/js/js.inliner/js.inliner.iml" filepath="$PROJECT_DIR$/js/js.inliner/js.inliner.iml" group="compiler/js" />
       <module fileurl="file://$PROJECT_DIR$/js/js.parser/js.parser.iml" filepath="$PROJECT_DIR$/js/js.parser/js.parser.iml" group="compiler/js" />
       <module fileurl="file://$PROJECT_DIR$/js/js.serializer/js.serializer.iml" filepath="$PROJECT_DIR$/js/js.serializer/js.serializer.iml" group="compiler/js" />

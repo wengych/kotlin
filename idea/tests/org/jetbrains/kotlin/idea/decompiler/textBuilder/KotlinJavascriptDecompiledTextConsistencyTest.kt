@@ -55,7 +55,7 @@ public class KotlinJavascriptDecompiledTextConsistencyTest : JetLightCodeInsight
         KotlinJavascriptLibraryManager.getInstance(project).syncUpdateProjectLibrary()
 
         val virtualFileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(GlobalSearchScope.allScope(project))
-        val packageFile = virtualFileFinder.findKotlinJavascriptVirtualFileWithHeader(PackageClassUtils.getPackageClassId(packageFqName))!!
+        val packageFile = virtualFileFinder.findVirtualFileWithKotlinJsMetadata(PackageClassUtils.getPackageClassId(packageFqName))!!
 
         val projectBasedText = buildDecompiledTextFromJsMetadata(packageFile, KotlinJavascriptResolverForDecompiler()).text
         val deserializedText = buildDecompiledTextFromJsMetadata(packageFile).text

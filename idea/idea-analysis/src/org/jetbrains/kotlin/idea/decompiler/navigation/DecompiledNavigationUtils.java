@@ -80,7 +80,7 @@ public final class DecompiledNavigationUtils {
         GlobalSearchScope scopeToSearchIn = JetSourceFilterScope.kotlinSourceAndClassFiles(GlobalSearchScope.allScope(project), project);
         VirtualFileFinder fileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(scopeToSearchIn);
         if (isFromKotlinJavascript(referencedDescriptor)) {
-            return fileFinder.findKotlinJavascriptVirtualFileWithHeader(containerClassId);
+            return fileFinder.findVirtualFileWithKotlinJsMetadata(containerClassId);
         }
         else {
             return fileFinder.findVirtualFileWithHeader(containerClassId);

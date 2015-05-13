@@ -45,7 +45,7 @@ public class KotlinJavascriptStubConsistencyTest : JetLightCodeInsightFixtureTes
         KotlinJavascriptLibraryManager.getInstance(project).syncUpdateProjectLibrary()
 
         val virtualFileFinder = VirtualFileFinderFactory.SERVICE.getInstance(project).create(GlobalSearchScope.allScope(project))
-        val packageFile = virtualFileFinder.findKotlinJavascriptVirtualFileWithHeader(PackageClassUtils.getPackageClassId(packageFqName))!!
+        val packageFile = virtualFileFinder.findVirtualFileWithKotlinJsMetadata(PackageClassUtils.getPackageClassId(packageFqName))!!
 
         val decompiledText = buildDecompiledTextFromJsMetadata(packageFile).text
         val jsMetaFileStub = KotlinJavascriptStubBuilder().buildFileStub(FileContentImpl.createByFile(packageFile))!!

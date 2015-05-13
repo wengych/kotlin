@@ -57,7 +57,7 @@ public final class IDEVirtualFileFinder extends VirtualFileKotlinClassFinder imp
 
     @Nullable
     @Override
-    public VirtualFile findKotlinJavascriptVirtualFileWithHeader(@NotNull ClassId classId) {
+    public VirtualFile findVirtualFileWithKotlinJsMetadata(@NotNull ClassId classId) {
         Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(KotlinJavascriptMetaFileIndex.KEY, classId.asSingleFqName(), scope);
         if (files.isEmpty()) {
             return null;

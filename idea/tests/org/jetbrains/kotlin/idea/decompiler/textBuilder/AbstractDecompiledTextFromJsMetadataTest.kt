@@ -71,7 +71,7 @@ public abstract class AbstractDecompiledTextFromJsMetadataTest : JetLightCodeIns
     private fun getJsMetaFile(packageName: String, className: String): VirtualFile? {
         val virtualFileFinder = VirtualFileFinderFactory.SERVICE.getInstance(getProject()).create(GlobalSearchScope.allScope(getProject()))
         val classId = ClassId(FqName(packageName), FqName(className), false)
-        val metaFile = virtualFileFinder.findKotlinJavascriptVirtualFileWithHeader(classId)
+        val metaFile = virtualFileFinder.findVirtualFileWithKotlinJsMetadata(classId)
         TestCase.assertNotNull(metaFile)
         return metaFile
     }

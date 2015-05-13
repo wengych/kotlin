@@ -22,20 +22,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
+import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
 import kotlin.platform.platformStatic
 
 public class KotlinJavascriptMetaFileSystem : ArchiveFileSystem() {
     companion object {
         platformStatic
-        public val PROTOCOL: String = "kotlin-js-meta"
-
-        platformStatic
-        public fun getInstance(): KotlinJavascriptMetaFileSystem = VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as KotlinJavascriptMetaFileSystem
+        public fun getInstance(): KotlinJavascriptMetaFileSystem = VirtualFileManager.getInstance().getFileSystem(KotlinJavascriptMetadataUtils.VFS_PROTOCOL) as KotlinJavascriptMetaFileSystem
     }
 
     private val ARCHIVE_SUFFIX = ".kjsm_archive"
 
-    override fun getProtocol(): String = PROTOCOL
+    override fun getProtocol(): String = KotlinJavascriptMetadataUtils.VFS_PROTOCOL
 
     override fun extractRootPath(path: String): String {
         val jarSeparatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR)

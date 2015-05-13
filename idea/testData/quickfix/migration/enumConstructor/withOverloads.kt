@@ -1,7 +1,7 @@
 // "Change to short enum constructor" "true"
 
 enum class SimpleEnum(val z: String = "xxx") {
-    FIRST<caret>: SimpleEnum() {
+    FIRST: SimpleEnum()<caret> {
         override fun foo(): String = "abc"
     },
     SECOND() {

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.stubs.elements.JetStubElementTypes
+import org.jetbrains.kotlin.resolve.DeclarationsChecker
 
 class DeprecatedEnumConstructorSyntaxFix(element: JetEnumEntry): JetIntentionAction<JetEnumEntry>(element) {
     override fun getFamilyName(): String = "Change to short enum constructor"
@@ -43,7 +44,7 @@ class DeprecatedEnumConstructorSyntaxFix(element: JetEnumEntry): JetIntentionAct
 
         public fun createWholeProjectFixFactory(): JetSingleIntentionActionFactory = createIntentionFactory {
             JetWholeProjectForEachElementOfTypeFix.createByPredicate<JetEnumEntry>(
-                    predicate = { it.usesDeprecatedConstructorSyntax() },
+                    predicate = { DeclarationsChecker.enumEntryUsesDeprecatedSuperConstructor(it) },
                     taskProcessor = { changeConstructorToShort(it) },
                     modalTitle = "Replacing deprecated enum constructor syntax",
                     name = "Change to short enum constructor",

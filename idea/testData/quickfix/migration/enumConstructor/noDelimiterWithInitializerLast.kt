@@ -3,6 +3,6 @@
 enum class MyEnum(val z: Int) {
     A(3)
     B(7)
-    C<caret>: MyEnum(12)
+    C: MyEnum(12)<caret>
     fun foo() = z * 2
 }
